@@ -17,8 +17,6 @@ class Obstacle {
              ? projectile.position.y
              : projectile.position.y + projectile.height;
 
-             
-
         return (
           projectile.position.x >= this.position.x &&
           projectile.position.x <= this.position.x + this.width &&

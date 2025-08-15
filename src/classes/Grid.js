@@ -8,7 +8,7 @@ class Grid {
     this.direction = "right";
     this.moveDown = false;
 
-    this.invadersVelocity = 2;
+    this.invadersVelocity = 1.5;
     this.invaders = this.init();
   }
 
