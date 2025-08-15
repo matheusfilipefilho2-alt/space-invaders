@@ -4,7 +4,7 @@ import {
   PATH_ENGINE_SPRITES,
   INITIAL_FRAMES,
 } from "../../utils/constantes.js";
-import Projectile from "./projectile.js";
+import Projectile from "./Projectile.js";
 
 class Player {
   constructor(canvasWidth, canvasHeight) {
