@@ -136,7 +136,7 @@ const clearParticles = () => {
 
 const createExplosion = (position, size, color) => {
   for (let i = 0; i < size; i += 1) {
-    const particle = new Particle (
+    const particle = new Particle(
       {
         x: position.x,
         y: position.y,
@@ -343,16 +343,16 @@ const gameLoop = () => {
 addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
 
-  if (key === "a") keys.left = true;
-  if (key === "d") keys.right = true;
+  if (key === "a" || key === "arrowleft") keys.left = true;
+  if (key === "d" || key === "arrowright") keys.right = true;
   if (key === " ") keys.shoot.pressed = true;
 });
 
 addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
 
-  if (key === "a") keys.left = false;
-  if (key === "d") keys.right = false;
+  if (key === "a" || key === "arrowleft") keys.left = false;
+  if (key === "d" || key === "arrowright") keys.right = false;
   if (key === " ") {
     keys.shoot.pressed = false;
     keys.shoot.releassed = true;
