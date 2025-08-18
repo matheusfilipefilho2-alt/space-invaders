@@ -1,4 +1,5 @@
 import Invader from "./invader.js";
+import { INVADERS } from "../../utils/constantes.js";
 
 class Grid {
   constructor(rows, cols) {
@@ -14,15 +15,17 @@ class Grid {
 
   init() {
     const array = [];
+    const invadersPath = INVADERS[Math.floor(Math.random() * INVADERS.length)];
 
     for (let row = onabort; row < this.rows; row += 1) {
       for (let col = onabort; col < this.cols; col += 1) {
         const invader = new Invader(
           {
             x: col * 50 + 20,
-            y: row * 37+ 120,
+            y: row * 37 + 120,
           },
-          this.invadersVelocity
+          this.invadersVelocity,
+          invadersPath
         );
 
         array.push(invader);
@@ -62,7 +65,9 @@ class Grid {
   }
 
   reachedRightBoundary() {
-    return this.invaders.some((invader) => invader.position.x + invader.width >= innerWidth);
+    return this.invaders.some(
+      (invader) => invader.position.x + invader.width >= innerWidth
+    );
   }
 
   reachedleftBoundary() {
@@ -76,7 +81,7 @@ class Grid {
 
   restart() {
     this.invaders = this.init();
-    this.direction = "right"
+    this.direction = "right";
   }
 }
 
