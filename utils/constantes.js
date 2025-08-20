@@ -14,6 +14,9 @@ export const INITIAL_FRAMES = 5;
 
 export const GameState = {
   START: "start",
+  LOGIN: "login",
+  REGISTER: "register",
+  RANKING: "ranking",
   PLAYING: "playing",
   GAME_OVER: "gameOver",
 };

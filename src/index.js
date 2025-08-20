@@ -1,3 +1,4 @@
+import RankingManager from "./classes/RankingManager.js";
 import Grid from "./classes/Grid.js";
 import Obstacle from "./classes/Obstacle.js";
 import Particle from "./classes/Particle.js";
@@ -16,6 +17,38 @@ const levelElement = document.querySelector(".level > span");
 const highElement = document.querySelector(".high > span");
 const buttonPlay = document.querySelector(".button-play");
 const buttonRestart = document.querySelector(".button-restart");
+
+// Ranking Manager
+const rankingManager = new RankingManager()
+
+// Elementos das novas telas
+const loginScreen = document.querySelector(".login-screen")
+const registerScreen = document.querySelector(".register-screen")
+const rankingScreen = document.querySelector(".ranking-screen")
+
+// Elementos de input
+const usernameInput = document.querySelector("#username")
+const pinInput = document.querySelector("#pin")
+const newUsernameInput = document.querySelector("#new-username")
+const newPinInput = document.querySelector("#new-pin")
+const confirmPinInput = document.querySelector("#confirm-pin")
+
+// Botões
+const buttonLogin = document.querySelector(".button-login")
+const buttonRegister = document.querySelector(".button-register")
+const buttonCreate = document.querySelector(".button-create")
+const buttonBack = document.querySelector(".button-back")
+const buttonBackRegister = document.querySelector(".button-back-register")
+const buttonPlayRanking = document.querySelector(".button-play-ranking")
+const buttonLogout = document.querySelector(".button-logout")
+
+// Lista de ranking
+const rankingList = document.querySelector(".ranking-list")
+
+// Remover telas inicialmente
+loginScreen.remove()
+registerScreen.remove()
+rankingScreen.remove()
 
 gameOverScreen.remove();
 
@@ -74,13 +107,108 @@ const keys = {
   },
 };
 
-const incrementScore = (value) => {
+const incrementScore = async (value) => {
   gameData.score += value;
 
   if (gameData.score > gameData.high) {
     gameData.high = gameData.score;
+    
+    // Atualizar score online se logado
+    await updateOnlineScore()
   }
 };
+
+// Event Listeners para Login
+buttonLogin.addEventListener("click", async () => {
+    const username = usernameInput.value.trim()
+    const pin = pinInput.value.trim()
+    
+    if (!username || !isValidPin(pin)) {
+        showError('Nome de usuário e PIN de 4 dígitos são obrigatórios!')
+        return
+    }
+    
+    const result = await rankingManager.login(username, pin)
+    
+    if (result.success) {
+        loginScreen.remove()
+        gameData.high = result.user.high_score
+        await showRankingScreen()
+    } else {
+        showError(result.error)
+    }
+})
+
+buttonRegister.addEventListener("click", () => {
+    showRegisterScreen()
+})
+
+buttonBack.addEventListener("click", () => {
+    loginScreen.remove()
+    document.body.append(startScreen)
+    currentState = GameState.START
+})
+
+// Event Listeners para Registro
+buttonCreate.addEventListener("click", async () => {
+    const username = newUsernameInput.value.trim()
+    const pin = newPinInput.value.trim()
+    const confirmPin = confirmPinInput.value.trim()
+    
+    if (!username || !isValidPin(pin)) {
+        showError('Nome de usuário e PIN de 4 dígitos são obrigatórios!')
+        return
+    }
+    
+    if (pin !== confirmPin) {
+        showError('PINs não conferem!')
+        return
+    }
+    
+    const result = await rankingManager.register(username, pin)
+    
+    if (result.success) {
+        registerScreen.remove()
+        await showRankingScreen()
+    } else {
+        showError(result.error)
+    }
+})
+
+buttonBackRegister.addEventListener("click", () => {
+    registerScreen.remove()
+    document.body.append(loginScreen)
+    currentState = GameState.LOGIN
+})
+
+// Event Listeners para Ranking
+buttonPlayRanking.addEventListener("click", () => {
+    rankingScreen.remove()
+    scoreUi.style.display = "block"
+    currentState = GameState.PLAYING
+    
+    // Iniciar intervalo de tiro dos inimigos
+    setInterval(() => {
+        const invader = grid.getRandomInvader()
+        if (invader) {
+            invader.shoot(invaderProjectiles)
+        }
+    }, 1000)
+})
+
+buttonLogout.addEventListener("click", () => {
+    rankingManager.logout()
+    gameData.high = 0
+    rankingScreen.remove()
+    document.body.append(startScreen)
+    currentState = GameState.START
+})
+
+// Atualizar botão Play original
+buttonPlay.addEventListener("click", () => {
+    startScreen.remove()
+    showLoginScreen()
+})
 
 const generateStars = () => {
   for (let i = 1; i < NUMBER_STARS; i += 1) {
@@ -183,6 +311,10 @@ const checkInvaderColission = () => {
       if (invader.hit(obstacle)) {
         obstacles.splice(obstacle, 1);
       }
+
+      if (invader.position.y >= player.position.y) {
+        gameOver();
+      }
     });
   });
 };
@@ -265,6 +397,75 @@ const gameOver = () => {
   player.alive = false;
   document.body.append(gameOverScreen);
 };
+
+// Mostrar mensagem de erro
+const showError = (message) => {
+    alert(message) // Você pode melhorar isso depois
+}
+
+// Validar PIN (4 dígitos)
+const isValidPin = (pin) => {
+    return true
+}
+
+// Mostrar tela de login
+const showLoginScreen = () => {
+    currentState = GameState.LOGIN
+    document.body.append(loginScreen)
+    usernameInput.focus()
+}
+
+// Mostrar tela de registro
+const showRegisterScreen = () => {
+    currentState = GameState.REGISTER
+    loginScreen.remove()
+    document.body.append(registerScreen)
+    newUsernameInput.focus()
+}
+
+// Mostrar ranking
+const showRankingScreen = async () => {
+    currentState = GameState.RANKING
+    document.body.append(rankingScreen)
+    
+    // Carregar e exibir ranking
+    const ranking = await rankingManager.getRanking()
+    displayRanking(ranking)
+}
+
+// Exibir lista de ranking
+const displayRanking = (ranking) => {
+    rankingList.innerHTML = ''
+    
+    ranking.forEach((player, index) => {
+        const rankingItem = document.createElement('div')
+        rankingItem.className = 'ranking-item'
+        
+        // Destacar usuário atual
+        if (rankingManager.getCurrentUser() && 
+            player.username === rankingManager.getCurrentUser().username) {
+            rankingItem.classList.add('current-user')
+        }
+        
+        rankingItem.innerHTML = `
+            <span class="ranking-position">#${index + 1}</span>
+            <span>${player.username}</span>
+            <span>${player.high_score}</span>
+        `
+        
+        rankingList.appendChild(rankingItem)
+    })
+}
+
+// Atualizar high score online
+const updateOnlineScore = async () => {
+    if (rankingManager.isLoggedIn()) {
+        const updated = await rankingManager.updateHighScore(gameData.score)
+        if (updated) {
+            console.log('Nova pontuação máxima salva!')
+        }
+    }
+}
 
 const gameLoop = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);

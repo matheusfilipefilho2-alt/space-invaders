@@ -91,3 +91,82 @@ canvas {
         scale: 1;
     }
 }
+
+/* Estilos para as novas telas */
+.login-screen,
+.register-screen,
+.ranking-screen {
+    background: linear-gradient(45deg, #121212, #1a1a2e);
+}
+
+.login-screen input,
+.register-screen input {
+    display: block;
+    margin: 10px auto;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-family: "Press Start 2P", sans-serif;
+    width: 250px;
+    text-align: center;
+}
+
+.login-screen input:focus,
+.register-screen input:focus {
+    border-color: #4D9BE6;
+    outline: none;
+}
+
+.button-login,
+.button-register,
+.button-create,
+.button-back,
+.button-back-register,
+.button-play-ranking,
+.button-logout {
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    background-color: #ddd;
+    display: block;
+    margin: 10px auto;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: "Press Start 2P", sans-serif;
+}
+
+.button-login:hover,
+.button-register:hover,
+.button-create:hover,
+.button-back:hover,
+.button-back-register:hover,
+.button-play-ranking:hover,
+.button-logout:hover {
+    background-color: #fff;
+}
+
+.ranking-list {
+    max-width: 400px;
+    margin: 20px auto;
+    text-align: left;
+}
+
+.ranking-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    font-size: 0.7rem;
+}
+
+.ranking-position {
+    color: #FFD700;
+}
+
+.current-user {
+    background: rgba(77, 155, 230, 0.3);
+    border: 1px solid #4D9BE6;
+}

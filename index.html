@@ -1,44 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link rel="stylesheet" href="src/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="src/style.css" />
 
     <title>Space Invaders</title>
-</head>
-<body>
-
+  </head>
+  <body>
     <section class="score-ui">
-        <div>
-             <span class="score">
-                score: <span>0</span>
-            </span> 
-             <span class="level">level: <span>1</span></span> 
-             <span class="high">high: <span>0</span></span> 
-         </div> 
-     </section>
+      <div>
+        <span class="score"> score: <span>0</span> </span>
+        <span class="level">level: <span>1</span></span>
+        <span class="high">high: <span>0</span></span>
+      </div>
+    </section>
 
     <section class="start-screen screen">
-        <div>
-            <h1>Space Invaders</h1>
-            <button class="button-play">Play</button>
+      <div>
+        <h1>Space Invaders</h1>
+        <button class="button-play">Play</button>
+      </div>
+
+      <span>Desenvolvido por Matheusin</span>
+    </section>
+
+    <!-- Tela de Login -->
+    <section class="login-screen screen">
+      <div>
+        <h1>Login</h1>
+        <input
+          type="text"
+          id="username"
+          placeholder="Nome de usuário"
+          maxlength="20"
+        />
+        <input
+          type="password"
+          id="pin"
+          placeholder="PIN (4 dígitos)"
+          maxlength="4"
+        />
+        <button class="button-login">Entrar</button>
+        <button class="button-register">Criar Conta</button>
+        <button class="button-back">Voltar</button>
+      </div>
+      <span>Digite seu nome de usuário e PIN</span>
+    </section>
+
+    <!-- Tela de Cadastro -->
+    <section class="register-screen screen">
+      <div>
+        <h1>Criar Conta</h1>
+        <input
+          type="text"
+          id="new-username"
+          placeholder="Nome de usuário"
+          maxlength="20"
+        />
+        <input
+          type="password"
+          id="new-pin"
+          placeholder="PIN (4 dígitos)"
+          maxlength="4"
+        />
+        <input
+          type="password"
+          id="confirm-pin"
+          placeholder="Confirmar PIN"
+          maxlength="4"
+        />
+        <button class="button-create">Criar</button>
+        <button class="button-back-register">Voltar</button>
+      </div>
+      <span>Escolha um nome único e um PIN de 4 dígitos</span>
+    </section>
+
+    <!-- Tela de Ranking -->
+    <section class="ranking-screen screen">
+      <div>
+        <h1>🏆 Ranking</h1>
+        <div class="ranking-list">
+          <!-- Os rankings aparecerão aqui -->
         </div>
+        <button class="button-play-ranking">Jogar</button>
+        <button class="button-logout">Sair</button>
+      </div>
+      <span>Top 10 melhores pontuações</span>
+    </section>
 
-        <span>Desenvolvido por Matheusin</span>
-    </section> 
+    <section class="game-over screen">
+      <div>
+        <h1>Game Over</h1>
+        <button class="button-restart">Restart</button>
+      </div>
 
-     <section class="game-over screen">
-        <div>
-            <h1>Game Over</h1>
-            <button class="button-restart">Restart</button>
-        </div>
-
-        <span>Desenvolvido por Matheusin</span>
+      <span>Desenvolvido por Matheusin</span>
     </section>
 
     <canvas></canvas>
     <script type="module" src="src/index.js"></script>
-</body>
+  </body>
 </html>
