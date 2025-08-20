@@ -2,7 +2,7 @@ class Bonus {
   constructor(canvasWidth, canvasHeight) {
     this.width = 30;
     this.height = 30;
-    this.velocity = 6;
+    this.velocity = 4;
     
     // Posição aleatória na parte superior da tela
     this.position = {

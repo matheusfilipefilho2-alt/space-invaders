@@ -87,7 +87,7 @@ class RankingManager {
                 .from('players')
                 .select('username, high_score')
                 .order('high_score', { ascending: false })
-                .limit(10)
+                .limit(15)
 
             if (error) throw error
             return data
