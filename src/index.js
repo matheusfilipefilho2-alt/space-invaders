@@ -60,7 +60,7 @@ canvas.height = innerHeight;
 
 ctx.imageSmoothingEnabled = false;
 
-let currentState = GameState.START;
+let currentState = GameState.LOGIN;
 
 const gameData = {
   score: 0,
@@ -362,6 +362,7 @@ const spawnGrid = () => {
     grid.restart();
 
     gameData.level += 1;
+    grid.invadersVelocity += 0.5;
   }
 };
 
@@ -563,7 +564,7 @@ addEventListener("keyup", (event) => {
 buttonPlay.addEventListener("click", () => {
   startScreen.remove();
   scoreUi.style.display = "block";
-  currentState = GameState.PLAYING;
+  currentState = GameState.LOGIN;
 
   setInterval(() => {
     const invader = grid.getRandomInvader();
