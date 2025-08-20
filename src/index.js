@@ -61,7 +61,7 @@ canvas.height = innerHeight;
 
 ctx.imageSmoothingEnabled = false;
 
-let currentState = GameState.START;
+let currentState = GameState.LOGIN;
 
 const gameData = {
   score: 0,
@@ -327,7 +327,7 @@ buttonRegister.addEventListener("click", () => {
 buttonBack.addEventListener("click", () => {
     loginScreen.remove()
     document.body.append(startScreen)
-    currentState = GameState.LOGIN
+    currentState = GameState.RANKING
 })
 
 // Event Listeners para Registro
@@ -359,14 +359,14 @@ buttonCreate.addEventListener("click", async () => {
 buttonBackRegister.addEventListener("click", () => {
     registerScreen.remove()
     document.body.append(loginScreen)
-    currentState = GameState.LOGIN
+    currentState = GameState.REGISTER
 })
 
 // Event Listeners para Ranking
 buttonPlayRanking.addEventListener("click", () => {
     rankingScreen.remove()
     scoreUi.style.display = "block"
-    currentState = GameState.LOGIN
+    currentState = GameState.PLAYING
     
     // Iniciar intervalo de tiro dos inimigos
     setInterval(() => {
