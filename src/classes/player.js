@@ -11,7 +11,7 @@ class Player {
     this.alive = true;
     this.width = 48 * 2;
     this.height = 48 * 2;
-    this.velocity = 6;
+    this.velocity = 10;
 
     this.position = {
       x: canvasWidth / 2 - this.width / 2,
