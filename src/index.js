@@ -5,6 +5,7 @@ import Particle from "./classes/Particle.js";
 import Player from "./classes/player.js";
 import SoundEffects from "./classes/SoundEffects.js";
 import Star from "./classes/Star.js";
+import Bonus from "./classes/Bonus.js";
 import { GameState, NUMBER_STARS } from "../utils/constantes.js";
 
 const soundEffects = new SoundEffects();
@@ -60,12 +61,24 @@ canvas.height = innerHeight;
 
 ctx.imageSmoothingEnabled = false;
 
-let currentState = GameState.LOGIN;
+let currentState = GameState.START;
 
 const gameData = {
   score: 0,
   level: 1,
   high: 0,
+};
+
+// Sistema de bônus
+const bonusSystem = {
+  bonuses: [],
+  spawnTimer: 0,
+  spawnInterval: 5000, // 10 segundos
+  playerBuff: {
+    active: false,
+    duration: 10000, // 7 segundos - Mega Destruction Mode
+    startTime: 0
+  }
 };
 
 const showGameData = () => {
@@ -118,6 +131,174 @@ const incrementScore = async (value) => {
   }
 };
 
+// Funções do sistema de bônus
+const spawnBonus = () => {
+  const bonus = new Bonus(canvas.width, canvas.height);
+  bonusSystem.bonuses.push(bonus);
+};
+
+const updateBonuses = () => {
+  // Atualizar timer de spawn
+  bonusSystem.spawnTimer += 16; // Aproximadamente 60 FPS
+  
+  // Spawnar novo bônus se o timer atingir o intervalo
+  if (bonusSystem.spawnTimer >= bonusSystem.spawnInterval) {
+    if (Math.random() < 0.3) { // 30% de chance de spawnar
+      spawnBonus();
+    }
+    bonusSystem.spawnTimer = 0;
+  }
+  
+  // Atualizar bônus existentes
+  bonusSystem.bonuses.forEach((bonus, index) => {
+    bonus.update();
+    
+    // Remover bônus que saíram da tela
+    if (bonus.isOffScreen()) {
+      bonusSystem.bonuses.splice(index, 1);
+    }
+  });
+  
+  // Verificar buff ativo
+  if (bonusSystem.playerBuff.active) {
+    const currentTime = Date.now();
+    if (currentTime - bonusSystem.playerBuff.startTime >= bonusSystem.playerBuff.duration) {
+      bonusSystem.playerBuff.active = false;
+    }
+  }
+};
+
+const drawBonuses = () => {
+  bonusSystem.bonuses.forEach(bonus => {
+    bonus.draw(ctx);
+  });
+};
+
+const checkBonusCollision = () => {
+  bonusSystem.bonuses.forEach((bonus, index) => {
+    if (bonus.hit(player)) {
+      // Ativar buff
+      bonusSystem.playerBuff.active = true;
+      bonusSystem.playerBuff.startTime = Date.now();
+      
+      // Criar efeito visual mais impactante
+      createExplosion(
+        {
+          x: bonus.position.x + bonus.width / 2,
+          y: bonus.position.y + bonus.height / 2,
+        },
+        25,
+        "#FFD700"
+      );
+      
+      // Efeito secundário
+      createExplosion(
+        {
+          x: bonus.position.x + bonus.width / 2,
+          y: bonus.position.y + bonus.height / 2,
+        },
+        15,
+        "#FF6B6B"
+      );
+      
+      // Pontuação extra
+      incrementScore(50);
+      
+      // Remover bônus
+      bonusSystem.bonuses.splice(index, 1);
+      
+      // Som de coleta (usando som de hit como placeholder)
+      soundEffects.playHitSound();
+    }
+  });
+};
+
+const playerShootWithBuff = (projectiles) => {
+  if (bonusSystem.playerBuff.active) {
+    // Disparar múltiplos projéteis durante o buff
+    const projectile1 = {
+      position: {
+        x: player.position.x + player.width / 2 - 5,
+        y: player.position.y + 2,
+      },
+      velocity: -10,
+      width: 2,
+      height: 20,
+      draw(ctx) {
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+      },
+      update() {
+        this.position.y += this.velocity;
+      }
+    };
+    
+    const projectile2 = {
+      position: {
+        x: player.position.x + player.width / 2 + 3,
+        y: player.position.y + 2,
+      },
+      velocity: -10,
+      width: 2,
+      height: 20,
+      draw(ctx) {
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+      },
+      update() {
+        this.position.y += this.velocity;
+      }
+    };
+    
+    projectiles.push(projectile1);
+    projectiles.push(projectile2);
+  } else {
+    // Disparo normal
+    player.shoot(projectiles);
+  }
+};
+
+const drawBuffIndicator = () => {
+  if (bonusSystem.playerBuff.active) {
+    const currentTime = Date.now();
+    const remaining = bonusSystem.playerBuff.duration - (currentTime - bonusSystem.playerBuff.startTime);
+    const progress = remaining / bonusSystem.playerBuff.duration;
+    
+    // Desenhar barra de progresso do buff
+    ctx.save();
+    
+    // Efeito de brilho na barra
+    ctx.shadowColor = "#FFD700";
+    ctx.shadowBlur = 10;
+    
+    ctx.fillStyle = "rgba(255, 215, 0, 0.9)";
+    ctx.fillRect(canvas.width / 2 - 120, 50, 240 * progress, 12);
+    
+    ctx.strokeStyle = "#FFD700";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(canvas.width / 2 - 120, 50, 240, 12);
+    
+    // Texto do buff - linha principal
+    ctx.shadowBlur = 5;
+    ctx.fillStyle = "#FFD700";
+    ctx.font = "14px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    ctx.fillText("MEGA DESTRUCTION MODE!", canvas.width / 2, 35);
+    
+    // Texto secundário
+    ctx.font = "8px 'Press Start 2P'";
+    ctx.fillStyle = "#FFA500";
+    ctx.fillText("Destroys 4 ships per hit!", canvas.width / 2, 75);
+    
+    // Tempo restante
+    const seconds = Math.ceil(remaining / 1000);
+    ctx.fillStyle = "#FF6B6B";
+    ctx.fillText(`${seconds}s`, canvas.width / 2 + 130, 58);
+    
+    ctx.restore();
+  }
+};
+
 // Event Listeners para Login
 buttonLogin.addEventListener("click", async () => {
     const username = usernameInput.value.trim()
@@ -146,7 +327,7 @@ buttonRegister.addEventListener("click", () => {
 buttonBack.addEventListener("click", () => {
     loginScreen.remove()
     document.body.append(startScreen)
-    currentState = GameState.START
+    currentState = GameState.LOGIN
 })
 
 // Event Listeners para Registro
@@ -185,7 +366,7 @@ buttonBackRegister.addEventListener("click", () => {
 buttonPlayRanking.addEventListener("click", () => {
     rankingScreen.remove()
     scoreUi.style.display = "block"
-    currentState = GameState.PLAYING
+    currentState = GameState.LOGIN
     
     // Iniciar intervalo de tiro dos inimigos
     setInterval(() => {
@@ -281,25 +462,78 @@ const createExplosion = (position, size, color) => {
   }
 };
 
+const findNearbyInvaders = (targetInvader, maxCount = 3) => {
+  const nearby = [];
+  const targetX = targetInvader.position.x + targetInvader.width / 2;
+  const targetY = targetInvader.position.y + targetInvader.height / 2;
+  
+  // Criar lista de invasores com suas distâncias
+  const invadersWithDistance = grid.invaders
+    .filter(invader => invader !== targetInvader)
+    .map(invader => {
+      const invaderX = invader.position.x + invader.width / 2;
+      const invaderY = invader.position.y + invader.height / 2;
+      const distance = Math.sqrt(
+        Math.pow(targetX - invaderX, 2) + Math.pow(targetY - invaderY, 2)
+      );
+      return { invader, distance };
+    })
+    .sort((a, b) => a.distance - b.distance);
+  
+  // Retornar os mais próximos
+  return invadersWithDistance.slice(0, maxCount).map(item => item.invader);
+};
+
+const destroyInvader = (invader, delayMs = 0) => {
+  setTimeout(() => {
+    const invaderIndex = grid.invaders.indexOf(invader);
+    if (invaderIndex !== -1) {
+      soundEffects.playHitSound();
+
+      createExplosion(
+        {
+          x: invader.position.x + invader.width / 2,
+          y: invader.position.y + invader.height / 2,
+        },
+        10,
+        bonusSystem.playerBuff.active ? "#FFD700" : "#939"
+      );
+
+      incrementScore(10);
+      grid.invaders.splice(invaderIndex, 1);
+    }
+  }, delayMs);
+};
+
 const checkShootInvaders = () => {
   grid.invaders.forEach((invader, invaderIndex) => {
     playerProjectiles.some((projectile, projectileIndex) => {
       if (invader.hit(projectile)) {
-        soundEffects.playHitSound();
+        // Destruir a nave atingida imediatamente
+        destroyInvader(invader);
+        
+        // Se o buff estiver ativo, destruir 3 naves adicionais
+        if (bonusSystem.playerBuff.active) {
+          const nearbyInvaders = findNearbyInvaders(invader, 3);
+          
+          nearbyInvaders.forEach((nearbyInvader, index) => {
+            // Adicionar delay escalonado para efeito visual mais dramático
+            destroyInvader(nearbyInvader, (index + 1) * 100);
+          });
+          
+          // Efeito visual especial para o buff
+          createExplosion(
+            {
+              x: invader.position.x + invader.width / 2,
+              y: invader.position.y + invader.height / 2,
+            },
+            20,
+            "#FF6B6B"
+          );
+        }
 
-        createExplosion(
-          {
-            x: invader.position.x + invader.width / 2,
-            y: invader.position.y + invader.height / 2,
-          },
-          10,
-          "#939 "
-        );
-
-        incrementScore(10);
-
-        grid.invaders.splice(invaderIndex, 1);
         playerProjectiles.splice(projectileIndex, 1);
+        return true;
       }
     });
   });
@@ -396,6 +630,12 @@ const gameOver = () => {
 
   currentState = GameState.GAME_OVER;
   player.alive = false;
+  
+  // Resetar sistema de bônus
+  bonusSystem.bonuses = [];
+  bonusSystem.playerBuff.active = false;
+  bonusSystem.spawnTimer = 0;
+  
   document.body.append(gameOverScreen);
 };
 
@@ -477,6 +717,14 @@ const gameLoop = () => {
     showGameData();
     spawnGrid();
 
+    // Atualizar sistema de bônus
+    updateBonuses();
+    drawBonuses();
+    checkBonusCollision();
+    
+    // Desenhar indicador de buff
+    drawBuffIndicator();
+
     drawParticles();
     drawProjectiles();
     drawObstacles();
@@ -502,7 +750,7 @@ const gameLoop = () => {
 
     if (keys.shoot.pressed && keys.shoot.releassed) {
       soundEffects.playShootSound();
-      player.shoot(playerProjectiles);
+      playerShootWithBuff(playerProjectiles);
       keys.shoot.releassed = false;
     }
 
@@ -564,7 +812,7 @@ addEventListener("keyup", (event) => {
 buttonPlay.addEventListener("click", () => {
   startScreen.remove();
   scoreUi.style.display = "block";
-  currentState = GameState.LOGIN;
+  currentState = GameState.PLAYING;
 
   setInterval(() => {
     const invader = grid.getRandomInvader();
@@ -583,6 +831,11 @@ buttonRestart.addEventListener("click", () => {
   grid.invadersVelocity = 1;
 
   invaderProjectiles.length = 0;
+  
+  // Resetar sistema de bônus
+  bonusSystem.bonuses = [];
+  bonusSystem.playerBuff.active = false;
+  bonusSystem.spawnTimer = 0;
 
   gameData.score = 0;
   gameData.level = 0;
