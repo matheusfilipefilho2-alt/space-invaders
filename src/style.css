@@ -26,6 +26,7 @@ canvas {
 
 .screen h1 {
     font-size: 2rem;
+    margin-bottom: 20px;
 }
 
 .screen span {
@@ -62,6 +63,7 @@ canvas {
     scale: 0;
     animation: zoom 2s ease-in-out forwards;
 }
+
 .score-ui {
     position: fixed;
     top: 0;
@@ -92,11 +94,25 @@ canvas {
     }
 }
 
-/* Estilos para as novas telas */
+/* Estilos para as telas de login e registro - CENTRALIZADAS */
 .login-screen,
 .register-screen,
 .ranking-screen {
     background: linear-gradient(45deg, #121212, #1a1a2e);
+}
+
+/* Container principal das telas de login/registro */
+.login-screen > div,
+.register-screen > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 50vh;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
 .login-screen input,
@@ -110,12 +126,14 @@ canvas {
     font-family: "Press Start 2P", sans-serif;
     width: 250px;
     text-align: center;
+    background-color: rgba(255, 255, 255, 0.9);
 }
 
 .login-screen input:focus,
 .register-screen input:focus {
     border-color: #4D9BE6;
     outline: none;
+    background-color: white;
 }
 
 .button-login,
@@ -134,6 +152,8 @@ canvas {
     font-size: 0.8rem;
     cursor: pointer;
     font-family: "Press Start 2P", sans-serif;
+    min-width: 150px;
+    transition: background-color 0.3s ease;
 }
 
 .button-login:hover,
@@ -144,12 +164,26 @@ canvas {
 .button-play-ranking:hover,
 .button-logout:hover {
     background-color: #fff;
+    transform: translateY(-2px);
+}
+
+/* Estilos específicos para a tela de ranking */
+.ranking-screen > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 .ranking-list {
     max-width: 400px;
     margin: 20px auto;
     text-align: left;
+    width: 100%;
 }
 
 .ranking-item {
@@ -169,4 +203,28 @@ canvas {
 .current-user {
     background: rgba(77, 155, 230, 0.3);
     border: 1px solid #4D9BE6;
+}
+
+/* Melhorar responsividade */
+@media (max-width: 768px) {
+    .login-screen input,
+    .register-screen input {
+        width: 220px;
+        font-size: 0.9rem;
+    }
+    
+    .screen h1 {
+        font-size: 1.5rem;
+    }
+    
+    .button-login,
+    .button-register,
+    .button-create,
+    .button-back,
+    .button-back-register,
+    .button-play-ranking,
+    .button-logout {
+        font-size: 0.7rem;
+        padding: 10px 16px;
+    }
 }
