@@ -1,3 +1,4 @@
+import { NavigationHelper } from "./navigation.js";
 import RankingManager from "./classes/RankingManager.js";
 import AntiCheat from "./classes/AntiCheat.js";
 import Grid from "./classes/Grid.js";
@@ -15,9 +16,9 @@ const soundEffects = new SoundEffects();
 const startScreen = document.querySelector(".start-screen");
 const gameOverScreen = document.querySelector(".game-over");
 const scoreUi = document.querySelector(".score-ui");
-const scoreElement = document.querySelector(".score > span");
-const levelElement = document.querySelector(".level > span");
-const highElement = document.querySelector(".high > span");
+const scoreElement = document.querySelector(".score");
+const levelElement = document.querySelector(".level");
+const highElement = document.querySelector(".high");
 const buttonPlay = document.querySelector(".button-play");
 const buttonRestart = document.querySelector(".button-restart");
 
@@ -27,34 +28,8 @@ const rankingManager = new RankingManager();
 //Iniciar AntiCheat
 const antiCheat = new AntiCheat();
 
-// Elementos das novas telas
-const loginScreen = document.querySelector(".login-screen");
-const registerScreen = document.querySelector(".register-screen");
-const rankingScreen = document.querySelector(".ranking-screen");
 
-// Elementos de input
-const usernameInput = document.querySelector("#username");
-const pinInput = document.querySelector("#pin");
-const newUsernameInput = document.querySelector("#new-username");
-const newPinInput = document.querySelector("#new-pin");
-const confirmPinInput = document.querySelector("#confirm-pin");
 
-// Botões
-const buttonLogin = document.querySelector(".button-login");
-const buttonRegister = document.querySelector(".button-register");
-const buttonCreate = document.querySelector(".button-create");
-const buttonBack = document.querySelector(".button-back");
-const buttonBackRegister = document.querySelector(".button-back-register");
-const buttonPlayRanking = document.querySelector(".button-play-ranking");
-const buttonLogout = document.querySelector(".button-logout");
-
-// Lista de ranking
-const rankingList = document.querySelector(".ranking-list");
-
-// Remover telas inicialmente
-loginScreen.remove();
-registerScreen.remove();
-rankingScreen.remove();
 
 gameOverScreen.remove();
 
@@ -66,7 +41,7 @@ canvas.height = innerHeight;
 
 ctx.imageSmoothingEnabled = false;
 
-let currentState = GameState.LOGIN;
+let currentState = GameState.START;
 
 const gameData = {
   score: 0,
@@ -332,99 +307,12 @@ const drawBuffIndicator = () => {
   }
 };
 
-// Event Listeners para Login
-buttonLogin.addEventListener("click", async () => {
-  const username = usernameInput.value.trim();
-  const pin = pinInput.value.trim();
-
-  if (!username || !isValidPin(pin)) {
-    showError("Nome de usuário e PIN de 4 dígitos são obrigatórios!");
-    return;
-  }
-
-  const result = await rankingManager.login(username, pin);
-
-  if (result.success) {
-    loginScreen.remove();
-    gameData.high = result.user.high_score;
-    await showRankingScreen();
-  } else {
-    showError(result.error);
-  }
-});
-
-buttonRegister.addEventListener("click", () => {
-  showRegisterScreen();
-});
-
-buttonBack.addEventListener("click", () => {
-  loginScreen.remove();
-  document.body.append(startScreen);
-  currentState = GameState.START;
-});
-
-// Event Listeners para Registro
-buttonCreate.addEventListener("click", async () => {
-  const username = newUsernameInput.value.trim();
-  const pin = newPinInput.value.trim();
-  const confirmPin = confirmPinInput.value.trim();
-
-  if (!username || !isValidPin(pin)) {
-    showError("Nome de usuário e PIN de 4 dígitos são obrigatórios!");
-    return;
-  }
-
-  if (pin !== confirmPin) {
-    showError("PINs não conferem!");
-    return;
-  }
-
-  const result = await rankingManager.register(username, pin);
-
-  if (result.success) {
-    registerScreen.remove();
-    await showRankingScreen();
-  } else {
-    showError(result.error);
-  }
-});
-
-buttonBackRegister.addEventListener("click", () => {
-  registerScreen.remove();
-  document.body.append(loginScreen);
-  currentState = GameState.LOGIN;
-});
-
-// Event Listeners para Ranking
-buttonPlayRanking.addEventListener("click", () => {
-  rankingScreen.remove();
-  scoreUi.style.display = "block";
-  currentState = GameState.PLAYING;
-
-  antiCheat.markNotFirstSession();
-  gameStartTime = Date.now();
-
-  // Iniciar intervalo de tiro dos inimigos
-  setInterval(() => {
-    const invader = grid.getRandomInvader();
-    if (invader) {
-      invader.shoot(invaderProjectiles);
-    }
-  }, 1000);
-});
-
-buttonLogout.addEventListener("click", () => {
-  rankingManager.logout();
-  gameData.high = 0;
-  rankingScreen.remove();
-  document.body.append(startScreen);
-  currentState = GameState.START;
-});
-
 //Função para mostrar status do anti-cheat (debug)
 const showAntiCheatStatus = () => {
   const status = antiCheat.getStatus();
-  console.log(`🛡️ AntiCheat Status: ${status.risk} | Flags: ${status.flags} | Time: ${status.sessionTime}s`);
+  console.log(
+    `🛡️ AntiCheat Status: ${status.risk} | Flags: ${status.flags} | Time: ${status.sessionTime}s`
+  );
 };
 
 // Atualizar botão Play original
@@ -721,57 +609,6 @@ const isValidPin = (pin) => {
   return true;
 };
 
-// Mostrar tela de login
-const showLoginScreen = () => {
-  currentState = GameState.LOGIN;
-  document.body.append(loginScreen);
-  usernameInput.focus();
-};
-
-// Mostrar tela de registro
-const showRegisterScreen = () => {
-  currentState = GameState.REGISTER;
-  loginScreen.remove();
-  document.body.append(registerScreen);
-  newUsernameInput.focus();
-};
-
-// Mostrar ranking
-const showRankingScreen = async () => {
-  currentState = GameState.RANKING;
-  document.body.append(rankingScreen);
-
-  // Carregar e exibir ranking
-  const ranking = await rankingManager.getRanking();
-  displayRanking(ranking);
-};
-
-// Exibir lista de ranking
-const displayRanking = (ranking) => {
-  rankingList.innerHTML = "";
-
-  ranking.forEach((player, index) => {
-    const rankingItem = document.createElement("div");
-    rankingItem.className = "ranking-item";
-
-    // Destacar usuário atual
-    if (
-      rankingManager.getCurrentUser() &&
-      player.username === rankingManager.getCurrentUser().username
-    ) {
-      rankingItem.classList.add("current-user");
-    }
-
-    rankingItem.innerHTML = `
-            <span class="ranking-position">#${index + 1}</span>
-            <span>${player.username}</span>
-            <span>${player.high_score}</span>
-        `;
-
-    rankingList.appendChild(rankingItem);
-  });
-};
-
 // Atualizar high score online
 const updateOnlineScore = async () => {
   if (rankingManager.isLoggedIn()) {
@@ -788,7 +625,6 @@ const gameLoop = () => {
   drawStars();
 
   if (currentState == GameState.PLAYING) {
-    
     if (antiCheat.shouldBlock()) {
       gameOver();
       return;
@@ -889,19 +725,47 @@ addEventListener("keyup", (event) => {
   }
 });
 
+// Novo botão de navegação para login
+const buttonLoginNav = document.querySelector(".button-login-nav");
+if (buttonLoginNav) {
+  buttonLoginNav.addEventListener("click", () => {
+    NavigationHelper.goTo("login.html");
+  });
+}
+
+// Modificar o botão play original
 buttonPlay.addEventListener("click", () => {
+  startGame();
+});
+
+// Verificar se deve iniciar o jogo automaticamente
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get("startGame") === "true") {
+  startGame();
+}
+
+function startGame() {
   startScreen.remove();
   scoreUi.style.display = "block";
   currentState = GameState.PLAYING;
 
+  // Carregar dados do usuário se logado
+  const currentUser = NavigationHelper.getCurrentUser();
+  if (currentUser) {
+    gameData.high = currentUser.high_score;
+    rankingManager.currentUser = currentUser;
+  }
+
+  antiCheat.markNotFirstSession();
+  gameStartTime = Date.now();
+
   setInterval(() => {
     const invader = grid.getRandomInvader();
-
     if (invader) {
       invader.shoot(invaderProjectiles);
     }
   }, 1000);
-});
+}
 
 buttonRestart.addEventListener("click", () => {
   currentState = GameState.PLAYING;

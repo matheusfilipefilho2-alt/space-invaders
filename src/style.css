@@ -229,3 +229,53 @@ canvas {
         padding: 10px 16px;
     }
 }
+
+/* Estilos para informações do usuário */
+.user-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 0.7rem;
+}
+
+.user-info span {
+    color: #FFD700;
+}
+
+/* Botão de navegação para login */
+.button-login-nav {
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    background-color: #4D9BE6;
+    color: white;
+    display: block;
+    margin: 10px auto;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: "Press Start 2P", sans-serif;
+}
+
+.button-login-nav:hover {
+    background-color: #3A7BC8;
+}
+
+.button-back-menu {
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    background-color: #666;
+    color: white;
+    display: block;
+    margin: 10px auto 0;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: "Press Start 2P", sans-serif;
+}
+
+.button-back-menu:hover {
+    background-color: #888;
+}

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="src/style.css" />
+    <link rel="icon" href="src/assets/images/invader_purple.gif" type="image/x-icon">
+    <title>Ranking - Space Invaders</title>
+</head>
+<body>
+    <!-- Fundo animado com estrelas -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <section class="ranking-screen screen">
+        <div>
+            <h1>🏆 Ranking Global</h1>
+            
+            <!-- Informações do usuário atual -->
+            <div class="user-info-card">
+                <div class="user-avatar">👨‍🚀</div>
+                <div class="user-details">
+                    <h3 id="current-user-name">Carregando...</h3>
+                    <p id="current-user-score">Score: 0</p>
+                </div>
+                <div class="user-status">
+                    <span class="online-indicator">🟢 Online</span>
+                </div>
+            </div>
+            
+            <!-- Lista de ranking -->
+            <div class="ranking-container">
+                <div class="ranking-header-title">
+                    <h2>🌟 Top Jogadores</h2>
+                    <span class="ranking-subtitle">Melhores pontuações da galáxia</span>
+                </div>
+                
+                <div class="ranking-list">
+                    <!-- O ranking será carregado aqui -->
+                </div>
+            </div>
+            
+            <!-- Botões de ação -->
+            <div class="action-buttons">
+                <button class="button-play-ranking primary-action">
+                    🚀 Jogar Agora
+                </button>
+                <button class="button-logout secondary-action">
+                    🚪 Sair
+                </button>
+            </div>
+        </div>
+        
+        <span class="footer-text">Sua aventura espacial te aguarda!</span>
+    </section>
+
+    <script type="module" src="src/ranking.js"></script>
+    
+    <!-- Script para animação de fundo -->
+    <script>
+        // Animação avançada de fundo para a página de ranking
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '-1';
+        canvas.style.background = 'radial-gradient(circle at center, #1a1a2e 0%, #0f0f23 100%)';
+        
+        const stars = [];
+        const shootingStars = [];
+        
+        // Estrelas normais
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2,
+                speed: Math.random() * 0.2 + 0.1,
+                opacity: Math.random() * 0.8 + 0.2
+            });
+        }
+        
+        // Estrelas cadentes ocasionais
+        function createShootingStar() {
+            if (Math.random() < 0.001) {
+                shootingStars.push({
+                    x: Math.random() * canvas.width,
+                    y: 0,
+                    speedX: (Math.random() - 0.5) * 2,
+                    speedY: Math.random() * 3 + 2,
+                    length: Math.random() * 50 + 20,
+                    opacity: 1
+                });
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Desenhar estrelas normais
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.fill();
+                
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = -star.radius;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+            
+            // Criar estrelas cadentes
+            createShootingStar();
+            
+            // Desenhar estrelas cadentes
+            shootingStars.forEach((star, index) => {
+                ctx.beginPath();
+                ctx.moveTo(star.x, star.y);
+                ctx.lineTo(star.x - star.speedX * 5, star.y - star.speedY * 3);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                star.x += star.speedX;
+                star.y += star.speedY;
+                star.opacity -= 0.01;
+                
+                if (star.opacity <= 0 || star.y > canvas.height) {
+                    shootingStars.splice(index, 1);
+                }
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+    
+    <style>
+        .user-info-card {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #4D9BE6;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(77, 155, 230, 0.3);
+        }
+        
+        .user-avatar {
+            font-size: 2rem;
+            margin-right: 15px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .user-details h3 {
+            color: #FFD700;
+            font-size: 1rem;
+            margin: 0 0 5px 0;
+        }
+        
+        .user-details p {
+            color: #4D9BE6;
+            font-size: 0.7rem;
+            margin: 0;
+        }
+        
+        .user-status {
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .online-indicator {
+            font-size: 0.6rem;
+            color: #44ff44;
+        }
+        
+        .ranking-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #333;
+        }
+        
+        .ranking-header-title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .ranking-header-title h2 {
+            color: #FFD700;
+            font-size: 1.2rem;
+            margin: 0 0 5px 0;
+        }
+        
+        .ranking-subtitle {
+            color: #aaa;
+            font-size: 0.6rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .primary-action {
+            background: linear-gradient(45deg, #4D9BE6, #6BB6FF) !important;
+            border: none !important;
+            padding: 15px 30px !important;
+            font-size: 0.9rem !important;
+            box-shadow: 0 4px 15px rgba(77, 155, 230, 0.4);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+        
+        .primary-action:hover {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 6px 20px rgba(77, 155, 230, 0.6) !important;
+            background: linear-gradient(45deg, #6BB6FF, #4D9BE6) !important;
+        }
+        
+        .secondary-action {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 2px solid #666 !important;
+            color: #ccc !important;
+        }
+        
+        .secondary-action:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-color: #888 !important;
+            color: white !important;
+        }
+        
+        .footer-text {
+            font-size: 0.5rem !important;
+            color: #666 !important;
+        }
+        
+        /* Estilos para a lista de ranking */
+        .ranking-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .ranking-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .ranking-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .ranking-list::-webkit-scrollbar-thumb {
+            background: #4D9BE6;
+            border-radius: 4px;
+        }
+        
+        .ranking-list::-webkit-scrollbar-thumb:hover {
+            background: #6BB6FF;
+        }
+        
+        /* Animação para o card do usuário */
+        .user-info-card {
+            animation: slideInFromTop 0.6s ease-out;
+        }
+        
+        @keyframes slideInFromTop {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .user-info-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .user-avatar {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .user-status {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</body>
+</html>

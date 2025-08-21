@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="src/style.css" />
+    <link rel="icon" href="src/assets/images/invader_purple.gif" type="image/x-icon">
+    <title>Login - Space Invaders</title>
+</head>
+<body>
+    <!-- Canvas para fundo de estrelas animado -->
+    <canvas id="stars-background"></canvas>
+    
+    <section class="login-screen screen">
+        <div class="login-container">
+            <h1>🚀 Login</h1>
+            <p class="subtitle">Entre na sua conta para jogar</p>
+            
+            <div class="form-container">
+                <input 
+                    type="text" 
+                    id="username" 
+                    placeholder="Nome de usuário" 
+                    maxlength="20"
+                    autocomplete="username"
+                />
+                <input 
+                    type="password" 
+                    id="pin" 
+                    placeholder="PIN (4 dígitos)" 
+                    maxlength="4"
+                    autocomplete="current-password"
+                />
+                
+                <button class="button-login">Entrar</button>
+                
+                <div class="divider">
+                    <span>ou</span>
+                </div>
+                
+                <button class="button-register secondary">Criar Conta</button>
+                <button class="button-back tertiary">← Voltar ao Menu</button>
+            </div>
+        </div>
+        <span class="footer-text">Digite suas credenciais para acessar o ranking</span>
+    </section>
+
+    <script type="module" src="src/login.js"></script>
+    
+    <script type="module">
+        // Importar a classe Star
+        import Star from './src/classes/Star.js';
+
+        class StarFieldBackground {
+            constructor() {
+                this.canvas = document.getElementById('stars-background');
+                this.ctx = this.canvas.getContext('2d');
+                this.stars = [];
+                this.numberOfStars = 150; // Número de estrelas
+
+                this.resize();
+                this.init();
+                this.animate();
+
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+
+                // Recriar estrelas quando redimensionar
+                this.stars = [];
+                this.init();
+            }
+
+            init() {
+                for (let i = 0; i < this.numberOfStars; i++) {
+                    const star = new Star(this.canvas.width, this.canvas.height);
+                    this.stars.push(star);
+                }
+            }
+
+            animate() {
+                // Limpar completamente o canvas e redesenhar com cor sólida
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Usar cor sólida sem transparência
+                this.ctx.fillStyle = '#050519';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Desenhar as estrelas
+                this.stars.forEach(star => {
+                    star.update();
+                    star.draw(this.ctx);
+                });
+
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new StarFieldBackground();
+        });
+    </script>
+    
+    <style>
+        /* Estilo para o fundo */
+        body {
+            background: radial-gradient(ellipse at center, #1a1a40 0%, #0a0a20 50%, #000000 100%);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #stars-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            display: block;
+        }
+        
+        /* Centralização da tela de login */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Container principal centralizado */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 300px;
+            max-width: 500px;
+            padding: 40px 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 0.6rem;
+            color: #aaa;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-container {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .divider {
+            margin: 20px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #444;
+        }
+        
+        .divider span {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0 15px;
+            color: #666;
+            font-size: 0.6rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .secondary {
+            background-color: #666 !important;
+        }
+        
+        .secondary:hover {
+            background-color: #888 !important;
+        }
+        
+        .tertiary {
+            background-color: transparent !important;
+            border: 1px solid #666 !important;
+            color: #aaa !important;
+        }
+        
+        .tertiary:hover {
+            background-color: #333 !important;
+            color: white !important;
+        }
+        
+        .footer-text {
+            font-size: 0.5rem !important;
+        }
+    </style>
+</body>
+</html>
