@@ -67,18 +67,21 @@ class RankingManager {
     // Atualizar pontuação máxima
     async updateHighScore(newScore) {
         if (!this.currentUser) return false
+        
+        if (newScore <= this.currentUser.high_score) {
+            console.log('Pontuação não atualizada: nova pontuação não é maior que a atual')
+            return false
+        }
 
         try {
-            if (newScore > this.currentUser.high_score) {
-                const { error } = await supabase
-                    .from('players')
-                    .update({ high_score: newScore })
-                    .eq('id', this.currentUser.id)
+            const { error } = await supabase
+                .from('players')
+                .update({ high_score: newScore })
+                .eq('id', this.currentUser.id)
 
-                if (!error) {
-                    this.currentUser.high_score = newScore
-                    return true
-                }
+            if (!error) {
+                this.currentUser.high_score = newScore
+                return true
             }
             return false
         } catch (error) {
