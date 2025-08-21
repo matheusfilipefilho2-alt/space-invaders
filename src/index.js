@@ -327,7 +327,7 @@ buttonRegister.addEventListener("click", () => {
 buttonBack.addEventListener("click", () => {
     loginScreen.remove()
     document.body.append(startScreen)
-    currentState = GameState.RANKING
+    currentState = GameState.START
 })
 
 // Event Listeners para Registro
@@ -359,7 +359,7 @@ buttonCreate.addEventListener("click", async () => {
 buttonBackRegister.addEventListener("click", () => {
     registerScreen.remove()
     document.body.append(loginScreen)
-    currentState = GameState.REGISTER
+    currentState = GameState.LOGIN
 })
 
 // Event Listeners para Ranking
