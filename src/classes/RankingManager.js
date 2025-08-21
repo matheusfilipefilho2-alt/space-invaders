@@ -5,10 +5,8 @@ class RankingManager {
         this.currentUser = null
     }
 
-    // Registrar novo usuário
     async register(username, pin) {
         try {
-            // Verificar se já existe
             const { data: existing } = await supabase
                 .from('players')
                 .select('username')
@@ -19,7 +17,6 @@ class RankingManager {
                 throw new Error('Nome de usuário já existe!')
             }
 
-            // Criar novo usuário
             const { data, error } = await supabase
                 .from('players')
                 .insert([
@@ -39,20 +36,30 @@ class RankingManager {
     // Fazer login
     async login(username, pin) {
         try {
+            // NÃO usar .single() - verificar se array tem elementos
             const { data, error } = await supabase
                 .from('players')
                 .select('*')
                 .eq('username', username)
                 .eq('pin', pin)
-                .single()
 
-            if (error || !data) {
+            if (error) {
+                console.error('Erro na consulta de login:', error)
+                throw new Error('Erro na autenticação')
+            }
+
+            // Verificar se encontrou algum usuário
+            if (!data || data.length === 0) {
                 throw new Error('Usuário ou PIN incorretos!')
             }
 
-            this.currentUser = data
-            return { success: true, user: data }
+            // Pegar o primeiro (e único) resultado
+            const user = data[0]
+            this.currentUser = user
+            return { success: true, user: user }
+
         } catch (error) {
+            console.error('Erro no login:', error)
             return { success: false, error: error.message }
         }
     }

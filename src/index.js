@@ -1,4 +1,5 @@
 import RankingManager from "./classes/RankingManager.js";
+import AntiCheat from "./classes/AntiCheat.js";
 import Grid from "./classes/Grid.js";
 import Obstacle from "./classes/Obstacle.js";
 import Particle from "./classes/Particle.js";
@@ -7,6 +8,7 @@ import SoundEffects from "./classes/SoundEffects.js";
 import Star from "./classes/Star.js";
 import Bonus from "./classes/Bonus.js";
 import { GameState, NUMBER_STARS } from "../utils/constantes.js";
+import { supabase } from "./supabase.js";
 
 const soundEffects = new SoundEffects();
 
@@ -20,36 +22,39 @@ const buttonPlay = document.querySelector(".button-play");
 const buttonRestart = document.querySelector(".button-restart");
 
 // Ranking Manager
-const rankingManager = new RankingManager()
+const rankingManager = new RankingManager();
+
+//Iniciar AntiCheat
+const antiCheat = new AntiCheat();
 
 // Elementos das novas telas
-const loginScreen = document.querySelector(".login-screen")
-const registerScreen = document.querySelector(".register-screen")
-const rankingScreen = document.querySelector(".ranking-screen")
+const loginScreen = document.querySelector(".login-screen");
+const registerScreen = document.querySelector(".register-screen");
+const rankingScreen = document.querySelector(".ranking-screen");
 
 // Elementos de input
-const usernameInput = document.querySelector("#username")
-const pinInput = document.querySelector("#pin")
-const newUsernameInput = document.querySelector("#new-username")
-const newPinInput = document.querySelector("#new-pin")
-const confirmPinInput = document.querySelector("#confirm-pin")
+const usernameInput = document.querySelector("#username");
+const pinInput = document.querySelector("#pin");
+const newUsernameInput = document.querySelector("#new-username");
+const newPinInput = document.querySelector("#new-pin");
+const confirmPinInput = document.querySelector("#confirm-pin");
 
 // Botões
-const buttonLogin = document.querySelector(".button-login")
-const buttonRegister = document.querySelector(".button-register")
-const buttonCreate = document.querySelector(".button-create")
-const buttonBack = document.querySelector(".button-back")
-const buttonBackRegister = document.querySelector(".button-back-register")
-const buttonPlayRanking = document.querySelector(".button-play-ranking")
-const buttonLogout = document.querySelector(".button-logout")
+const buttonLogin = document.querySelector(".button-login");
+const buttonRegister = document.querySelector(".button-register");
+const buttonCreate = document.querySelector(".button-create");
+const buttonBack = document.querySelector(".button-back");
+const buttonBackRegister = document.querySelector(".button-back-register");
+const buttonPlayRanking = document.querySelector(".button-play-ranking");
+const buttonLogout = document.querySelector(".button-logout");
 
 // Lista de ranking
-const rankingList = document.querySelector(".ranking-list")
+const rankingList = document.querySelector(".ranking-list");
 
 // Remover telas inicialmente
-loginScreen.remove()
-registerScreen.remove()
-rankingScreen.remove()
+loginScreen.remove();
+registerScreen.remove();
+rankingScreen.remove();
 
 gameOverScreen.remove();
 
@@ -69,6 +74,8 @@ const gameData = {
   high: 0,
 };
 
+let gameStartTime = Date.now();
+
 // Sistema de bônus
 const bonusSystem = {
   bonuses: [],
@@ -77,8 +84,8 @@ const bonusSystem = {
   playerBuff: {
     active: false,
     duration: 10000, // 7 segundos - Mega Destruction Mode
-    startTime: 0
-  }
+    startTime: 0,
+  },
 };
 
 const showGameData = () => {
@@ -121,13 +128,33 @@ const keys = {
 };
 
 const incrementScore = async (value) => {
+  if (antiCheat.shouldBlock()) {
+    console.warn("🚫 Jogador bloqueado pelo anti-cheat!");
+    gameOver();
+    return;
+  }
+
   gameData.score += value;
+
+  antiCheat.recordScoreEvent(
+    gameData.score,
+    gameData.level,
+    Date.now() - gameStartTime
+  );
+
+  if (antiCheat.shouldBlock()) {
+    console.warn("🚫 Comportamento suspeito detectado!");
+
+    alert("Comportamento suspeito detectado. O jogo será encerrado.");
+    gameOver();
+    return;
+  }
 
   if (gameData.score > gameData.high) {
     gameData.high = gameData.score;
-    
+
     // Atualizar score online se logado
-    await updateOnlineScore()
+    await updateOnlineScore();
   }
 };
 
@@ -140,36 +167,40 @@ const spawnBonus = () => {
 const updateBonuses = () => {
   // Atualizar timer de spawn
   bonusSystem.spawnTimer += 16; // Aproximadamente 60 FPS
-  
+
   // Spawnar novo bônus se o timer atingir o intervalo
   if (bonusSystem.spawnTimer >= bonusSystem.spawnInterval) {
-    if (Math.random() < 0.3) { // 30% de chance de spawnar
+    if (Math.random() < 0.3) {
+      // 30% de chance de spawnar
       spawnBonus();
     }
     bonusSystem.spawnTimer = 0;
   }
-  
+
   // Atualizar bônus existentes
   bonusSystem.bonuses.forEach((bonus, index) => {
     bonus.update();
-    
+
     // Remover bônus que saíram da tela
     if (bonus.isOffScreen()) {
       bonusSystem.bonuses.splice(index, 1);
     }
   });
-  
+
   // Verificar buff ativo
   if (bonusSystem.playerBuff.active) {
     const currentTime = Date.now();
-    if (currentTime - bonusSystem.playerBuff.startTime >= bonusSystem.playerBuff.duration) {
+    if (
+      currentTime - bonusSystem.playerBuff.startTime >=
+      bonusSystem.playerBuff.duration
+    ) {
       bonusSystem.playerBuff.active = false;
     }
   }
 };
 
 const drawBonuses = () => {
-  bonusSystem.bonuses.forEach(bonus => {
+  bonusSystem.bonuses.forEach((bonus) => {
     bonus.draw(ctx);
   });
 };
@@ -180,7 +211,7 @@ const checkBonusCollision = () => {
       // Ativar buff
       bonusSystem.playerBuff.active = true;
       bonusSystem.playerBuff.startTime = Date.now();
-      
+
       // Criar efeito visual mais impactante
       createExplosion(
         {
@@ -190,7 +221,7 @@ const checkBonusCollision = () => {
         25,
         "#FFD700"
       );
-      
+
       // Efeito secundário
       createExplosion(
         {
@@ -200,13 +231,13 @@ const checkBonusCollision = () => {
         15,
         "#FF6B6B"
       );
-      
+
       // Pontuação extra
       incrementScore(50);
-      
+
       // Remover bônus
       bonusSystem.bonuses.splice(index, 1);
-      
+
       // Som de coleta (usando som de hit como placeholder)
       soundEffects.playHitSound();
     }
@@ -230,9 +261,9 @@ const playerShootWithBuff = (projectiles) => {
       },
       update() {
         this.position.y += this.velocity;
-      }
+      },
     };
-    
+
     const projectile2 = {
       position: {
         x: player.position.x + player.width / 2 + 3,
@@ -247,9 +278,9 @@ const playerShootWithBuff = (projectiles) => {
       },
       update() {
         this.position.y += this.velocity;
-      }
+      },
     };
-    
+
     projectiles.push(projectile1);
     projectiles.push(projectile2);
   } else {
@@ -261,135 +292,146 @@ const playerShootWithBuff = (projectiles) => {
 const drawBuffIndicator = () => {
   if (bonusSystem.playerBuff.active) {
     const currentTime = Date.now();
-    const remaining = bonusSystem.playerBuff.duration - (currentTime - bonusSystem.playerBuff.startTime);
+    const remaining =
+      bonusSystem.playerBuff.duration -
+      (currentTime - bonusSystem.playerBuff.startTime);
     const progress = remaining / bonusSystem.playerBuff.duration;
-    
+
     // Desenhar barra de progresso do buff
     ctx.save();
-    
+
     // Efeito de brilho na barra
     ctx.shadowColor = "#FFD700";
     ctx.shadowBlur = 10;
-    
+
     ctx.fillStyle = "rgba(255, 215, 0, 0.9)";
     ctx.fillRect(canvas.width / 2 - 120, 50, 240 * progress, 12);
-    
+
     ctx.strokeStyle = "#FFD700";
     ctx.lineWidth = 3;
     ctx.strokeRect(canvas.width / 2 - 120, 50, 240, 12);
-    
+
     // Texto do buff - linha principal
     ctx.shadowBlur = 5;
     ctx.fillStyle = "#FFD700";
     ctx.font = "14px 'Press Start 2P'";
     ctx.textAlign = "center";
     ctx.fillText("MEGA DESTRUCTION MODE!", canvas.width / 2, 35);
-    
+
     // Texto secundário
     ctx.font = "8px 'Press Start 2P'";
     ctx.fillStyle = "#FFA500";
     ctx.fillText("Destroys 4 ships per hit!", canvas.width / 2, 75);
-    
+
     // Tempo restante
     const seconds = Math.ceil(remaining / 1000);
     ctx.fillStyle = "#FF6B6B";
     ctx.fillText(`${seconds}s`, canvas.width / 2 + 130, 58);
-    
+
     ctx.restore();
   }
 };
 
 // Event Listeners para Login
 buttonLogin.addEventListener("click", async () => {
-    const username = usernameInput.value.trim()
-    const pin = pinInput.value.trim()
-    
-    if (!username || !isValidPin(pin)) {
-        showError('Nome de usuário e PIN de 4 dígitos são obrigatórios!')
-        return
-    }
-    
-    const result = await rankingManager.login(username, pin)
-    
-    if (result.success) {
-        loginScreen.remove()
-        gameData.high = result.user.high_score
-        await showRankingScreen()
-    } else {
-        showError(result.error)
-    }
-})
+  const username = usernameInput.value.trim();
+  const pin = pinInput.value.trim();
+
+  if (!username || !isValidPin(pin)) {
+    showError("Nome de usuário e PIN de 4 dígitos são obrigatórios!");
+    return;
+  }
+
+  const result = await rankingManager.login(username, pin);
+
+  if (result.success) {
+    loginScreen.remove();
+    gameData.high = result.user.high_score;
+    await showRankingScreen();
+  } else {
+    showError(result.error);
+  }
+});
 
 buttonRegister.addEventListener("click", () => {
-    showRegisterScreen()
-})
+  showRegisterScreen();
+});
 
 buttonBack.addEventListener("click", () => {
-    loginScreen.remove()
-    document.body.append(startScreen)
-    currentState = GameState.START
-})
+  loginScreen.remove();
+  document.body.append(startScreen);
+  currentState = GameState.START;
+});
 
 // Event Listeners para Registro
 buttonCreate.addEventListener("click", async () => {
-    const username = newUsernameInput.value.trim()
-    const pin = newPinInput.value.trim()
-    const confirmPin = confirmPinInput.value.trim()
-    
-    if (!username || !isValidPin(pin)) {
-        showError('Nome de usuário e PIN de 4 dígitos são obrigatórios!')
-        return
-    }
-    
-    if (pin !== confirmPin) {
-        showError('PINs não conferem!')
-        return
-    }
-    
-    const result = await rankingManager.register(username, pin)
-    
-    if (result.success) {
-        registerScreen.remove()
-        await showRankingScreen()
-    } else {
-        showError(result.error)
-    }
-})
+  const username = newUsernameInput.value.trim();
+  const pin = newPinInput.value.trim();
+  const confirmPin = confirmPinInput.value.trim();
+
+  if (!username || !isValidPin(pin)) {
+    showError("Nome de usuário e PIN de 4 dígitos são obrigatórios!");
+    return;
+  }
+
+  if (pin !== confirmPin) {
+    showError("PINs não conferem!");
+    return;
+  }
+
+  const result = await rankingManager.register(username, pin);
+
+  if (result.success) {
+    registerScreen.remove();
+    await showRankingScreen();
+  } else {
+    showError(result.error);
+  }
+});
 
 buttonBackRegister.addEventListener("click", () => {
-    registerScreen.remove()
-    document.body.append(loginScreen)
-    currentState = GameState.LOGIN
-})
+  registerScreen.remove();
+  document.body.append(loginScreen);
+  currentState = GameState.LOGIN;
+});
 
 // Event Listeners para Ranking
 buttonPlayRanking.addEventListener("click", () => {
-    rankingScreen.remove()
-    scoreUi.style.display = "block"
-    currentState = GameState.PLAYING
-    
-    // Iniciar intervalo de tiro dos inimigos
-    setInterval(() => {
-        const invader = grid.getRandomInvader()
-        if (invader) {
-            invader.shoot(invaderProjectiles)
-        }
-    }, 1000)
-})
+  rankingScreen.remove();
+  scoreUi.style.display = "block";
+  currentState = GameState.PLAYING;
+
+  antiCheat.markNotFirstSession();
+  gameStartTime = Date.now();
+
+  // Iniciar intervalo de tiro dos inimigos
+  setInterval(() => {
+    const invader = grid.getRandomInvader();
+    if (invader) {
+      invader.shoot(invaderProjectiles);
+    }
+  }, 1000);
+});
 
 buttonLogout.addEventListener("click", () => {
-    rankingManager.logout()
-    gameData.high = 0
-    rankingScreen.remove()
-    document.body.append(startScreen)
-    currentState = GameState.START
-})
+  rankingManager.logout();
+  gameData.high = 0;
+  rankingScreen.remove();
+  document.body.append(startScreen);
+  currentState = GameState.START;
+});
+
+//Função para mostrar status do anti-cheat (debug)
+const showAntiCheatStatus = () => {
+  const status = antiCheat.getStatus();
+  console.log(`🛡️ AntiCheat Status: ${status.risk} | Flags: ${status.flags} | Time: ${status.sessionTime}s`);
+};
 
 // Atualizar botão Play original
 buttonPlay.addEventListener("click", () => {
-    startScreen.remove()
-    showLoginScreen()
-})
+  startScreen.remove();
+  showLoginScreen();
+});
 
 const generateStars = () => {
   for (let i = 1; i < NUMBER_STARS; i += 1) {
@@ -466,11 +508,11 @@ const findNearbyInvaders = (targetInvader, maxCount = 3) => {
   const nearby = [];
   const targetX = targetInvader.position.x + targetInvader.width / 2;
   const targetY = targetInvader.position.y + targetInvader.height / 2;
-  
+
   // Criar lista de invasores com suas distâncias
   const invadersWithDistance = grid.invaders
-    .filter(invader => invader !== targetInvader)
-    .map(invader => {
+    .filter((invader) => invader !== targetInvader)
+    .map((invader) => {
       const invaderX = invader.position.x + invader.width / 2;
       const invaderY = invader.position.y + invader.height / 2;
       const distance = Math.sqrt(
@@ -479,9 +521,9 @@ const findNearbyInvaders = (targetInvader, maxCount = 3) => {
       return { invader, distance };
     })
     .sort((a, b) => a.distance - b.distance);
-  
+
   // Retornar os mais próximos
-  return invadersWithDistance.slice(0, maxCount).map(item => item.invader);
+  return invadersWithDistance.slice(0, maxCount).map((item) => item.invader);
 };
 
 const destroyInvader = (invader, delayMs = 0) => {
@@ -511,16 +553,16 @@ const checkShootInvaders = () => {
       if (invader.hit(projectile)) {
         // Destruir a nave atingida imediatamente
         destroyInvader(invader);
-        
+
         // Se o buff estiver ativo, destruir 3 naves adicionais
         if (bonusSystem.playerBuff.active) {
           const nearbyInvaders = findNearbyInvaders(invader, 3);
-          
+
           nearbyInvaders.forEach((nearbyInvader, index) => {
             // Adicionar delay escalonado para efeito visual mais dramático
             destroyInvader(nearbyInvader, (index + 1) * 100);
           });
-          
+
           // Efeito visual especial para o buff
           createExplosion(
             {
@@ -601,6 +643,14 @@ const spawnGrid = () => {
 };
 
 const gameOver = () => {
+  const securityReport = antiCheat.getSecurityReport();
+
+  console.log("📊 Relatório de Segurança:", securityReport);
+
+  if (securityReport.flaggedBehaviors.length > 0) {
+    logSuspiciousActivity(securityReport);
+  }
+
   createExplosion(
     {
       x: player.position.x + player.width / 2,
@@ -630,83 +680,107 @@ const gameOver = () => {
 
   currentState = GameState.GAME_OVER;
   player.alive = false;
-  
+
   // Resetar sistema de bônus
   bonusSystem.bonuses = [];
   bonusSystem.playerBuff.active = false;
   bonusSystem.spawnTimer = 0;
-  
+
   document.body.append(gameOverScreen);
+};
+
+const logSuspiciousActivity = async (securityReport) => {
+  if (rankingManager.isLoggedIn()) {
+    try {
+      const { error } = await supabase.from("security_logs").insert([
+        {
+          username: rankingManager.getCurrentUser().username,
+          score: gameData.score,
+          level: gameData.level,
+          security_report: securityReport,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+
+      if (error) {
+        console.error("Erro ao registrar atividade suspeita:", error);
+      }
+    } catch (error) {
+      console.error("Erro ao conectar com servidor de segurança:", error);
+    }
+  }
 };
 
 // Mostrar mensagem de erro
 const showError = (message) => {
-    alert(message) // Você pode melhorar isso depois
-}
+  alert(message); // Você pode melhorar isso depois
+};
 
 // Validar PIN (4 dígitos)
 const isValidPin = (pin) => {
-    return true
-}
+  return true;
+};
 
 // Mostrar tela de login
 const showLoginScreen = () => {
-    currentState = GameState.LOGIN
-    document.body.append(loginScreen)
-    usernameInput.focus()
-}
+  currentState = GameState.LOGIN;
+  document.body.append(loginScreen);
+  usernameInput.focus();
+};
 
 // Mostrar tela de registro
 const showRegisterScreen = () => {
-    currentState = GameState.REGISTER
-    loginScreen.remove()
-    document.body.append(registerScreen)
-    newUsernameInput.focus()
-}
+  currentState = GameState.REGISTER;
+  loginScreen.remove();
+  document.body.append(registerScreen);
+  newUsernameInput.focus();
+};
 
 // Mostrar ranking
 const showRankingScreen = async () => {
-    currentState = GameState.RANKING
-    document.body.append(rankingScreen)
-    
-    // Carregar e exibir ranking
-    const ranking = await rankingManager.getRanking()
-    displayRanking(ranking)
-}
+  currentState = GameState.RANKING;
+  document.body.append(rankingScreen);
+
+  // Carregar e exibir ranking
+  const ranking = await rankingManager.getRanking();
+  displayRanking(ranking);
+};
 
 // Exibir lista de ranking
 const displayRanking = (ranking) => {
-    rankingList.innerHTML = ''
-    
-    ranking.forEach((player, index) => {
-        const rankingItem = document.createElement('div')
-        rankingItem.className = 'ranking-item'
-        
-        // Destacar usuário atual
-        if (rankingManager.getCurrentUser() && 
-            player.username === rankingManager.getCurrentUser().username) {
-            rankingItem.classList.add('current-user')
-        }
-        
-        rankingItem.innerHTML = `
+  rankingList.innerHTML = "";
+
+  ranking.forEach((player, index) => {
+    const rankingItem = document.createElement("div");
+    rankingItem.className = "ranking-item";
+
+    // Destacar usuário atual
+    if (
+      rankingManager.getCurrentUser() &&
+      player.username === rankingManager.getCurrentUser().username
+    ) {
+      rankingItem.classList.add("current-user");
+    }
+
+    rankingItem.innerHTML = `
             <span class="ranking-position">#${index + 1}</span>
             <span>${player.username}</span>
             <span>${player.high_score}</span>
-        `
-        
-        rankingList.appendChild(rankingItem)
-    })
-}
+        `;
+
+    rankingList.appendChild(rankingItem);
+  });
+};
 
 // Atualizar high score online
 const updateOnlineScore = async () => {
-    if (rankingManager.isLoggedIn()) {
-        const updated = await rankingManager.updateHighScore(gameData.score)
-        if (updated) {
-            console.log('Nova pontuação máxima salva!')
-        }
+  if (rankingManager.isLoggedIn()) {
+    const updated = await rankingManager.updateHighScore(gameData.score);
+    if (updated) {
+      console.log("Nova pontuação máxima salva!");
     }
-}
+  }
+};
 
 const gameLoop = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -714,6 +788,12 @@ const gameLoop = () => {
   drawStars();
 
   if (currentState == GameState.PLAYING) {
+    
+    if (antiCheat.shouldBlock()) {
+      gameOver();
+      return;
+    }
+
     showGameData();
     spawnGrid();
 
@@ -721,7 +801,7 @@ const gameLoop = () => {
     updateBonuses();
     drawBonuses();
     checkBonusCollision();
-    
+
     // Desenhar indicador de buff
     drawBuffIndicator();
 
@@ -831,7 +911,7 @@ buttonRestart.addEventListener("click", () => {
   grid.invadersVelocity = 1;
 
   invaderProjectiles.length = 0;
-  
+
   // Resetar sistema de bônus
   bonusSystem.bonuses = [];
   bonusSystem.playerBuff.active = false;
@@ -839,6 +919,9 @@ buttonRestart.addEventListener("click", () => {
 
   gameData.score = 0;
   gameData.level = 0;
+
+  antiCheat.reset();
+  gameStartTime = Date.now();
 
   gameOverScreen.remove();
 });
