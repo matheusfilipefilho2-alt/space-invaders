@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" fill="#000"/>
+  <!-- Space Invader pixel art -->
+  <rect x="8" y="6" width="2" height="2" fill="#0f0"/>
+  <rect x="22" y="6" width="2" height="2" fill="#0f0"/>
+  <rect x="10" y="8" width="2" height="2" fill="#0f0"/>
+  <rect x="20" y="8" width="2" height="2" fill="#0f0"/>
+  <rect x="8" y="10" width="16" height="2" fill="#0f0"/>
+  <rect x="6" y="12" width="4" height="2" fill="#0f0"/>
+  <rect x="10" y="12" width="12" height="2" fill="#0f0"/>
+  <rect x="22" y="12" width="4" height="2" fill="#0f0"/>
+  <rect x="6" y="14" width="20" height="2" fill="#0f0"/>
+  <rect x="8" y="16" width="2" height="2" fill="#0f0"/>
+  <rect x="12" y="16" width="8" height="2" fill="#0f0"/>
+  <rect x="22" y="16" width="2" height="2" fill="#0f0"/>
+  <rect x="10" y="18" width="2" height="2" fill="#0f0"/>
+  <rect x="20" y="18" width="2" height="2" fill="#0f0"/>
+  <rect x="6" y="20" width="2" height="2" fill="#0f0"/>
+  <rect x="10" y="20" width="2" height="2" fill="#0f0"/>
+  <rect x="20" y="20" width="2" height="2" fill="#0f0"/>
+  <rect x="24" y="20" width="2" height="2" fill="#0f0"/>
+  <!-- Stars background -->
+  <rect x="2" y="2" width="1" height="1" fill="#fff"/>
+  <rect x="28" y="4" width="1" height="1" fill="#fff"/>
+  <rect x="4" y="26" width="1" height="1" fill="#fff"/>
+  <rect x="26" y="28" width="1" height="1" fill="#fff"/>
+</svg>

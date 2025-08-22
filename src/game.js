@@ -282,7 +282,11 @@ const startGame = () => {
   // Atualizar UI
   updateUI();
   
-  // Iniciar música do primeiro nível
+  // Parar música global de menu e música local, depois iniciar música do nível
+  if (window.globalMenuMusic) {
+    window.globalMenuMusic.stopMenuMusic();
+  }
+  soundEffects.stopMenuMusic();
   soundEffects.playLevelMusic(gameData.level);
 
   // Iniciar loop do jogo se não estiver rodando
@@ -330,8 +334,9 @@ const endGame = () => {
   // Parar spawn de projéteis
   clearInterval(spawnProjectilesInterval);
   
-  // Parar música do nível
+  // Parar música do nível e iniciar música de menu
   soundEffects.stopLevelMusic();
+  soundEffects.playMenuMusic();
 };
 
 // Função para pausar/despausar o jogo
@@ -850,12 +855,12 @@ addEventListener("keydown", (event) => {
 
 addEventListener("keyup", (event) => {
   switch (event.code) {
-    case "ArrowLeft":
     case "KeyA":
+    case "ArrowLeft":
       keys.left = false;
       break;
-    case "ArrowRight":
     case "KeyD":
+    case "ArrowRight":
       keys.right = false;
       break;
     case "Space":
@@ -865,5 +870,4 @@ addEventListener("keyup", (event) => {
   }
 });
 
-// Inicializar o jogo
 startGame();

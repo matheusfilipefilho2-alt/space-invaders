@@ -30,6 +30,10 @@ class SoundEffects {
         
         this.levelMusics = {}
         this.currentLevelMusic = null
+        
+        // Música de menu
+        this.menuMusic = null
+        this.menuMusicPath = "src/assets/audios/level/musicas/space_menu_full_mix.wav"
 
         this.currentShootSound = 0
         this.currentHitSound = 0
@@ -95,6 +99,35 @@ class SoundEffects {
             this.currentLevelMusic.currentTime = 0
             this.currentLevelMusic = null
         }
+    }
+    
+    playMenuMusic() {
+        // Parar música de nível se estiver tocando
+        this.stopLevelMusic()
+        
+        // Carregar música de menu se ainda não foi carregada
+        if (!this.menuMusic) {
+            this.menuMusic = new Audio(this.menuMusicPath)
+            this.menuMusic.loop = true
+            this.menuMusic.volume = 0.4
+        }
+        
+        // Tocar música de menu
+        this.menuMusic.play().catch(error => {
+            console.warn('Erro ao tocar música de menu:', error)
+        })
+    }
+    
+    stopMenuMusic() {
+        if (this.menuMusic) {
+            this.menuMusic.pause()
+            this.menuMusic.currentTime = 0
+        }
+    }
+    
+    stopAllMusic() {
+        this.stopLevelMusic()
+        this.stopMenuMusic()
     }
 
     playSound(soundType) {
