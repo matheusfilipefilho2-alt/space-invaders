@@ -10,6 +10,11 @@ class Obstacle {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
   }
+  
+  update() {
+    // Método vazio para compatibilidade com o loop de jogo
+    // Pode ser implementado no futuro para animações ou efeitos
+  }
 
     hit(projectile) {
         const projectilePositonY =
@@ -23,7 +28,12 @@ class Obstacle {
           projectilePositonY >= this.position.y &&
           projectilePositonY <= this.position.y + this.height
         );
-    }    
+    }
+    
+    collidesWithProjectile(projectile) {
+        // Alias para o método hit para compatibilidade com game.js
+        return this.hit(projectile);
+    }
 }
 
 export default Obstacle;

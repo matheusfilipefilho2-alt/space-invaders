@@ -8,6 +8,9 @@ class Particle {
   }
 
   draw(ctx) {
+    // Verificar se position existe antes de desenhar
+    if (!this.position) return;
+    
     ctx.save();
     ctx.beginPath();
     ctx.globalAlpha = this.opacity;
@@ -19,8 +22,11 @@ class Particle {
   }
 
   update() {
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
+    // Verificar se position e velocity existem antes de acessar suas propriedades
+    if (this.position && this.velocity) {
+      this.position.x += this.velocity.x;
+      this.position.y += this.velocity.y;
+    }
     this.opacity = this.opacity - 0.01 <= 0 ? 0 : this.opacity - 0.01
   }
 }

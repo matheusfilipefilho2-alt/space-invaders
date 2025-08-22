@@ -11,14 +11,15 @@ class Grid {
 
     this.invadersVelocity = 1.5;
     this.invaders = this.init();
+    this.invaderProjectiles = [];
   }
 
   init() {
     const array = [];
     const invadersPath = INVADERS[Math.floor(Math.random() * INVADERS.length)];
 
-    for (let row = onabort; row < this.rows; row += 1) {
-      for (let col = onabort; col < this.cols; col += 1) {
+    for (let row = 0; row < this.rows; row += 1) {
+      for (let col = 0; col < this.cols; col += 1) {
         const invader = new Invader(
           {
             x: col * 50 + 20,
@@ -82,6 +83,17 @@ class Grid {
   restart() {
     this.invaders = this.init();
     this.direction = "right";
+    this.invaderProjectiles = [];
+  }
+  
+  initialize(level) {
+    // Ajusta a dificuldade com base no nível
+    this.invadersVelocity = 1.5 + (level * 0.2);
+    this.restart();
+  }
+
+  createInvaders() {
+    return this.init();
   }
 }
 

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="src/assets/images/invader_purple.gif" type="image/x-icon">
+    <title>Login - Space Invaders</title>
+</head>
+<body>
+    <!-- Canvas para fundo de estrelas animado -->
+    <canvas id="stars-background"></canvas>
+    
+    <section class="start-screen">
+        <div class="form-wrapper">
+            <h1 class="game-title">🚀 LOGIN</h1>
+            <p class="game-subtitle">Entre com sua conta para salvar pontuações</p>
+            
+            <!-- Invasor animado decorativo -->
+            <div class="animated-invader">
+                <div class="invader-container">
+                    <div class="invader-sprite">🔐</div>
+                    <div class="invader-eyes"></div>
+                </div>
+                <div class="invader-beam"></div>
+                <div class="invader-shadow"></div>
+            </div>
+            
+            <!-- Formulário de login -->
+            <div class="form-container">
+                <input 
+                    type="text" 
+                    id="username" 
+                    placeholder="Nome de usuário" 
+                    maxlength="20"
+                    autocomplete="username"
+                    class="game-input"
+                />
+                <input 
+                    type="password" 
+                    id="pin" 
+                    placeholder="PIN (4 dígitos)" 
+                    maxlength="4"
+                    autocomplete="current-password"
+                    class="game-input"
+                />
+            </div>
+            
+            <!-- Botões de ação -->
+            <div class="menu-buttons">
+                <button class="button-play" id="login-btn">
+                    <span class="button-icon">🔐</span>
+                    ENTRAR
+                </button>
+                <button class="button-view-ranking" id="register-btn">
+                    <span class="button-icon">✨</span>
+                    CRIAR CONTA
+                </button>
+                <button class="button-restart" id="back-btn">
+                    <span class="button-icon">←</span>
+                    VOLTAR
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer-container">
+            <div class="footer-line"></div>
+            <span class="footer-text">DEVELOPED BY MATHEUSIN v1.5</span>
+            <div class="footer-stars">
+                <span>✦</span><span>✧</span><span>✦</span>
+            </div>
+        </div>
+    </section>
+
+    <script type="module" src="src/login.js"></script>
+    
+    <script type="module">
+        // Importar a classe Star
+        import Star from './src/classes/Star.js';
+
+        class StarFieldBackground {
+            constructor() {
+                this.canvas = document.getElementById('stars-background');
+                this.ctx = this.canvas.getContext('2d');
+                this.stars = [];
+                this.numberOfStars = 150; // Número de estrelas
+
+                this.resize();
+                this.init();
+                this.animate();
+
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+
+                // Recriar estrelas quando redimensionar
+                this.stars = [];
+                this.init();
+            }
+
+            init() {
+                for (let i = 0; i < this.numberOfStars; i++) {
+                    const star = new Star(this.canvas.width, this.canvas.height);
+                    this.stars.push(star);
+                }
+            }
+
+            animate() {
+                // Limpar completamente o canvas e redesenhar com cor sólida
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Usar cor sólida sem transparência
+                this.ctx.fillStyle = '#050519';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Desenhar as estrelas
+                this.stars.forEach(star => {
+                    star.update();
+                    star.draw(this.ctx);
+                });
+
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new StarFieldBackground();
+        });
+    </script>
+    
+</body>
+</html>

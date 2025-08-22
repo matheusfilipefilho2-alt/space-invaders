@@ -1,110 +1,137 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="src/style.css" />
-
-    <head>
-  <link rel="icon" href="src\assets\images\invader_purple.gif" type="image/x-icon">
-</head>
-
-    <title>Space Invaders</title>
+    <title>Space Invaders - Retro Game</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <section class="score-ui">
-      <div>
-        <span class="score"> score: <span>0</span> </span>
-        <span class="level">level: <span>1</span></span>
-        <span class="high">high: <span>0</span></span>
-      </div>
-    </section>
+    <!-- Canvas para fundo de estrelas -->
+    <canvas id="stars-background"></canvas>
 
+
+
+    <!-- Tela Inicial -->
     <section class="start-screen screen">
-      <div>
-        <h1>Space Invaders</h1>
-        <button class="button-play">Play</button>
-      </div>
-
-      <span>Desenvolvido por Matheusin</span>
-    </section>
-
-    <!-- Tela de Login -->
-    <section class="login-screen screen">
-      <div>
-        <h1>Login</h1>
-        <input
-          type="text"
-          id="username"
-          placeholder="Nome de usuário"
-          maxlength="20"
-        />
-        <input
-          type="password"
-          id="pin"
-          placeholder="PIN (4 dígitos)"
-          maxlength="4"
-        />
-        <button class="button-login">Entrar</button>
-        <button class="button-register">Criar Conta</button>
-        <button class="button-back">Voltar</button>
-      </div>
-      <span>Digite seu nome de usuário e PIN</span>
-    </section>
-
-    <!-- Tela de Cadastro -->
-    <section class="register-screen screen">
-      <div>
-        <h1>Criar Conta</h1>
-        <input
-          type="text"
-          id="new-username"
-          placeholder="Nome de usuário"
-          maxlength="20"
-        />
-        <input
-          type="password"
-          id="new-pin"
-          placeholder="PIN (4 dígitos)"
-          maxlength="4"
-        />
-        <input
-          type="password"
-          id="confirm-pin"
-          placeholder="Confirmar PIN"
-          maxlength="4"
-        />
-        <button class="button-create">Criar</button>
-        <button class="button-back-register">Voltar</button>
-      </div>
-      <span>Escolha um nome único e um PIN de 4 dígitos</span>
-    </section>
-
-    <!-- Tela de Ranking -->
-    <section class="ranking-screen screen">
-      <div>
-        <h1>🏆 Ranking</h1>
-        <div class="ranking-list">
-          <!-- Os rankings aparecerão aqui -->
+      <div class="game-container">
+        <!-- Título com efeito neon -->
+        <div class="title-container">
+          <h1 class="main-title">
+            <span
+              class="title-word space-word"
+              data-text="SPACE"
+              style="font-size: 100px; display: block; margin-bottom: 20px"
+              >SPACE</span
+            >
+            <span
+              class="title-word invaders-word"
+              data-text="INVADERS"
+              style="font-size: 100px; display: block"
+              >INVADERS</span
+            >
+          </h1>
+          <div class="title-scanlines"></div>
+          <div class="title-glow"></div>
         </div>
-        <button class="button-play-ranking">Jogar</button>
-        <button class="button-logout">Sair</button>
+
+        <!-- Subtítulo -->
+        <p class="game-subtitle">DEFEND EARTH FROM ALIEN INVASION</p>
+
+        <!-- Invasor animado decorativo -->
+        <div class="animated-invader">
+          <div class="invader-container">
+            <div class="invader-sprite">👾</div>
+            <div class="invader-eyes"></div>
+          </div>
+          <div class="invader-beam"></div>
+          <div class="invader-shadow"></div>
+        </div>
+
+        <!-- Menu de botões -->
+        <div class="menu-buttons action-buttons">
+          <button class="button-play primary-action">
+            <span class="button-icon">🚀</span>
+            START GAME
+          </button>
+
+          <button class="button-view-ranking secondary-action">
+            <span class="button-icon">👤</span>
+            LOGIN / RANKING
+          </button>
+        </div>
       </div>
-      <span>Top 15 melhores pontuações</span>
+
+      <!-- Footer -->
+      <div class="footer-container">
+        <div class="footer-line"></div>
+        <span class="footer-text">DEVELOPED BY MATHEUSIN v1.5</span>
+        <div class="footer-stars">
+          <span>✦</span><span>✧</span><span>✦</span>
+        </div>
+      </div>
     </section>
 
-    <section class="game-over screen">
-      <div>
-        <h1>Game Over</h1>
-        <button class="button-restart">Restart</button>
-      </div>
 
-      <span>Desenvolvido por Matheusin</span>
-    </section>
 
-    <canvas></canvas>
+    <!-- Scripts -->
     <script type="module" src="src/index.js"></script>
+    <script type="module">
+      // Importar a classe Star para o fundo animado
+      import Star from "./src/classes/Star.js";
+
+      class StarFieldBackground {
+        constructor() {
+          this.canvas = document.getElementById("stars-background");
+          this.ctx = this.canvas.getContext("2d");
+          this.stars = [];
+          this.numberOfStars = 120;
+
+          this.resize();
+          this.init();
+          this.animate();
+
+          window.addEventListener("resize", () => this.resize());
+        }
+
+        resize() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+          this.stars = [];
+          this.init();
+        }
+
+        init() {
+          for (let i = 0; i < this.numberOfStars; i++) {
+            const star = new Star(this.canvas.width, this.canvas.height);
+            this.stars.push(star);
+          }
+        }
+
+        animate() {
+          this.ctx.globalCompositeOperation = "source-over";
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.fillStyle = "#050519";
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          this.stars.forEach((star) => {
+            star.update();
+            star.draw(this.ctx);
+          });
+
+          requestAnimationFrame(() => this.animate());
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        new StarFieldBackground();
+      });
+    </script>
   </body>
 </html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="src/assets/images/invader_purple.gif" type="image/x-icon">
+    <title>Ranking - Space Invaders</title>
+</head>
+<body>
+    <!-- Fundo animado com estrelas -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <section class="start-screen">
+        <div class="game-container">
+            <h1 class="game-title">🏆 RANKING</h1>
+            <p class="game-subtitle">Melhores pontuações da galáxia</p>
+            
+            <!-- Invasor animado decorativo -->
+            <div class="animated-invader">
+                <div class="invader-container">
+                    <div class="invader-sprite">👑</div>
+                    <div class="invader-eyes"></div>
+                </div>
+                <div class="invader-beam"></div>
+                <div class="invader-shadow"></div>
+            </div>
+            
+            <!-- Informações do usuário atual -->
+            <div class="user-info-card">
+                <div class="user-avatar">👨‍🚀</div>
+                <div class="user-details">
+                    <h3 id="current-user-name">Carregando...</h3>
+                    <p id="current-user-score">Score: 0</p>
+                </div>
+                <div class="user-status">
+                    <span class="online-indicator">🟢 Online</span>
+                </div>
+            </div>
+            
+            <!-- Lista de ranking -->
+            <div class="ranking-container">
+                <div class="ranking-list">
+                    <!-- O ranking será carregado aqui -->
+                </div>
+            </div>
+            
+            <!-- Botões de ação -->
+            <div class="menu-buttons">
+                <button class="button-play button-play-ranking">
+                    <span class="button-icon">🚀</span>
+                    JOGAR AGORA
+                </button>
+                <button class="button-view-ranking button-logout">
+                    <span class="button-icon">🚪</span>
+                    SAIR
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer-container">
+            <div class="footer-line"></div>
+            <span class="footer-text">DEVELOPED BY MATHEUSIN v1.5</span>
+            <div class="footer-stars">
+                <span>✦</span><span>✧</span><span>✦</span>
+            </div>
+        </div>
+    </section>
+
+    <script type="module" src="src/ranking.js"></script>
+    
+    <!-- Script para animação de fundo -->
+    <script>
+        // Animação avançada de fundo para a página de ranking
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '-1';
+        canvas.style.background = 'radial-gradient(circle at center, #1a1a2e 0%, #0f0f23 100%)';
+        
+        const stars = [];
+        const shootingStars = [];
+        
+        // Estrelas normais
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2,
+                speed: Math.random() * 0.2 + 0.1,
+                opacity: Math.random() * 0.8 + 0.2
+            });
+        }
+        
+        // Estrelas cadentes ocasionais
+        function createShootingStar() {
+            if (Math.random() < 0.001) {
+                shootingStars.push({
+                    x: Math.random() * canvas.width,
+                    y: 0,
+                    speedX: (Math.random() - 0.5) * 2,
+                    speedY: Math.random() * 3 + 2,
+                    length: Math.random() * 50 + 20,
+                    opacity: 1
+                });
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Desenhar estrelas normais
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.fill();
+                
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = -star.radius;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+            
+            // Criar estrelas cadentes
+            createShootingStar();
+            
+            // Desenhar estrelas cadentes
+            shootingStars.forEach((star, index) => {
+                ctx.beginPath();
+                ctx.moveTo(star.x, star.y);
+                ctx.lineTo(star.x - star.speedX * 5, star.y - star.speedY * 3);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                star.x += star.speedX;
+                star.y += star.speedY;
+                star.opacity -= 0.01;
+                
+                if (star.opacity <= 0 || star.y > canvas.height) {
+                    shootingStars.splice(index, 1);
+                }
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+    
+</body>
+</html>
