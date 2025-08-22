@@ -6,7 +6,8 @@
     <title>Admin Panel - Anti-Cheat Space Invaders</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="src/style.css" />
-    <link rel="icon" href="src/assets/images/invader_purple.gif" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body class="anticheat-body">
     <div class="anticheat-container">
@@ -51,6 +52,10 @@
         </div>
     </div>
 
+    <script type="module">
+        // Importar sistema global de música
+        import globalMenuMusic from './src/globalMenuMusic.js';
+    </script>
     <script>
         // Configuração do Supabase (use suas credenciais)
         const SUPABASE_URL = "https://apbbhuhtdqfwfmlzxnwv.supabase.co/";

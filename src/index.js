@@ -1,4 +1,5 @@
 import { NavigationHelper } from "./navigation.js";
+import globalMenuMusic from "./globalMenuMusic.js";
 
 // Elementos da interface
 const startScreen = document.querySelector(".start-screen");
@@ -10,6 +11,8 @@ const buttonLoginNav = document.querySelector(".button-logout");
 
 // Estado inicial da aplicação
 let currentState = 'START';
+
+// A música de menu é gerenciada automaticamente pelo globalMenuMusic
 
 // Navegação e controle de interface
 if (buttonLoginNav) {

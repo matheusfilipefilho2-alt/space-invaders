@@ -165,18 +165,72 @@ body {
   box-sizing: border-box;
 }
 
+/* Container principal do jogo */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Título principal */
+.title-container {
+  position: relative;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.main-title {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+}
+
+.title-word {
+  display: block;
+  text-align: center;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.space-word {
+  color: #00ff88;
+  text-shadow: 0 0 30px #00ff88, 0 0 60px #00ff88;
+  margin-bottom: 10px;
+}
+
+.invaders-word {
+  color: #ff4757;
+  text-shadow: 0 0 30px #ff4757, 0 0 60px #ff4757;
+}
+
+.title-scanlines,
+.title-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .game-title {
   font-size: clamp(32px, 8vw, 64px);
   color: #00ff88;
   text-shadow: 0 0 30px #00ff88;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   animation: glow 2s ease-in-out infinite alternate;
+  text-align: center;
 }
 
 .game-subtitle {
   font-size: clamp(12px, 3vw, 18px);
   color: #ffa502;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
   text-align: center;
 }
 
@@ -239,7 +293,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin: 20px 0;
+  margin: 30px 0;
   align-items: center;
   width: 100%;
   max-width: 400px;
