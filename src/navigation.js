@@ -40,5 +40,30 @@ export const NavigationHelper = {
     logout() {
         this.clearTemporaryData('currentUser');
         this.goTo('index.html');
+    },
+
+    // Navegar para a página de ranking
+    navigateToRanking() {
+        this.goTo('ranking.html');
+    },
+
+    // Navegar para a página de login
+    navigateToLogin() {
+        this.goTo('login.html');
+    },
+
+    // Navegar para a página de registro
+    navigateToRegister() {
+        this.goTo('register.html');
+    },
+
+    // Navegar para o jogo
+    navigateToGame() {
+        this.goTo('game.html');
+    },
+
+    // Voltar para a página inicial
+    navigateToHome() {
+        this.goTo('index.html');
     }
 };

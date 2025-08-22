@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="icon" href="src/assets/images/invader_purple.gif" type="image/x-icon">
+    <title>Space Invaders - Game</title>
+</head>
+<body>
+    <!-- Canvas para fundo de estrelas animado -->
+    <canvas id="stars-background"></canvas>
+    
+    <!-- Canvas principal do jogo -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- UI do Jogo -->
+    <section class="score-ui">
+        <div class="score-item">
+            <span class="score-label">SCORE</span>
+            <span class="score-value score">0</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">LEVEL</span>
+            <span class="score-value level">1</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">HIGH</span>
+            <span class="score-value high">0</span>
+        </div>
+    </section>
+
+    <!-- Tela de Game Over -->
+    <section class="game-over screen">
+        <div class="game-container">
+            <!-- Título Game Over com efeito -->
+            <div class="gameover-title-container">
+                <h1 class="gameover-title">GAME OVER</h1>
+                <div class="gameover-subtitle">MISSION FAILED</div>
+                <div class="gameover-effects">
+                    <div class="static-effect"></div>
+                </div>
+            </div>
+    
+            <!-- Botões de ação -->
+            <div class="menu-buttons action-buttons">
+                <button class="button-restart primary-action">
+                    <span class="button-icon">🔄</span>
+                    PLAY AGAIN
+                </button>
+    
+                <button class="button-view-ranking secondary-action">
+                    <span class="button-icon">👤</span>
+                    RANKING
+                </button>
+            </div>
+        </div>
+    
+        <div class="footer-container">
+            <span class="footer-text">TRY TO BEAT YOUR HIGH SCORE!</span>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script type="module" src="src/game.js"></script>
+</body>
+</html>

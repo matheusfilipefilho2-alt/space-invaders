@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="src/style.css" />
+    <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="src/assets/images/invader_purple.gif" type="image/x-icon">
     <title>Ranking - Space Invaders</title>
 </head>
@@ -12,9 +12,20 @@
     <!-- Fundo animado com estrelas -->
     <canvas id="bg-canvas"></canvas>
     
-    <section class="ranking-screen screen">
-        <div>
-            <h1>🏆 Ranking Global</h1>
+    <section class="start-screen">
+        <div class="game-container">
+            <h1 class="game-title">🏆 RANKING</h1>
+            <p class="game-subtitle">Melhores pontuações da galáxia</p>
+            
+            <!-- Invasor animado decorativo -->
+            <div class="animated-invader">
+                <div class="invader-container">
+                    <div class="invader-sprite">👑</div>
+                    <div class="invader-eyes"></div>
+                </div>
+                <div class="invader-beam"></div>
+                <div class="invader-shadow"></div>
+            </div>
             
             <!-- Informações do usuário atual -->
             <div class="user-info-card">
@@ -30,28 +41,32 @@
             
             <!-- Lista de ranking -->
             <div class="ranking-container">
-                <div class="ranking-header-title">
-                    <h2>🌟 Top Jogadores</h2>
-                    <span class="ranking-subtitle">Melhores pontuações da galáxia</span>
-                </div>
-                
                 <div class="ranking-list">
                     <!-- O ranking será carregado aqui -->
                 </div>
             </div>
             
             <!-- Botões de ação -->
-            <div class="action-buttons">
-                <button class="button-play-ranking primary-action">
-                    🚀 Jogar Agora
+            <div class="menu-buttons">
+                <button class="button-play button-play-ranking">
+                    <span class="button-icon">🚀</span>
+                    JOGAR AGORA
                 </button>
-                <button class="button-logout secondary-action">
-                    🚪 Sair
+                <button class="button-view-ranking button-logout">
+                    <span class="button-icon">🚪</span>
+                    SAIR
                 </button>
             </div>
         </div>
         
-        <span class="footer-text">Sua aventura espacial te aguarda!</span>
+        <!-- Footer -->
+        <div class="footer-container">
+            <div class="footer-line"></div>
+            <span class="footer-text">DEVELOPED BY MATHEUSIN v1.5</span>
+            <div class="footer-stars">
+                <span>✦</span><span>✧</span><span>✦</span>
+            </div>
+        </div>
     </section>
 
     <script type="module" src="src/ranking.js"></script>
@@ -147,179 +162,5 @@
         });
     </script>
     
-    <style>
-        .user-info-card {
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #4D9BE6;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(77, 155, 230, 0.3);
-        }
-        
-        .user-avatar {
-            font-size: 2rem;
-            margin-right: 15px;
-            background: rgba(255, 215, 0, 0.2);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .user-details h3 {
-            color: #FFD700;
-            font-size: 1rem;
-            margin: 0 0 5px 0;
-        }
-        
-        .user-details p {
-            color: #4D9BE6;
-            font-size: 0.7rem;
-            margin: 0;
-        }
-        
-        .user-status {
-            margin-left: auto;
-            text-align: right;
-        }
-        
-        .online-indicator {
-            font-size: 0.6rem;
-            color: #44ff44;
-        }
-        
-        .ranking-container {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            border: 1px solid #333;
-        }
-        
-        .ranking-header-title {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .ranking-header-title h2 {
-            color: #FFD700;
-            font-size: 1.2rem;
-            margin: 0 0 5px 0;
-        }
-        
-        .ranking-subtitle {
-            color: #aaa;
-            font-size: 0.6rem;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .primary-action {
-            background: linear-gradient(45deg, #4D9BE6, #6BB6FF) !important;
-            border: none !important;
-            padding: 15px 30px !important;
-            font-size: 0.9rem !important;
-            box-shadow: 0 4px 15px rgba(77, 155, 230, 0.4);
-            transform: translateY(0);
-            transition: all 0.3s ease;
-        }
-        
-        .primary-action:hover {
-            transform: translateY(-3px) !important;
-            box-shadow: 0 6px 20px rgba(77, 155, 230, 0.6) !important;
-            background: linear-gradient(45deg, #6BB6FF, #4D9BE6) !important;
-        }
-        
-        .secondary-action {
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 2px solid #666 !important;
-            color: #ccc !important;
-        }
-        
-        .secondary-action:hover {
-            background: rgba(255, 255, 255, 0.2) !important;
-            border-color: #888 !important;
-            color: white !important;
-        }
-        
-        .footer-text {
-            font-size: 0.5rem !important;
-            color: #666 !important;
-        }
-        
-        /* Estilos para a lista de ranking */
-        .ranking-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .ranking-list::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .ranking-list::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-        
-        .ranking-list::-webkit-scrollbar-thumb {
-            background: #4D9BE6;
-            border-radius: 4px;
-        }
-        
-        .ranking-list::-webkit-scrollbar-thumb:hover {
-            background: #6BB6FF;
-        }
-        
-        /* Animação para o card do usuário */
-        .user-info-card {
-            animation: slideInFromTop 0.6s ease-out;
-        }
-        
-        @keyframes slideInFromTop {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .user-info-card {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .user-avatar {
-                margin-right: 0;
-                margin-bottom: 10px;
-            }
-            
-            .user-status {
-                margin-left: 0;
-                margin-top: 10px;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-    </style>
 </body>
 </html>

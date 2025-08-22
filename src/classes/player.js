@@ -81,14 +81,14 @@ class Player {
     this.framesCounter--;
   }
 
-  shoot(projectiles) {
+  shoot(projectiles, type = 'normal') {
     const p = new Projectile(
       {
-        x: this.position.x + this.width / 2 - 1,
+        x: this.position.x + this.width / 2 - (type === 'destruction' ? 2 : 1),
         y: this.position.y + 2,
       },
-       - 10
-
+      -10,
+      type
     );
 
     projectiles.push(p);

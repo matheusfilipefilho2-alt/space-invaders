@@ -5,6 +5,7 @@ class Invader {
     this.width = 50 * 0.8;
     this.height = 37 * 0.8;
     this.velocity = velocity;
+    this.alive = true; // Propriedade para controlar se o invasor está vivo
 
     this.position = position;
 
