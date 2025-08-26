@@ -29,9 +29,9 @@ const rankingManager = new RankingManager();
 const currentUser = NavigationHelper.getCurrentUser();
 if (currentUser) {
   rankingManager.currentUser = currentUser;
-  console.log('Usuário logado encontrado:', currentUser.username);
+  console.log("Usuário logado encontrado:", currentUser.username);
 } else {
-  console.warn('Nenhum usuário logado encontrado');
+  console.warn("Nenhum usuário logado encontrado");
 }
 
 // Iniciar AntiCheat
@@ -290,7 +290,7 @@ const startGame = () => {
 
   // Atualizar UI
   updateUI();
-  
+
   // Parar música global de menu e música local, depois iniciar música do nível
   if (window.globalMenuMusic) {
     window.globalMenuMusic.stopMenuMusic();
@@ -334,7 +334,13 @@ const endGame = () => {
   updateHighScore();
 
   // Salvar pontuação no ranking
-  rankingManager.updateHighScore(gameData.score); // Mudança aqui: saveScore -> updateHighScore
+  const updated = rankingManager.updateHighScore(gameData.score); // Mudança aqui: saveScore -> updateHighScore
+  if (updated === true) {
+    const userDataNew = rankingManager.getUser(currentUser.username);
+
+    // Salvar dados do usuário
+    NavigationHelper.setCurrentUser(userDataNew);
+  }
 
   // Mostrar tela de game over
   document.body.appendChild(gameOverScreen);
@@ -342,7 +348,7 @@ const endGame = () => {
 
   // Parar spawn de projéteis
   clearInterval(spawnProjectilesInterval);
-  
+
   // Parar música do nível e iniciar música de menu
   soundEffects.stopLevelMusic();
   soundEffects.playMenuMusic();
@@ -402,25 +408,28 @@ const updateBonuses = () => {
   // Verificar se o buff expirou
   if (bonusSystem.playerBuff.active) {
     const currentTime = Date.now();
-    if (currentTime - bonusSystem.playerBuff.startTime >= bonusSystem.playerBuff.duration) {
+    if (
+      currentTime - bonusSystem.playerBuff.startTime >=
+      bonusSystem.playerBuff.duration
+    ) {
       bonusSystem.playerBuff.active = false;
     }
   }
 };
 
 const drawBonuses = () => {
-  bonusSystem.bonuses.forEach(bonus => bonus.draw(ctx));
+  bonusSystem.bonuses.forEach((bonus) => bonus.draw(ctx));
 };
 
 const checkBonusCollision = () => {
   bonusSystem.bonuses.forEach((bonus, index) => {
     if (player.hit(bonus)) {
       bonusSystem.bonuses.splice(index, 1);
-      
+
       // Ativar buff
       bonusSystem.playerBuff.active = true;
       bonusSystem.playerBuff.startTime = Date.now();
-      
+
       createExplosion(
         {
           x: bonus.position.x + bonus.width / 2,
@@ -429,7 +438,7 @@ const checkBonusCollision = () => {
         15,
         "#FFD700"
       );
-      
+
       soundEffects.playSound("bonus");
     }
   });
@@ -438,7 +447,7 @@ const checkBonusCollision = () => {
 const playerShootWithBuff = (projectiles) => {
   if (bonusSystem.playerBuff.active) {
     // Projétil de destruction quando o buff está ativo
-    player.shoot(projectiles, 'destruction');
+    player.shoot(projectiles, "destruction");
   } else {
     player.shoot(projectiles);
   }
@@ -447,16 +456,18 @@ const playerShootWithBuff = (projectiles) => {
 const drawBuffIndicator = () => {
   if (bonusSystem.playerBuff.active) {
     const currentTime = Date.now();
-    const timeLeft = bonusSystem.playerBuff.duration - (currentTime - bonusSystem.playerBuff.startTime);
+    const timeLeft =
+      bonusSystem.playerBuff.duration -
+      (currentTime - bonusSystem.playerBuff.startTime);
     const progress = timeLeft / bonusSystem.playerBuff.duration;
-    
+
     // Barra de progresso do buff
     ctx.fillStyle = "rgba(255, 215, 0, 0.8)";
     ctx.fillRect(20, 20, 200 * progress, 10);
-    
+
     ctx.strokeStyle = "#FFD700";
     ctx.strokeRect(20, 20, 200, 10);
-    
+
     // Texto do buff
     ctx.fillStyle = "#FFD700";
     ctx.font = "16px Arial";
@@ -465,12 +476,12 @@ const drawBuffIndicator = () => {
 };
 
 const drawProjectiles = () => {
-  playerProjectiles.forEach(projectile => {
+  playerProjectiles.forEach((projectile) => {
     projectile.update();
     projectile.draw(ctx);
   });
-  
-  invaderProjectiles.forEach(projectile => {
+
+  invaderProjectiles.forEach((projectile) => {
     projectile.update();
     projectile.draw(ctx);
   });
@@ -483,7 +494,7 @@ const clearProjectiles = () => {
       playerProjectiles.splice(i, 1);
     }
   }
-  
+
   // Remover projéteis dos invasores fora da tela
   for (let i = invaderProjectiles.length - 1; i >= 0; i--) {
     if (invaderProjectiles[i].position.y > canvas.height) {
@@ -496,27 +507,27 @@ const findNearbyInvaders = (targetInvader, maxCount = 3) => {
   const nearbyInvaders = [];
   const targetCenter = {
     x: targetInvader.position.x + targetInvader.width / 2,
-    y: targetInvader.position.y + targetInvader.height / 2
+    y: targetInvader.position.y + targetInvader.height / 2,
   };
-  
-  grid.invaders.forEach(invader => {
+
+  grid.invaders.forEach((invader) => {
     if (invader !== targetInvader && invader.alive) {
       const invaderCenter = {
         x: invader.position.x + invader.width / 2,
-        y: invader.position.y + invader.height / 2
+        y: invader.position.y + invader.height / 2,
       };
-      
+
       const distance = Math.sqrt(
         Math.pow(targetCenter.x - invaderCenter.x, 2) +
-        Math.pow(targetCenter.y - invaderCenter.y, 2)
+          Math.pow(targetCenter.y - invaderCenter.y, 2)
       );
-      
+
       if (distance <= 100 && nearbyInvaders.length < maxCount) {
         nearbyInvaders.push(invader);
       }
     }
   });
-  
+
   return nearbyInvaders;
 };
 
@@ -525,9 +536,9 @@ const destroyInvader = (invader, delayMs = 0) => {
     if (invader.alive) {
       // Marcar como morto imediatamente
       invader.alive = false;
-      
+
       incrementScore(100);
-      
+
       createExplosion(
         {
           x: invader.position.x + invader.width / 2,
@@ -536,9 +547,9 @@ const destroyInvader = (invader, delayMs = 0) => {
         15,
         "#FF6B6B"
       );
-      
+
       soundEffects.playSound("explosion");
-      
+
       // Remover invasor do grid
       const invaderIndex = grid.invaders.indexOf(invader);
       if (invaderIndex > -1) {
@@ -552,30 +563,30 @@ const checkShootInvaders = () => {
   // Usar for loop reverso para evitar problemas com remoção de elementos
   for (let i = grid.invaders.length - 1; i >= 0; i--) {
     const invader = grid.invaders[i];
-    
+
     // Verificar apenas invasores vivos
     if (!invader.alive) continue;
-    
+
     for (let j = playerProjectiles.length - 1; j >= 0; j--) {
       const projectile = playerProjectiles[j];
-      
+
       if (invader.hit(projectile)) {
         // Verificar se é um projétil de destruction
-        if (projectile.type === 'destruction') {
+        if (projectile.type === "destruction") {
           // Destruir exatamente 4 invasores (incluindo o atingido)
           const invadersToDestroy = [invader];
           const nearbyInvaders = findNearbyInvaders(invader, 3);
           invadersToDestroy.push(...nearbyInvaders);
-          
+
           // Garantir que temos exatamente 4 invasores para destruir
           const finalInvaders = invadersToDestroy.slice(0, 4);
-          
+
           finalInvaders.forEach((targetInvader, index) => {
             if (targetInvader && targetInvader.alive) {
               // Adicionar delay escalonado para efeito visual dramático
               setTimeout(() => {
                 destroyInvader(targetInvader);
-                
+
                 // Efeito visual especial para cada destruição
                 createExplosion(
                   {
@@ -588,7 +599,7 @@ const checkShootInvaders = () => {
               }, index * 150);
             }
           });
-          
+
           // Efeito visual especial inicial para o projétil de destruction
           createExplosion(
             {
@@ -650,42 +661,42 @@ const checkShootObstacles = () => {
       if (obstacle.collidesWithProjectile(projectile)) {
         playerProjectiles.splice(projectileIndex, 1);
         createExplosion(
-           {
-             x: projectile.position.x,
-             y: projectile.position.y,
-           },
-           10,
-           obstacle.color
-         );
-       }
-     });
-     
-     // Projéteis dos invasores vs obstáculos
-     invaderProjectiles.forEach((projectile, projectileIndex) => {
-       if (obstacle.collidesWithProjectile(projectile)) {
-         invaderProjectiles.splice(projectileIndex, 1);
-         createExplosion(
-           {
-             x: projectile.position.x,
-             y: projectile.position.y,
-           },
-           10,
-           obstacle.color
-         );
-       }
-     });
-   });
- };
+          {
+            x: projectile.position.x,
+            y: projectile.position.y,
+          },
+          10,
+          obstacle.color
+        );
+      }
+    });
+
+    // Projéteis dos invasores vs obstáculos
+    invaderProjectiles.forEach((projectile, projectileIndex) => {
+      if (obstacle.collidesWithProjectile(projectile)) {
+        invaderProjectiles.splice(projectileIndex, 1);
+        createExplosion(
+          {
+            x: projectile.position.x,
+            y: projectile.position.y,
+          },
+          10,
+          obstacle.color
+        );
+      }
+    });
+  });
+};
 
 const spawnGrid = () => {
   if (grid.invaders.length === 0) {
     grid.invaders = grid.createInvaders();
     gameData.level++;
     updateUI();
-    
+
     // Tocar som de próximo nível
     soundEffects.playSound("nextLevel");
-    
+
     // Trocar música do nível
     soundEffects.playLevelMusic(gameData.level);
   }
@@ -757,7 +768,7 @@ const gameLoop = () => {
     });
 
     drawProjectiles();
-    
+
     // Atualizar e desenhar obstáculos
     obstacles.forEach((obstacle) => {
       obstacle.update();
@@ -826,7 +837,7 @@ const gameLoop = () => {
     });
 
     drawProjectiles();
-    
+
     // Desenhar obstáculos
     obstacles.forEach((obstacle) => {
       obstacle.draw(ctx);

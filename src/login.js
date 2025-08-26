@@ -22,8 +22,10 @@ if (buttonLogin && usernameInput && pinInput) {
         }
 
         const result = await rankingManager.login(username, pin);
+        console.log(result.user);
 
         if (result.success) {
+            
             // Salvar dados do usuário
             NavigationHelper.setCurrentUser(result.user);
             // Ir para o ranking

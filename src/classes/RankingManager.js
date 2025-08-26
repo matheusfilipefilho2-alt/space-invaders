@@ -70,9 +70,8 @@ class RankingManager {
             newScore,
             currentUser: this.currentUser,
             hasUser: !!this.currentUser,
-            currentHighScore: this.currentUser?.high_score
+            currentHighScore: this.currentUser.high_score
         });
-        
         if (!this.currentUser) {
             console.error('❌ Erro: Usuário não está logado (currentUser é null/undefined)');
             return false;
@@ -87,6 +86,7 @@ class RankingManager {
                     .update({ high_score: newScore })
                     .eq('id', this.currentUser.id)
 
+                    
                 if (!error) {
                     this.currentUser.high_score = newScore;
                     console.log('✅ Pontuação atualizada com sucesso!');
@@ -117,6 +117,21 @@ class RankingManager {
             return data
         } catch (error) {
             console.error('Erro ao buscar ranking:', error)
+            return []
+        }
+    }
+
+    async getUser(username) {
+        try {
+            const { data, error } = await supabase 
+            .from('players')
+            .select('*')
+            .eq('username', username)
+            if (error) throw error
+            console.log("atualizou")
+            return data 
+        }catch (error) {
+            console.error('erro ao buscar ranking:', error)
             return []
         }
     }
