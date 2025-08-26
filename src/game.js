@@ -25,6 +25,15 @@ const gameOverScreen = document.querySelector(".game-over");
 // Ranking Manager
 const rankingManager = new RankingManager();
 
+// Configurar usuário atual no rankingManager
+const currentUser = NavigationHelper.getCurrentUser();
+if (currentUser) {
+  rankingManager.currentUser = currentUser;
+  console.log('Usuário logado encontrado:', currentUser.username);
+} else {
+  console.warn('Nenhum usuário logado encontrado');
+}
+
 // Iniciar AntiCheat
 const antiCheat = new AntiCheat();
 
