@@ -66,24 +66,41 @@ class RankingManager {
 
     // Atualizar pontuação máxima
     async updateHighScore(newScore) {
-        if (!this.currentUser) return false
+        console.log('🎯 Tentando atualizar pontuação:', {
+            newScore,
+            currentUser: this.currentUser,
+            hasUser: !!this.currentUser,
+            currentHighScore: this.currentUser?.high_score
+        });
+        
+        if (!this.currentUser) {
+            console.error('❌ Erro: Usuário não está logado (currentUser é null/undefined)');
+            return false;
+        }
 
         try {
             if (newScore > this.currentUser.high_score) {
+                console.log('🚀 Nova pontuação é maior! Atualizando no banco...');
+                
                 const { error } = await supabase
                     .from('players')
                     .update({ high_score: newScore })
                     .eq('id', this.currentUser.id)
 
                 if (!error) {
-                    this.currentUser.high_score = newScore
-                    return true
+                    this.currentUser.high_score = newScore;
+                    console.log('✅ Pontuação atualizada com sucesso!');
+                    return true;
+                } else {
+                    console.error('❌ Erro do Supabase:', error);
                 }
+            } else {
+                console.log('📊 Pontuação atual não é maior que o recorde');
             }
-            return false
+            return false;
         } catch (error) {
-            console.error('Erro ao atualizar pontuação:', error)
-            return false
+            console.error('❌ Erro ao atualizar pontuação:', error);
+            return false;
         }
     }
 
