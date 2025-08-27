@@ -13,12 +13,189 @@
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
       rel="stylesheet"
     />
+    
+    <!-- NOVO: Estilos para sistema de recompensas -->
+    <style>
+      .reward-toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #000;
+        padding: 15px 25px;
+        border-radius: 25px;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 10px;
+        z-index: 10000;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+        animation: slideInDown 0.5s ease-out;
+        display: none;
+      }
+
+      .level-badge {
+        display: inline-block;
+        background: var(--level-color, #FFD700);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 8px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        margin: 0 5px;
+      }
+
+      .coins-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255, 215, 0, 0.2);
+        border: 1px solid #FFD700;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 8px;
+        color: #FFD700;
+      }
+
+      .shop-preview {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.9);
+        border: 2px solid #FFD700;
+        border-radius: 15px;
+        padding: 15px;
+        color: white;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 8px;
+        z-index: 999;
+        max-width: 250px;
+        display: none;
+      }
+
+      .achievement-notification {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #9C27B0, #673AB7);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        font-family: 'Press Start 2P', monospace;
+        text-align: center;
+        z-index: 10001;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        animation: achievementPop 0.5s ease-out;
+        display: none;
+      }
+
+      @keyframes slideInDown {
+        from {
+          transform: translate(-50%, -100%);
+          opacity: 0;
+        }
+        to {
+          transform: translate(-50%, 0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes achievementPop {
+        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+        50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      }
+
+      .menu-buttons-enhanced {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin: 30px 0;
+        align-items: center;
+        width: 100%;
+        max-width: 400px;
+        justify-content: center;
+      }
+
+      .button-with-badge {
+        position: relative;
+        display: inline-block;
+      }
+
+      .button-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #FF4757;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @media (max-width: 768px) {
+        .user-info-card-home {
+          position: relative !important;
+          top: auto !important;
+          right: auto !important;
+          margin: 20px auto !important;
+          max-width: 300px !important;
+        }
+
+        .shop-preview {
+          display: none !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <!-- Canvas para fundo de estrelas -->
     <canvas id="stars-background"></canvas>
 
+    <!-- NOVO: Toast de recompensas -->
+    <div id="reward-toast" class="reward-toast">
+      <div id="reward-message">🪙 Nova recompensa desbloqueada!</div>
+    </div>
 
+    <!-- NOVO: Notificação de conquista -->
+    <div id="achievement-notification" class="achievement-notification">
+      <div style="font-size: 24px; margin-bottom: 10px;">🏆</div>
+      <div id="achievement-title">Conquista Desbloqueada!</div>
+      <div id="achievement-description" style="font-size: 6px; margin-top: 8px; color: #ddd;">Descrição da conquista</div>
+    </div>
+
+    <!-- NOVO: Preview da loja -->
+    <div id="shop-preview" class="shop-preview">
+      <div style="margin-bottom: 10px; color: #FFD700; font-weight: bold;">🛍️ LOJA DISPONÍVEL</div>
+      <div style="margin-bottom: 8px; font-size: 6px;">Compre melhorias especiais:</div>
+      <div style="font-size: 6px; line-height: 1.4;">
+        • Naves especiais<br>
+        • Impulsos de velocidade<br>
+        • Temas personalizados<br>
+        • E muito mais!
+      </div>
+      <button onclick="NavigationHelper.navigateToShop()" style="
+        width: 100%;
+        margin-top: 10px;
+        background: #FFD700;
+        color: #000;
+        border: none;
+        padding: 8px;
+        border-radius: 8px;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 6px;
+        cursor: pointer;
+      ">
+        VISITAR LOJA
+      </button>
+    </div>
 
     <!-- Tela Inicial -->
     <section class="start-screen screen">
@@ -45,6 +222,18 @@
 
         <!-- Subtítulo -->
         <p class="game-subtitle">DEFEND EARTH FROM ALIEN INVASION</p>
+        
+        <!-- NOVO: Sistema de recompensas integrado -->
+        <div id="reward-system-info" style="display: none; margin: 20px 0;">
+          <div style="text-align: center; color: #4ECDC4; font-size: 10px; margin-bottom: 15px;">
+            🎮 SISTEMA DE RECOMPENSAS ATIVO
+          </div>
+          <div style="display: flex; justify-content: center; gap: 20px; font-size: 8px;">
+            <div>🪙 Ganhe moedas</div>
+            <div>⭐ Suba de nível</div>
+            <div>🛍️ Compre upgrades</div>
+          </div>
+        </div>
 
         <!-- Invasor animado decorativo -->
         <div class="animated-invader">
@@ -56,31 +245,55 @@
           <div class="invader-shadow"></div>
         </div>
 
-        <!-- Menu de botões -->
-        <div class="menu-buttons action-buttons">
-          <button class="button-play primary-action">
-            <span class="button-icon">🚀</span>
-            START GAME
-          </button>
+        <!-- Menu de botões ATUALIZADO -->
+        <div class="menu-buttons action-buttons menu-buttons-enhanced" id="main-menu-buttons">
+          <!-- Botão Jogar -->
+          <div class="button-with-badge">
+            <button class="button-play primary-action">
+              <span class="button-icon">🚀</span>
+              START GAME
+            </button>
+            <!-- Badge será adicionado dinamicamente se houver power-ups ativos -->
+          </div>
 
-          <button class="button-view-ranking secondary-action">
-            <span class="button-icon">👤</span>
-            LOGIN
+          <!-- Botão Login/Perfil -->
+          <div class="button-with-badge">
+            <button class="button-view-ranking secondary-action" id="login-profile-btn">
+              <span class="button-icon">👤</span>
+              LOGIN
+            </button>
+          </div>
+        </div>
+
+        <!-- NOVO: Menu secundário para usuários logados -->
+        <div class="menu-buttons" id="secondary-menu" style="display: none;">
+          <button class="button-view-ranking" onclick="NavigationHelper.navigateToRanking()">
+            <span class="button-icon">🏆</span>
+            RANKING
           </button>
+          
+          <div class="button-with-badge">
+            <button class="button-view-ranking" onclick="NavigationHelper.navigateToShop()">
+              <span class="button-icon">🛍️</span>
+              LOJA
+            </button>
+            <div class="button-badge" id="shop-badge" style="display: none;">!</div>
+          </div>
         </div>
       </div>
 
-      <!-- Footer -->
+      <!-- Footer ATUALIZADO -->
       <div class="footer-container">
         <div class="footer-line"></div>
-        <span class="footer-text">DEVELOPED BY MATHEUSIN v1.5</span>
+        <span class="footer-text">
+          DEVELOPED BY MATHEUSIN v1.5 
+          <span id="reward-system-status" style="color: #4ECDC4; margin-left: 10px;"></span>
+        </span>
         <div class="footer-stars">
           <span>✦</span><span>✧</span><span>✦</span>
         </div>
       </div>
     </section>
-
-
 
     <!-- Scripts -->
     <script type="module" src="src/index.js"></script>
@@ -133,6 +346,75 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         new StarFieldBackground();
+      });
+    </script>
+
+    <!-- NOVO: Script para funcionalidades de recompensas na tela inicial -->
+    <script>
+      // Funções globais para sistema de recompensas
+      window.showRewardToast = function(message, duration = 3000) {
+        const toast = document.getElementById('reward-toast');
+        const messageElement = document.getElementById('reward-message');
+        
+        messageElement.textContent = message;
+        toast.style.display = 'block';
+        
+        setTimeout(() => {
+          toast.style.display = 'none';
+        }, duration);
+      };
+
+      window.showAchievement = function(title, description) {
+        const notification = document.getElementById('achievement-notification');
+        const titleElement = document.getElementById('achievement-title');
+        const descElement = document.getElementById('achievement-description');
+        
+        titleElement.textContent = title;
+        descElement.textContent = description;
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 4000);
+      };
+
+      window.updateShopBadge = function(show = true) {
+        const badge = document.getElementById('shop-badge');
+        if (badge) {
+          badge.style.display = show ? 'flex' : 'none';
+        }
+      };
+
+      // Mostrar preview da loja para usuários com moedas
+      window.maybeShowShopPreview = function() {
+        const currentUser = window.NavigationHelper?.getCurrentUser();
+        if (currentUser && currentUser.coins >= 30) {
+          const preview = document.getElementById('shop-preview');
+          if (preview) {
+            preview.style.display = 'block';
+            
+            // Esconder após 10 segundos
+            setTimeout(() => {
+              preview.style.display = 'none';
+            }, 10000);
+          }
+        }
+      };
+
+      // Event listener para quando a página carrega completamente
+      window.addEventListener('load', () => {
+        // Mostrar preview da loja após 5 segundos
+        setTimeout(() => {
+          window.maybeShowShopPreview();
+        }, 5000);
+      });
+
+      // Detectar clique fora do preview para fechá-lo
+      document.addEventListener('click', (e) => {
+        const preview = document.getElementById('shop-preview');
+        if (preview && preview.style.display === 'block' && !preview.contains(e.target)) {
+          preview.style.display = 'none';
+        }
       });
     </script>
   </body>

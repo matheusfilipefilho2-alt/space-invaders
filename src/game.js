@@ -1,4 +1,5 @@
 import { NavigationHelper } from "./navigation.js";
+import RewardUI from "./classes/RewardUI.js";
 import RankingManager from "./classes/RankingManager.js";
 import AntiCheat from "./classes/AntiCheat.js";
 import Grid from "./classes/Grid.js";
@@ -10,9 +11,28 @@ import Star from "./classes/Star.js";
 import Bonus from "./classes/Bonus.js";
 import { GameState, NUMBER_STARS } from "../utils/constantes.js";
 import { supabase } from "./supabase.js";
+import AchievementSystem from "./classes/AchievementSystem.js"; // NOVO
 
 // Inicializar efeitos sonoros
 const soundEffects = new SoundEffects();
+const rewardUI = new RewardUI();
+const rankingManager = new RankingManager();
+const achievementSystem = new AchievementSystem(rankingManager); // NOVO
+
+const gameStats = {
+  startTime: Date.now(),
+  killCount: 0,
+  rapidKills: 0,
+  rapidKillWindow: [],
+  maxCombo: 0,
+  currentCombo: 0,
+  bonusesCollected: 0,
+  perfectShots: 0,
+  totalShots: 0,
+  survivalTime: 0,
+  levelStart: 1,
+  levelEnd: 1,
+};
 
 // Elementos da UI
 const scoreElement = document.querySelector(".score");
@@ -22,17 +42,58 @@ const buttonRestart = document.querySelector(".button-restart");
 const buttonViewRanking = document.querySelector(".button-view-ranking");
 const gameOverScreen = document.querySelector(".game-over");
 
-// Ranking Manager
-const rankingManager = new RankingManager();
-
 // Configurar usuário atual no rankingManager
 const currentUser = NavigationHelper.getCurrentUser();
 if (currentUser) {
   rankingManager.currentUser = currentUser;
-  console.log("Usuário logado encontrado:", currentUser.username);
+  rewardUI.setUser(currentUser);
+  rewardUI.setRewardSystem(rankingManager.getRewardSystem());
+
+  // NOVO: Marcar nível inicial para detectar saltos de nível
+  gameStats.levelStart = rankingManager
+    .getRewardSystem()
+    .getCurrentLevel(currentUser.high_score || 0).id;
+
+  console.log("🎮 Sistemas de recompensas inicializados");
 } else {
-  console.warn("Nenhum usuário logado encontrado");
+  console.warn("⚠️ Usuário não logado - recompensas desabilitadas");
 }
+
+// NOVA FUNÇÃO: Registrar tiro para estatísticas
+const registerShot = (hit = false) => {
+  gameStats.totalShots++;
+  if (hit) {
+    gameStats.perfectShots++;
+  } else {
+    gameStats.currentCombo = 0; // Reset combo se errou
+  }
+};
+
+// NOVA FUNÇÃO: Registrar coleta de bônus
+const registerBonusCollected = () => {
+  gameStats.bonusesCollected++;
+};
+
+// NOVA FUNÇÃO: Registrar kill para conquistas
+const registerKill = () => {
+  gameStats.killCount++;
+  gameStats.currentCombo++;
+  gameStats.maxCombo = Math.max(gameStats.maxCombo, gameStats.currentCombo);
+
+  // Rastrear kills rápidos para conquista "Fogo Rápido"
+  const now = Date.now();
+  gameStats.rapidKillWindow.push(now);
+
+  // Manter apenas kills dos últimos 30 segundos
+  gameStats.rapidKillWindow = gameStats.rapidKillWindow.filter(
+    (time) => now - time <= 30000
+  );
+
+  gameStats.rapidKills = Math.max(
+    gameStats.rapidKills,
+    gameStats.rapidKillWindow.length
+  );
+};
 
 // Iniciar AntiCheat
 const antiCheat = new AntiCheat();
@@ -276,6 +337,8 @@ const startGame = () => {
   totalPausedTime = 0;
   gameStartTime = Date.now();
 
+  resetGameStats();
+
   // Limpar arrays
   grid.invaders = [];
   grid.initialize(gameData.level);
@@ -284,6 +347,8 @@ const startGame = () => {
   obstacles.length = 0;
   bonusSystem.bonuses = [];
   bonusSystem.playerBuff.active = false;
+
+  rewardUI.clear();
 
   // Inicializar obstáculos
   initObstacles();
@@ -322,7 +387,7 @@ const startGame = () => {
 };
 
 // Função para finalizar o jogo
-const endGame = () => {
+const endGame = async () => {
   currentState = GameState.GAME_OVER;
   player.alive = false;
 
@@ -342,6 +407,113 @@ const endGame = () => {
     NavigationHelper.setCurrentUser(userDataNew);
   }
 
+  // NOVO: Sistema completo de recompensas
+  let gameResult = null;
+  if (currentUser && rankingManager.isLoggedIn()) {
+    console.log("🎯 Processando recompensas e conquistas...");
+
+    // Calcular estatísticas finais
+    const finalStats = calculateFinalGameStats();
+    console.log("📊 Estatísticas da partida:", finalStats);
+
+    // Processar recompensas de pontuação
+    gameResult = await rankingManager.updateHighScore(gameData.score);
+
+    if (gameResult.success || gameResult.rewards) {
+      // Atualizar usuário local
+      const updatedUser = rankingManager.getCurrentUser();
+      NavigationHelper.setCurrentUser(updatedUser);
+      rewardUI.setUser(updatedUser);
+
+      // Verificar conquistas
+      console.log("🏆 Verificando conquistas...");
+      const achievementResults = await achievementSystem.checkAchievements(
+        finalStats
+      );
+
+      if (achievementResults.length > 0) {
+        console.log(
+          `🎉 ${achievementResults.length} conquista(s) desbloqueada(s)!`
+        );
+
+        // Adicionar conquistas ao resultado
+        gameResult.achievements = achievementResults;
+
+        // Atualizar moedas com recompensas das conquistas
+        let totalAchievementCoins = 0;
+        achievementResults.forEach((result) => {
+          totalAchievementCoins += result.coinReward || 0;
+        });
+
+        if (totalAchievementCoins > 0) {
+          console.log(`💰 +${totalAchievementCoins} moedas de conquistas!`);
+
+          // Atualizar usuário final
+          const finalUser = rankingManager.getCurrentUser();
+          NavigationHelper.setCurrentUser(finalUser);
+          rewardUI.setUser(finalUser);
+        }
+      }
+
+      // Mostrar notificações de recompensas
+      if (gameResult.rewards) {
+        rewardUI.showRewardNotifications(gameResult.rewards);
+      }
+
+      // Mostrar conquistas desbloqueadas
+      if (achievementResults.length > 0) {
+        achievementResults.forEach((achievementResult, index) => {
+          setTimeout(() => {
+            const notification =
+              achievementSystem.createAchievementNotification(
+                achievementResult
+              );
+            rewardUI.createNotificationElement(notification);
+
+            // Usar função global se existir (para compatibilidade)
+            if (window.showAchievement) {
+              window.showAchievement(
+                achievementResult.achievement.name,
+                achievementResult.achievement.description
+              );
+            }
+          }, 3000 + index * 2000); // Espaçar conquistas por 2 segundos
+        });
+      }
+
+      // Mostrar resumo completo após todas as notificações
+      setTimeout(() => {
+        // Adicionar estatísticas da partida ao resultado
+        gameResult.gameStats = finalStats;
+        rewardUI.showGameEndSummary(gameResult);
+      }, 5000 + achievementResults.length * 2000);
+    } else {
+      console.log(
+        "📊 Pontuação não superou o recorde, verificando conquistas mesmo assim..."
+      );
+
+      // Mesmo sem novo recorde, verificar conquistas
+      const finalStats = calculateFinalGameStats();
+      const achievementResults = await achievementSystem.checkAchievements(
+        finalStats
+      );
+
+      if (achievementResults.length > 0) {
+        achievementResults.forEach((achievementResult, index) => {
+          setTimeout(() => {
+            const notification =
+              achievementSystem.createAchievementNotification(
+                achievementResult
+              );
+            rewardUI.createNotificationElement(notification);
+          }, 2000 + index * 2000);
+        });
+      }
+    }
+  } else {
+    console.log("ℹ️ Usuário não logado - sem recompensas nem conquistas");
+  }
+
   // Mostrar tela de game over
   document.body.appendChild(gameOverScreen);
   gameOverScreen.style.display = "flex";
@@ -352,6 +524,23 @@ const endGame = () => {
   // Parar música do nível e iniciar música de menu
   soundEffects.stopLevelMusic();
   soundEffects.playMenuMusic();
+};
+
+// NOVA FUNÇÃO: Mostrar progresso de conquistas próximas durante o jogo
+const showNearbyAchievements = () => {
+  if (!currentUser || !achievementSystem) return;
+
+  const nearby = achievementSystem.getNearbyAchievements(3);
+
+  nearby.forEach((progress, index) => {
+    setTimeout(() => {
+      NavigationHelper.showToast(
+        `🏆 ${progress.achievement.name}: ${progress.progress}% (${progress.remainingToUnlock} restante)`,
+        "info",
+        3000
+      );
+    }, index * 1000);
+  });
 };
 
 // Função para pausar/despausar o jogo
@@ -426,6 +615,8 @@ const checkBonusCollision = () => {
     if (player.hit(bonus)) {
       bonusSystem.bonuses.splice(index, 1);
 
+      registerBonusCollected();
+
       // Ativar buff
       bonusSystem.playerBuff.active = true;
       bonusSystem.playerBuff.startTime = Date.now();
@@ -445,6 +636,8 @@ const checkBonusCollision = () => {
 };
 
 const playerShootWithBuff = (projectiles) => {
+  gameStats.totalShots++;
+
   if (bonusSystem.playerBuff.active) {
     // Projétil de destruction quando o buff está ativo
     player.shoot(projectiles, "destruction");
@@ -538,6 +731,7 @@ const destroyInvader = (invader, delayMs = 0) => {
       invader.alive = false;
 
       incrementScore(100);
+      registerKill();
 
       createExplosion(
         {
@@ -571,6 +765,8 @@ const checkShootInvaders = () => {
       const projectile = playerProjectiles[j];
 
       if (invader.hit(projectile)) {
+        registerShot(true);
+
         // Verificar se é um projétil de destruction
         if (projectile.type === "destruction") {
           // Destruir exatamente 4 invasores (incluindo o atingido)
@@ -619,6 +815,31 @@ const checkShootInvaders = () => {
       }
     }
   }
+};
+
+const calculateFinalGameStats = () => {
+  const endTime = Date.now();
+  const gameDuration = endTime - gameStats.startTime;
+
+  gameStats.survivalTime = Math.floor(gameDuration / 1000);
+  gameStats.levelEnd = gameData.level;
+
+  const levelJump = gameStats.levelEnd - gameStats.levelStart;
+
+  return {
+    finalScore: gameData.score,
+    gameTime: gameStats.survivalTime,
+    killCount: gameStats.killCount,
+    rapidKills: gameStats.rapidKills,
+    maxCombo: gameStats.maxCombo,
+    bonusesCollected: gameStats.bonusesCollected,
+    accuracy:
+      gameStats.totalShots > 0
+        ? (gameStats.perfectShots / gameStats.totalShots) * 100
+        : 0,
+    levelJump: levelJump,
+    isFirstGame: (currentUser?.total_games || 0) === 0,
+  };
 };
 
 const checkInvaderCollision = () => {
@@ -870,6 +1091,11 @@ addEventListener("keydown", (event) => {
     case "KeyP":
       togglePause();
       break;
+    case "KeyC": // NOVO: Mostrar conquistas próximas
+      if (currentState === GameState.PLAYING) {
+        showNearbyAchievements();
+      }
+      break;
   }
 });
 
@@ -890,4 +1116,36 @@ addEventListener("keyup", (event) => {
   }
 });
 
+// NOVO: Resetar estatísticas ao iniciar novo jogo
+const resetGameStats = () => {
+  gameStats.startTime = Date.now();
+  gameStats.killCount = 0;
+  gameStats.rapidKills = 0;
+  gameStats.rapidKillWindow = [];
+  gameStats.maxCombo = 0;
+  gameStats.currentCombo = 0;
+  gameStats.bonusesCollected = 0;
+  gameStats.perfectShots = 0;
+  gameStats.totalShots = 0;
+  gameStats.survivalTime = 0;
+
+  if (currentUser) {
+    gameStats.levelStart = rankingManager
+      .getRewardSystem()
+      .getCurrentLevel(currentUser.high_score || 0).id;
+  }
+};
+
 startGame();
+
+// NOVO: Exportar funções para debug/testes
+if (window.location.hostname === 'localhost') {
+    window.debugRewards = {
+        gameStats,
+        achievementSystem,
+        rankingManager,
+        rewardUI,
+        showNearbyAchievements,
+        calculateFinalGameStats
+    };
+}

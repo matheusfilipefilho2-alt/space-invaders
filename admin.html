@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Space Invaders</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: 'Press Start 2P', monospace;
+            background: #050519;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px solid #4ECDC4;
+        }
+
+        .admin-title {
+            font-size: 24px;
+            color: #4ECDC4;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .dashboard-card.stats { border-color: #4ECDC4; }
+        .dashboard-card.players { border-color: #FF6B6B; }
+        .dashboard-card.revenue { border-color: #FFD700; }
+        .dashboard-card.security { border-color: #FF4757; }
+
+        .card-title {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 8px;
+            opacity: 0.7;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .players-table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .players-table th,
+        .players-table td {
+            padding: 10px;
+            text-align: left;
+            font-size: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .players-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .admin-btn {
+            padding: 10px 15px;
+            border: 2px solid;
+            background: transparent;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .admin-btn.primary { border-color: #4ECDC4; }
+        .admin-btn.danger { border-color: #FF4757; }
+        .admin-btn.warning { border-color: #FFA502; }
+        .admin-btn.success { border-color: #00ff88; }
+
+        .admin-btn:hover {
+            background: var(--hover-color);
+            color: #000;
+        }
+
+        .admin-btn.primary:hover { --hover-color: #4ECDC4; }
+        .admin-btn.danger:hover { --hover-color: #FF4757; }
+        .admin-btn.warning:hover { --hover-color: #FFA502; }
+        .admin-btn.success:hover { --hover-color: #00ff88; }
+
+        .security-alerts {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(255, 71, 87, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .alert-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            border-left: 4px solid #FF4757;
+            font-size: 8px;
+        }
+
+        .alert-time {
+            color: #888;
+            font-size: 7px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background: rgba(5, 5, 25, 0.95);
+            border: 3px solid #4ECDC4;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 80vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            color: #4ECDC4;
+            font-size: 12px;
+            padding: 20px;
+        }
+
+        .metric-trend {
+            font-size: 8px;
+            margin-top: 5px;
+        }
+
+        .trend-up { color: #00ff88; }
+        .trend-down { color: #FF4757; }
+        .trend-stable { color: #FFA502; }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 10px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fundo de estrelas -->
+    <canvas id="stars-background"></canvas>
+
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <h1 class="admin-title">🚀 ADMIN DASHBOARD</h1>
+            <p style="font-size: 10px; color: #888;">Sistema de Administração - Space Invaders v1.5</p>
+            <div style="margin-top: 15px;">
+                <span id="server-status" class="server-status">🟢 Online</span>
+                <span style="margin: 0 15px;">|</span>
+                <span id="last-update">Última atualização: --:--</span>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="action-buttons">
+            <button class="admin-btn primary" onclick="refreshDashboard()">🔄 ATUALIZAR</button>
+            <button class="admin-btn success" onclick="exportData()">📤 EXPORTAR</button>
+            <button class="admin-btn warning" onclick="showSystemConfig()">⚙️ CONFIGURAÇÕES</button>
+            <button class="admin-btn danger" onclick="showSecurityLogs()">🛡️ SEGURANÇA</button>
+        </div>
+
+        <!-- Cards do Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Estatísticas Gerais -->
+            <div class="dashboard-card stats">
+                <div class="card-title" style="color: #4ECDC4;">
+                    📊 ESTATÍSTICAS GERAIS
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-players">0</div>
+                        <div class="stat-label">Jogadores Totais</div>
+                        <div class="metric-trend" id="players-trend">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="active-players">0</div>
+                        <div class="stat-label">Ativos (24h)</div>
+                        <div class="metric-trend" id="active-trend">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-games">0</div>
+                        <div class="stat-label">Partidas Jogadas</div>
+                        <div class="metric-trend" id="games-trend">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avg-score">0</div>
+                        <div class="stat-label">Score Médio</div>
+                        <div class="metric-trend" id="score-trend">--</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="playersChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Jogadores -->
+            <div class="dashboard-card players">
+                <div class="card-title" style="color: #FF6B6B;">
+                    👥 TOP JOGADORES
+                </div>
+                <div class="players-table-container">
+                    <table class="players-table" id="top-players-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Jogador</th>
+                                <th>Score</th>
+                                <th>Nível</th>
+                                <th>Moedas</th>
+                                <th>Última</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-players-body">
+                            <tr><td colspan="6" class="loading">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sistema Econômico -->
+            <div class="dashboard-card revenue">
+                <div class="card-title" style="color: #FFD700;">
+                    💰 ECONOMIA DO JOGO
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-coins">0</div>
+                        <div class="stat-label">Moedas em Circulação</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="shop-transactions">0</div>
+                        <div class="stat-label">Transações na Loja</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="popular-item">--</div>
+                        <div class="stat-label">Item Mais Popular</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avg-coins-per-player">0</div>
+                        <div class="stat-label">Moedas por Jogador</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="economyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Segurança -->
+            <div class="dashboard-card security">
+                <div class="card-title" style="color: #FF4757;">
+                    🛡️ SEGURANÇA & ANTI-CHEAT
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="security-alerts">0</div>
+                        <div class="stat-label">Alertas Ativos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="blocked-users">0</div>
+                        <div class="stat-label">Usuários Bloqueados</div>
+                    </div>
+                </div>
+
+                <div class="security-alerts" id="security-alerts-list">
+                    <div class="loading">Carregando alertas...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos Adicionais -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+            <div class="dashboard-card">
+                <div class="card-title">📈 ENGAJAMENTO POR HORA</div>
+                <div class="chart-container">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="card-title">🏆 CONQUISTAS MAIS RARAS</div>
+                <div class="chart-container">
+                    <canvas id="achievementsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Configurações -->
+    <div class="modal" id="config-modal">
+        <div class="modal-content">
+            <h3>⚙️ CONFIGURAÇÕES DO SISTEMA</h3>
+            <div id="config-content">
+                <div class="loading">Carregando configurações...</div>
+            </div>
+            <button class="admin-btn primary" onclick="closeModal('config-modal')">FECHAR</button>
+        </div>
+    </div>
+
+    <!-- Modal para Logs de Segurança -->
+    <div class="modal" id="security-modal">
+        <div class="modal-content">
+            <h3>🛡️ LOGS DE SEGURANÇA DETALHADOS</h3>
+            <div id="security-content">
+                <div class="loading">Carregando logs...</div>
+            </div>
+            <button class="admin-btn primary" onclick="closeModal('security-modal')">FECHAR</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import Star from './src/classes/Star.js';
+
+        // Fundo animado
+        const canvas = document.getElementById('stars-background');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '-1';
+        canvas.style.background = 'linear-gradient(135deg, #050519 0%, #0a0a2e 50%, #16213e 100%)';
+
+        const stars = [];
+        for (let i = 0; i < 50; i++) {
+            stars.push(new Star(canvas.width, canvas.height));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#050519';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(star => {
+                star.update();
+                star.draw(ctx);
+            });
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+
+    <script>
+        // Configuração do Supabase
+        const SUPABASE_URL = "https://apbbhuhtdqfwfmlzxnwv.supabase.co/";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwYmJodWh0ZHFmd2ZtbHp4bnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTcyNjUsImV4cCI6MjA3MTI5MzI2NX0.D330nS8F9ZIMqnZHzvFIST-wv4ccCyyumV6s4zSmAGs";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Variáveis globais
+        let charts = {};
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDashboard();
+            setInterval(refreshDashboard, 30000); // Atualizar a cada 30s
+        });
+
+        async function initializeDashboard() {
+            console.log('🚀 Inicializando dashboard admin...');
+            await loadDashboardData();
+            updateLastUpdateTime();
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Carregar dados em paralelo
+                const [
+                    playersData,
+                    gamesData,
+                    securityData,
+                    economyData
+                ] = await Promise.all([
+                    loadPlayersData(),
+                    loadGamesData(),
+                    loadSecurityData(),
+                    loadEconomyData()
+                ]);
+
+                // Atualizar UI
+                updateStatistics(playersData, gamesData, economyData);
+                updateTopPlayers(playersData.topPlayers);
+                updateSecurityAlerts(securityData);
+                createCharts(playersData, gamesData, economyData);
+
+                console.log('✅ Dashboard carregado com sucesso');
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar dashboard:', error);
+                showError('Erro ao carregar dados do dashboard');
+            }
+        }
+
+        async function loadPlayersData() {
+            const { data: players, error } = await supabase
+                .from('players')
+                .select('*')
+                .order('high_score', { ascending: false });
+
+            if (error) throw error;
+
+            const now = Date.now();
+            const oneDayAgo = now - (24 * 60 * 60 * 1000);
+
+            const activePlayers = players.filter(p => {
+                const lastPlayed = new Date(p.last_played).getTime();
+                return lastPlayed >= oneDayAgo;
+            });
+
+            return {
+                total: players.length,
+                active: activePlayers.length,
+                topPlayers: players.slice(0, 10),
+                players: players
+            };
+        }
+
+        async function loadGamesData() {
+            const { data: analytics, error } = await supabase
+                .from('analytics_events')
+                .select('*')
+                .eq('event_name', 'game_end')
+                .gte('timestamp', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+            if (error) throw error;
+
+            const totalGames = analytics.length;
+            const averageScore = analytics.length > 0 ? 
+                analytics.reduce((sum, game) => sum + (game.properties?.finalScore || 0), 0) / totalGames : 0;
+
+            return {
+                total: totalGames,
+                averageScore: Math.round(averageScore),
+                gamesData: analytics
+            };
+        }
+
+        async function loadSecurityData() {
+            const { data: logs, error } = await supabase
+                .from('security_logs')
+                .select('*')
+                .order('timestamp', { ascending: false })
+                .limit(20);
+
+            if (error) throw error;
+
+            const alerts = logs.filter(log => 
+                log.security_report?.riskLevel >= 2
+            );
+
+            return {
+                alerts: alerts.length,
+                recentAlerts: alerts.slice(0, 5),
+                blockedUsers: logs.filter(log => 
+                    log.security_report?.isBlocked
+                ).length
+            };
+        }
+
+        async function loadEconomyData() {
+            const { data: players, error } = await supabase
+                .from('players')
+                .select('coins');
+
+            if (error) throw error;
+
+            const totalCoins = players.reduce((sum, p) => sum + (p.coins || 0), 0);
+            const avgCoinsPerPlayer = players.length > 0 ? totalCoins / players.length : 0;
+
+            return {
+                totalCoins,
+                avgCoinsPerPlayer: Math.round(avgCoinsPerPlayer),
+                transactions: 0, // Placeholder - implementar se necessário
+                popularItem: 'Theme Neon' // Placeholder
+            };
+        }
+
+        function updateStatistics(playersData, gamesData, economyData) {
+            document.getElementById('total-players').textContent = playersData.total;
+            document.getElementById('active-players').textContent = playersData.active;
+            document.getElementById('total-games').textContent = gamesData.total;
+            document.getElementById('avg-score').textContent = gamesData.averageScore.toLocaleString();
+            
+            document.getElementById('total-coins').textContent = economyData.totalCoins.toLocaleString();
+            document.getElementById('shop-transactions').textContent = economyData.transactions;
+            document.getElementById('popular-item').textContent = economyData.popularItem;
+            document.getElementById('avg-coins-per-player').textContent = economyData.avgCoinsPerPlayer;
+        }
+
+        function updateTopPlayers(topPlayers) {
+            const tbody = document.getElementById('top-players-body');
+            tbody.innerHTML = '';
+
+            topPlayers.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.username}</td>
+                    <td>${(player.high_score || 0).toLocaleString()}</td>
+                    <td>${player.level_id || 1}</td>
+                    <td>${(player.coins || 0).toLocaleString()}</td>
+                    <td>${player.last_played ? new Date(player.last_played).toLocaleDateString('pt-BR') : 'Nunca'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateSecurityAlerts(securityData) {
+            document.getElementById('security-alerts').textContent = securityData.alerts;
+            document.getElementById('blocked-users').textContent = securityData.blockedUsers;
+
+            const alertsList = document.getElementById('security-alerts-list');
+            alertsList.innerHTML = '';
+
+            if (securityData.recentAlerts.length === 0) {
+                alertsList.innerHTML = '<div style="text-align: center; color: #00ff88;">✅ Nenhum alerta ativo</div>';
+                return;
+            }
+
+            securityData.recentAlerts.forEach(alert => {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert-item';
+                alertDiv.innerHTML = `
+                    <div><strong>${alert.username}</strong> - Risco: ${getRiskLevel(alert.security_report?.riskLevel)}</div>
+                    <div style="margin: 5px 0;">${alert.security_report?.flaggedBehaviors?.[0]?.description || 'Comportamento suspeito'}</div>
+                    <div class="alert-time">${new Date(alert.timestamp).toLocaleString('pt-BR')}</div>
+                `;
+                alertsList.appendChild(alertDiv);
+            });
+        }
+
+        function getRiskLevel(level) {
+            const levels = {
+                0: '🟢 Baixo',
+                1: '🟡 Médio', 
+                2: '🟠 Alto',
+                3: '🔴 Crítico'
+            };
+            return levels[level] || '❓ Desconhecido';
+        }
+
+        function createCharts(playersData, gamesData, economyData) {
+            // Gráfico de jogadores ao longo do tempo
+            createPlayersChart();
+            
+            // Gráfico da economia
+            createEconomyChart(economyData);
+            
+            // Gráfico de engajamento por hora
+            createHourlyChart(gamesData);
+            
+            // Gráfico de conquistas
+            createAchievementsChart();
+        }
+
+        function createPlayersChart() {
+            const ctx = document.getElementById('playersChart').getContext('2d');
+            
+            // Dados simulados - em produção, buscar dados reais
+            const data = {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                datasets: [{
+                    label: 'Novos Jogadores',
+                    data: [12, 19, 8, 25, 22, 15],
+                    borderColor: '#4ECDC4',
+                    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            };
+
+            if (charts.players) charts.players.destroy();
+            charts.players = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: { 
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createEconomyChart(economyData) {
+            const ctx = document.getElementById('economyChart').getContext('2d');
+            
+            const data = {
+                labels: ['Temas', 'Boosts', 'Cosméticos', 'Utilitários'],
+                datasets: [{
+                    data: [35, 25, 30, 10],
+                    backgroundColor: [
+                        '#FF6B6B',
+                        '#4ECDC4', 
+                        '#FFD700',
+                        '#9C27B0'
+                    ]
+                }]
+            };
+
+            if (charts.economy) charts.economy.destroy();
+            charts.economy = new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#888' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createHourlyChart(gamesData) {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            
+            // Processar dados por hora
+            const hourlyData = new Array(24).fill(0);
+            gamesData.gamesData?.forEach(game => {
+                const hour = new Date(game.timestamp).getHours();
+                hourlyData[hour]++;
+            });
+
+            const data = {
+                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                datasets: [{
+                    label: 'Partidas por Hora',
+                    data: hourlyData,
+                    borderColor: '#FFD700',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            };
+
+            if (charts.hourly) charts.hourly.destroy();
+            charts.hourly = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: { 
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAchievementsChart() {
+            const ctx = document.getElementById('achievementsChart').getContext('2d');
+            
+            const data = {
+                labels: ['Primeira Partida', 'Mil Pontos', 'Veterano', 'Ace Pilot', 'Destruidor'],
+                datasets: [{
+                    label: '% de Jogadores',
+                    data: [95, 78, 45, 23, 12],
+                    backgroundColor: [
+                        'rgba(78, 205, 196, 0.8)',
+                        'rgba(255, 107, 107, 0.8)',
+                        'rgba(255, 215, 0, 0.8)',
+                        'rgba(156, 39, 176, 0.8)',
+                        'rgba(255, 152, 0, 0.8)'
+                    ]
+                }]
+            };
+
+            if (charts.achievements) charts.achievements.destroy();
+            charts.achievements = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { 
+                                color: '#888',
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: { 
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateLastUpdateTime() {
+            document.getElementById('last-update').textContent = 
+                `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+        }
+
+        // Funções dos botões
+        function refreshDashboard() {
+            console.log('🔄 Atualizando dashboard...');
+            loadDashboardData();
+        }
+
+        function exportData() {
+            alert('📤 Funcionalidade de exportação em desenvolvimento');
+        }
+
+        function showSystemConfig() {
+            document.getElementById('config-modal').style.display = 'flex';
+            // Carregar configurações reais aqui
+        }
+
+        function showSecurityLogs() {
+            document.getElementById('security-modal').style.display = 'flex';
+            // Carregar logs detalhados aqui
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showError(message) {
+            // Implementar notificação de erro
+            console.error(message);
+        }
+
+        // Disponibilizar funções globalmente
+        window.refreshDashboard = refreshDashboard;
+        window.exportData = exportData;
+        window.showSystemConfig = showSystemConfig;
+        window.showSecurityLogs = showSecurityLogs;
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>

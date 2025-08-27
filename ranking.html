@@ -47,12 +47,22 @@
                 </div>
             </div>
             
-            <!-- Botões de ação -->
+            <!-- Botões de ação ATUALIZADOS -->
             <div class="menu-buttons">
                 <button class="button-play button-play-ranking">
                     <span class="button-icon">🚀</span>
                     JOGAR AGORA
                 </button>
+                
+                <!-- NOVO: Botão da Loja -->
+                <button class="button-view-ranking button-shop-ranking" onclick="NavigationHelper.navigateToShop()">
+                    <span class="button-icon">🛍️</span>
+                    LOJA
+                    <span id="shop-coin-indicator" class="coin-indicator" style="display: none;">
+                        <span class="coin-count">0</span> 🪙
+                    </span>
+                </button>
+                
                 <button class="button-view-ranking button-logout">
                     <span class="button-icon">🚪</span>
                     SAIR
@@ -70,10 +80,66 @@
         </div>
     </section>
 
+    <!-- NOVO: Modal de informações de conquistas -->
+    <div id="achievement-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>🏆 SUAS CONQUISTAS</h3>
+            <div id="achievement-list" class="achievement-list">
+                <!-- Lista de conquistas será carregada aqui -->
+            </div>
+            <button onclick="closeAchievementModal()" class="modal-btn confirm">FECHAR</button>
+        </div>
+    </div>
+
     <script type="module" src="src/ranking.js"></script>
     <script type="module">
         // Importar sistema global de música
         import globalMenuMusic from './src/globalMenuMusic.js';
+    </script>
+    
+    <!-- NOVO: Funções para modal de conquistas -->
+    <script>
+        window.showAchievements = async function() {
+            const modal = document.getElementById('achievement-modal');
+            const list = document.getElementById('achievement-list');
+            
+            try {
+                // Esta função será implementada no ranking.js atualizado
+                const achievements = await window.loadUserAchievements();
+                
+                if (achievements.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; color: #888;">Nenhuma conquista desbloqueada ainda</div>';
+                } else {
+                    list.innerHTML = achievements.map(achievement => `
+                        <div class="achievement-item">
+                            <div class="achievement-icon">${achievement.icon}</div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">${achievement.name}</div>
+                                <div class="achievement-description">${achievement.description}</div>
+                            </div>
+                            <div class="achievement-reward">+${achievement.coinReward} 🪙</div>
+                        </div>
+                    `).join('');
+                }
+                
+                modal.style.display = 'flex';
+            } catch (error) {
+                console.error('Erro ao carregar conquistas:', error);
+                list.innerHTML = '<div style="text-align: center; color: #ff4757;">Erro ao carregar conquistas</div>';
+                modal.style.display = 'flex';
+            }
+        };
+
+        window.closeAchievementModal = function() {
+            document.getElementById('achievement-modal').style.display = 'none';
+        };
+
+        // Fechar modal clicando fora
+        document.getElementById('achievement-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAchievementModal();
+            }
+        });
     </script>
     
     <!-- Script para animação de fundo -->
@@ -166,6 +232,145 @@
             canvas.height = window.innerHeight;
         });
     </script>
+
+    <!-- NOVO: Estilos adicionais para conquistas e loja -->
+    <style>
+        .button-shop-ranking {
+            position: relative;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000 !important;
+            border-color: #FFD700;
+        }
+
+        .button-shop-ranking:hover {
+            background: linear-gradient(135deg, #FFA500, #FFD700);
+            box-shadow: 0 0 30px #FFD700;
+        }
+
+        .coin-indicator {
+            position: absolute;
+            top: -8px;
+            right: -5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 6px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: coinPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes coinPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background: rgba(5, 5, 25, 0.95);
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+            color: white;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .achievement-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid #FFD700;
+        }
+
+        .achievement-icon {
+            font-size: 24px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .achievement-info {
+            flex: 1;
+        }
+
+        .achievement-name {
+            font-size: 10px;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+
+        .achievement-description {
+            font-size: 8px;
+            color: #888;
+        }
+
+        .achievement-reward {
+            color: #4ECDC4;
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            margin-top: 20px;
+        }
+
+        .modal-btn.confirm {
+            background: #00ff88;
+            color: #000;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 20px;
+                padding: 20px;
+                max-width: 90vw;
+            }
+
+            .achievement-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .coin-indicator {
+                position: static;
+                display: inline-block;
+                margin-left: 10px;
+            }
+        }
+    </style>
     
 </body>
 </html>
