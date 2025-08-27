@@ -10,7 +10,7 @@ export const PATH_ENGINE_IMAGE = "src/assets/images/engine.png";
 export const PATH_ENGINE_SPRITES = "src/assets/images/engine_sprites.png";
 
 export const NUMBER_STARS = 100;
-export const INITIAL_FRAMES = 5;
+export const INITIAL_FRAMES = 10;
 
 export const GameState = {
   START: "start",
