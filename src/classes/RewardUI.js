@@ -206,12 +206,26 @@ class RewardUI {
     }
 
     updatePlayerInfo() {
-        if (!this.currentUser || !this.rewardSystem) return;
+        if (!this.currentUser || !this.rewardSystem) {
+            this.hidePlayerInfoCard();
+            return;
+        }
 
         const stats = this.rewardSystem.getPlayerStats(this.currentUser);
-        if (!stats) return;
+        if (!stats) {
+            this.hidePlayerInfoCard();
+            return;
+        }
 
         const levelProgress = this.rewardSystem.getLevelProgress(this.currentUser.high_score || 0);
+        
+        // Verificar se há informações relevantes para mostrar
+        if (!this.hasRelevantInfo(stats, levelProgress)) {
+            this.hidePlayerInfoCard();
+            return;
+        }
+        
+        this.showPlayerInfoCard();
 
         this.playerInfo.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
@@ -280,9 +294,22 @@ class RewardUI {
     }
 
     showGameEndSummary(gameResult) {
-        if (!gameResult || !gameResult.rewards) return;
-
+        if (!gameResult) return;
+        
         const { rewards, newHighScore, playerStats } = gameResult;
+        
+        // Verificar se há informações relevantes para mostrar no resumo
+        const hasRelevantSummaryInfo = (
+            newHighScore || 
+            (rewards && rewards.coinsEarned > 0) || 
+            (rewards && rewards.levelUp) ||
+            (playerStats && playerStats.highScore > 0)
+        );
+        
+        if (!hasRelevantSummaryInfo) {
+            console.log('📊 Nenhuma informação relevante para mostrar no resumo do jogo');
+            return;
+        }
 
         // Criar resumo de fim de jogo
         const summary = document.createElement('div');
@@ -367,6 +394,37 @@ class RewardUI {
                 summary.remove();
             }
         }, 10000);
+    }
+
+    // Verificar se há informações relevantes para mostrar
+    hasRelevantInfo(stats, levelProgress) {
+        // Mostrar se há moedas para exibir
+        if (stats.coins > 0) return true;
+        
+        // Mostrar se há progresso para o próximo nível
+        if (levelProgress && levelProgress.next && levelProgress.progress > 0) return true;
+        
+        // Mostrar se não está no nível inicial (Bronze I)
+        if (stats.level && stats.level.id > 1) return true;
+        
+        // Mostrar se há high score
+        if (stats.highScore > 0) return true;
+        
+        return false;
+    }
+    
+    // Mostrar player info card
+    showPlayerInfoCard() {
+        if (this.playerInfo) {
+            this.playerInfo.style.display = 'flex';
+        }
+    }
+    
+    // Esconder player info card
+    hidePlayerInfoCard() {
+        if (this.playerInfo) {
+            this.playerInfo.style.display = 'none';
+        }
     }
 
     // Utilitário para escurecer cores

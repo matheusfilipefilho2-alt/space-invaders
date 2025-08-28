@@ -77,19 +77,14 @@ body {
   top: 15px;
   left: 50%;
   transform: translateX(-50%);
-  width: 50%;
+  width: 90%;
+  max-width: 1200px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  gap: 10px;
   z-index: 10000;
   font-size: clamp(12px, 2.5vw, 16px);
-  
-  /* Container simples */
-  background: rgba(0, 0, 0, 0.8);
-  border: 2px solid #333;
-  border-radius: 8px;
-  padding: 15px 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Removido efeito de borda animada */
@@ -99,7 +94,9 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  padding: 0 15px;
+  padding: 0 20px;
+  min-width: 120px;
+  text-align: center;
 }
 
 .score-item:not(:last-child) {
@@ -124,6 +121,156 @@ body {
   color: #ffd700;
 }
 
+/* Container do placar principal */
+.game-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 15px 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 800px;
+}
+
+/* Informações do Jogador integradas - Layout Horizontal */
+.player-info {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 4px 8px;
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.player-icon {
+  font-size: 12px;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+}
+
+.player-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.player-name {
+  color: #fff;
+  font-weight: bold;
+  font-size: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1;
+}
+
+.player-status {
+  color: #4ade80;
+  font-size: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  animation: pulse 2s infinite;
+  line-height: 1;
+}
+
+.player-stats {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.player-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+  padding: 0px 1px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  min-width: 24px;
+  flex: 1;
+  height: 20px;
+}
+
+.player-stats .stat-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.stat-icon {
+  font-size: 4px;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.3));
+}
+
+.stat-label {
+  color: #aaa;
+  font-size: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0px;
+  text-align: center;
+  line-height: 1;
+}
+
+.stat-value {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1px;
+  text-align: center;
+  min-height: 4px;
+  line-height: 1;
+}
+
+/* Cores especiais para diferentes stats */
+.stat-value.accuracy {
+  color: #10b981;
+}
+
+.stat-value.combo {
+  color: #f59e0b;
+}
+
+.stat-value.kills {
+  color: #ef4444;
+}
+
+.stat-value.time {
+  color: #3b82f6;
+}
+
+.stat-value.bonuses {
+  color: #8b5cf6;
+}
+
+.stat-value.status {
+  color: #06b6d4;
+}
+
+/* Efeito especial para combo alto */
+.stat-value.combo.high-combo {
+  color: #ff6b6b;
+  animation: glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px #ff6b6b;
+  }
+  to {
+    text-shadow: 0 0 10px #ff6b6b, 0 0 15px #ff6b6b;
+  }
+}
+
 /* Estilos específicos para páginas com scroll */
 body.shop-page,
 body.admin-page {
@@ -135,24 +282,107 @@ body.admin-page {
 /* Responsividade */
 @media (max-width: 768px) {
   .score-ui {
-    width: 80%;
-    padding: 10px 15px;
+    width: 95%;
     font-size: clamp(10px, 3vw, 14px);
+    gap: 8px;
+  }
+  
+  .game-stats {
+    padding: 10px 15px;
   }
   
   .score-item {
-    padding: 0 8px;
+    padding: 0 10px;
+    min-width: 80px;
+  }
+  
+  /* Informações do jogador em tablets */
+  .player-info {
+    padding: 6px 10px;
+    height: 120px;
+    gap: 8px;
+  }
+  
+  .player-stats {
+    gap: 6px;
+  }
+  
+  .player-stats .stat-item {
+    padding: 3px 4px;
+    min-width: 40px;
+  }
+  
+  .stat-icon {
+    font-size: 11px;
+  }
+  
+  .stat-label {
+    font-size: 6px;
+  }
+  
+  .stat-value {
+    font-size: 8px;
   }
 }
 
 @media (max-width: 480px) {
   .score-ui {
-    width: 95%;
+    width: 98%;
+    gap: 6px;
+  }
+  
+  .game-stats {
     padding: 8px 12px;
   }
   
   .score-item {
-    padding: 0 5px;
+    padding: 0 8px;
+    min-width: 60px;
+  }
+  
+  /* Informações do jogador em mobile */
+  .player-info {
+    padding: 6px 8px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .player-header {
+    gap: 6px;
+  }
+  
+  .player-icon {
+    font-size: 12px;
+  }
+  
+  .player-name {
+    font-size: 9px;
+  }
+  
+  .player-status {
+    font-size: 6px;
+  }
+  
+  .player-stats {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  
+  .player-stats .stat-item {
+    padding: 3px 2px;
+    min-width: 35px;
+  }
+  
+  .stat-icon {
+    font-size: 10px;
+  }
+  
+  .stat-label {
+    font-size: 6px;
+  }
+  
+  .stat-value {
+    font-size: 7px;
   }
 }
 

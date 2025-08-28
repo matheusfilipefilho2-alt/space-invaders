@@ -45,6 +45,16 @@ const buttonRestart = document.querySelector(".button-restart");
 const buttonViewRanking = document.querySelector(".button-view-ranking");
 const gameOverScreen = document.querySelector(".game-over");
 
+// Elementos do card de informações do jogador
+const playerNameElement = document.querySelector(".player-name");
+const playerStatusElement = document.querySelector(".player-status");
+const accuracyElement = document.querySelector(".accuracy");
+const comboElement = document.querySelector(".combo");
+const killsElement = document.querySelector(".kills");
+const timeElement = document.querySelector(".time");
+const bonusesElement = document.querySelector(".bonuses");
+const statusElement = document.querySelector(".status");
+
 // Configurar usuário atual no rankingManager
 const currentUser = NavigationHelper.getCurrentUser();
 if (currentUser) {
@@ -176,12 +186,81 @@ const gameData = {
   high: currentUser ? (currentUser.high_score || 0) : (localStorage.getItem("highScore") || 0),
 };
 
+// Função para formatar tempo em MM:SS
+const formatTime = (milliseconds) => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
+// Função para calcular precisão
+const calculateAccuracy = () => {
+  if (gameStats.totalShots === 0) return 100;
+  return Math.round((gameStats.perfectShots / gameStats.totalShots) * 100);
+};
+
+// Função para obter status do jogador
+const getPlayerStatus = () => {
+  if (player.isInvulnerable()) return 'Invulnerável';
+  if (bonusSystem.playerBuff.active) return 'Mega Mode';
+  if (player.goldenShipEnabled) return 'Nave Dourada';
+  if (player.trailEnabled) return 'Arco-íris';
+  return 'Normal';
+};
+
+// Atualizar o card de informações do jogador
+const updatePlayerInfoCard = () => {
+  if (!playerNameElement) return;
+  
+  // Atualizar nome do jogador
+  if (currentUser) {
+    playerNameElement.textContent = currentUser.username || 'Jogador';
+  }
+  
+  // Atualizar status
+  const status = getPlayerStatus();
+  playerStatusElement.textContent = status === 'Normal' ? 'Em Combate' : status;
+  
+  // Atualizar precisão
+  const accuracy = calculateAccuracy();
+  accuracyElement.textContent = `${accuracy}%`;
+  
+  // Atualizar combo
+  const combo = gameStats.currentCombo;
+  comboElement.textContent = combo.toString();
+  
+  // Adicionar efeito visual para combo alto
+  if (combo >= 10) {
+    comboElement.classList.add('high-combo');
+  } else {
+    comboElement.classList.remove('high-combo');
+  }
+  
+  // Atualizar kills
+  killsElement.textContent = gameStats.killCount.toString();
+  
+  // Atualizar tempo de jogo
+  const currentTime = Date.now();
+  const gameTime = currentTime - gameStats.startTime - totalPausedTime;
+  timeElement.textContent = formatTime(gameTime);
+  
+  // Atualizar bônus coletados
+  bonusesElement.textContent = gameStats.bonusesCollected.toString();
+  
+  // Atualizar status visual
+  statusElement.textContent = status;
+};
+
 // Atualizar a UI com os dados iniciais
 const updateUI = () => {
   scoreElement.textContent = gameData.score;
   levelElement.textContent = gameData.level;
   highElement.textContent = gameData.high;
   livesElement.textContent = player.getLives();
+  
+  // Atualizar card de informações do jogador
+  updatePlayerInfoCard();
 };
 
 // Inicializar jogador e grid
@@ -785,8 +864,6 @@ const checkBonusCollision = () => {
 };
 
 const playerShootWithBuff = (projectiles) => {
-  gameStats.totalShots++;
-
   if (bonusSystem.playerBuff.active) {
     // Projétil de destruction quando o buff está ativo
     player.shoot(projectiles, "destruction");
@@ -833,6 +910,8 @@ const clearProjectiles = () => {
   // Remover projéteis do jogador fora da tela
   for (let i = playerProjectiles.length - 1; i >= 0; i--) {
     if (playerProjectiles[i].position.y < 0) {
+      // Registrar como tiro perdido (não acertou nenhum invasor)
+      registerShot(false);
       playerProjectiles.splice(i, 1);
     }
   }
