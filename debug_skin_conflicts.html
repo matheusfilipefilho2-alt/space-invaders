@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Conflitos de Skins no localStorage</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4ECDC4;
+        }
+        .conflict {
+            background: #4a2a2a;
+            border-left-color: #ff6b6b;
+        }
+        .ok {
+            background: #2a4a2a;
+            border-left-color: #51cf66;
+        }
+        button {
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45b7aa;
+        }
+        .log {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .user-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .user-card {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug - Conflitos de Skins no localStorage</h1>
+    
+    <div class="section">
+        <h2>🎯 Objetivo</h2>
+        <p>Identificar e resolver conflitos entre os campos <code>activeSkin_100</code> e <code>selectedSkin_100</code> no localStorage que podem estar causando erros no sistema de skins.</p>
+    </div>
+
+    <div class="section">
+        <h2>👤 Configuração de Usuário de Teste</h2>
+        <button onclick="setupTestUser()">Criar Usuário ID 100</button>
+        <button onclick="clearAllSkinData()">Limpar Todos os Dados de Skin</button>
+        <div id="user-setup-log" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>📊 Análise do localStorage</h2>
+        <button onclick="analyzeLocalStorage()">Analisar localStorage</button>
+        <button onclick="showAllSkinKeys()">Mostrar Todas as Chaves de Skin</button>
+        <div id="analysis-log" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Simulação de Conflitos</h2>
+        <button onclick="createConflictScenario1()">Cenário 1: activeSkin ≠ selectedSkin</button>
+        <button onclick="createConflictScenario2()">Cenário 2: Dados Corrompidos</button>
+        <button onclick="createConflictScenario3()">Cenário 3: Múltiplas Versões</button>
+        <div id="conflict-log" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>🧪 Teste de Carregamento</h2>
+        <button onclick="testPlayerSkinLoading()">Testar Player.loadUserSelectedSkin()</button>
+        <button onclick="testShopSkinLoading()">Testar Shop.getActiveSkin()</button>
+        <div id="loading-test-log" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>✅ Propostas de Correção</h2>
+        <button onclick="proposeUnifiedSystem()">Propor Sistema Unificado</button>
+        <button onclick="implementFix()">Implementar Correção</button>
+        <div id="fix-log" class="log"></div>
+    </div>
+
+    <!-- Scripts carregados apenas se necessário para evitar conflitos de módulos -->
+    
+    <script>
+        const testUserId = 100;
+        
+        function log(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent += new Date().toLocaleTimeString() + ' - ' + message + '\n';
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function clearLog(elementId) {
+            document.getElementById(elementId).textContent = '';
+        }
+        
+        // Configurar usuário de teste
+        window.setupTestUser = function() {
+            clearLog('user-setup-log');
+            log('user-setup-log', '🚀 Configurando usuário de teste ID 100...');
+            
+            try {
+                const testUser = {
+                    id: testUserId,
+                    name: 'Usuário Teste',
+                    email: 'teste@teste.com',
+                    coins: 1000
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(testUser));
+                localStorage.setItem('spaceInvaders_currentUser', JSON.stringify(testUser));
+                localStorage.setItem('isLoggedIn', 'true');
+                
+                log('user-setup-log', '✅ Usuário criado com sucesso');
+                log('user-setup-log', `📋 ID: ${testUser.id}`);
+                log('user-setup-log', `📋 Nome: ${testUser.name}`);
+                
+            } catch (error) {
+                log('user-setup-log', '❌ Erro: ' + error.message);
+            }
+        };
+        
+        // Limpar todos os dados de skin
+        window.clearAllSkinData = function() {
+            clearLog('user-setup-log');
+            log('user-setup-log', '🧹 Limpando todos os dados de skin...');
+            
+            try {
+                const keysToRemove = [];
+                
+                // Encontrar todas as chaves relacionadas a skins
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('Skin') || key.includes('skin'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                
+                // Remover as chaves
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    log('user-setup-log', `🗑️ Removido: ${key}`);
+                });
+                
+                log('user-setup-log', `✅ ${keysToRemove.length} chaves de skin removidas`);
+                
+            } catch (error) {
+                log('user-setup-log', '❌ Erro: ' + error.message);
+            }
+        };
+        
+        // Analisar localStorage
+        window.analyzeLocalStorage = function() {
+            clearLog('analysis-log');
+            log('analysis-log', '🔍 Analisando localStorage...');
+            
+            try {
+                const skinKeys = [];
+                const conflicts = [];
+                
+                // Encontrar todas as chaves de skin
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('Skin') || key.includes('skin'))) {
+                        skinKeys.push(key);
+                    }
+                }
+                
+                log('analysis-log', `📊 Encontradas ${skinKeys.length} chaves relacionadas a skins:`);
+                
+                skinKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    log('analysis-log', `  ${key}: ${value}`);
+                    
+                    // Verificar se é JSON válido
+                    try {
+                        JSON.parse(value);
+                        log('analysis-log', `    ✅ JSON válido`);
+                    } catch {
+                        log('analysis-log', `    ❌ JSON inválido`);
+                        conflicts.push(`${key}: JSON inválido`);
+                    }
+                });
+                
+                // Verificar conflitos específicos para usuário 100
+                const activeSkin = localStorage.getItem(`activeSkin_${testUserId}`);
+                const selectedSkin = localStorage.getItem(`selectedSkin_${testUserId}`);
+                
+                if (activeSkin && selectedSkin) {
+                    try {
+                        const activeData = JSON.parse(activeSkin);
+                        const selectedData = JSON.parse(selectedSkin);
+                        
+                        if (activeData.skinId !== selectedData.skinId) {
+                            conflicts.push('activeSkin e selectedSkin têm IDs diferentes');
+                            log('analysis-log', `⚠️ CONFLITO: activeSkin=${activeData.skinId}, selectedSkin=${selectedData.skinId}`);
+                        } else {
+                            log('analysis-log', `✅ activeSkin e selectedSkin estão sincronizados`);
+                        }
+                    } catch (error) {
+                        conflicts.push('Erro ao comparar activeSkin e selectedSkin');
+                    }
+                }
+                
+                log('analysis-log', `\n📋 Resumo: ${conflicts.length} conflitos encontrados`);
+                conflicts.forEach(conflict => {
+                    log('analysis-log', `  ❌ ${conflict}`);
+                });
+                
+            } catch (error) {
+                log('analysis-log', '❌ Erro na análise: ' + error.message);
+            }
+        };
+        
+        // Mostrar todas as chaves de skin
+        window.showAllSkinKeys = function() {
+            clearLog('analysis-log');
+            log('analysis-log', '🔑 Todas as chaves do localStorage:');
+            
+            const allKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                allKeys.push(localStorage.key(i));
+            }
+            
+            allKeys.sort().forEach(key => {
+                const isSkinRelated = key.includes('Skin') || key.includes('skin');
+                const prefix = isSkinRelated ? '🎨' : '📄';
+                log('analysis-log', `${prefix} ${key}`);
+            });
+        };
+        
+        // Criar cenários de conflito
+        window.createConflictScenario1 = function() {
+            clearLog('conflict-log');
+            log('conflict-log', '🔧 Criando Cenário 1: activeSkin ≠ selectedSkin');
+            
+            const activeSkin = {
+                skinId: 'skin_milenium',
+                skinFile: 'milenium.png',
+                setAt: new Date().toISOString()
+            };
+            
+            const selectedSkin = {
+                skinId: 'skin_xwing',
+                skinFile: 'xwing.png',
+                skinName: 'X-Wing Fighter'
+            };
+            
+            localStorage.setItem(`activeSkin_${testUserId}`, JSON.stringify(activeSkin));
+            localStorage.setItem(`selectedSkin_${testUserId}`, JSON.stringify(selectedSkin));
+            
+            log('conflict-log', '✅ Conflito criado:');
+            log('conflict-log', `  activeSkin: ${activeSkin.skinId}`);
+            log('conflict-log', `  selectedSkin: ${selectedSkin.skinId}`);
+        };
+        
+        window.createConflictScenario2 = function() {
+            clearLog('conflict-log');
+            log('conflict-log', '🔧 Criando Cenário 2: Dados Corrompidos');
+            
+            // JSON inválido
+            localStorage.setItem(`activeSkin_${testUserId}`, '{"skinId":"skin_test","skinFile":}');
+            localStorage.setItem(`selectedSkin_${testUserId}`, 'skin_invalid_format');
+            
+            log('conflict-log', '✅ Dados corrompidos criados');
+        };
+        
+        window.createConflictScenario3 = function() {
+            clearLog('conflict-log');
+            log('conflict-log', '🔧 Criando Cenário 3: Múltiplas Versões');
+            
+            // Criar múltiplas versões com formatos diferentes
+            localStorage.setItem(`activeSkin_${testUserId}`, JSON.stringify({
+                skinId: 'skin_blue',
+                skinFile: 'blue.png',
+                setAt: new Date().toISOString()
+            }));
+            
+            localStorage.setItem(`selectedSkin_${testUserId}`, JSON.stringify({
+                id: 'skin_blue', // formato diferente (id vs skinId)
+                file: 'blue.png', // formato diferente (file vs skinFile)
+                name: 'Nave Azul'
+            }));
+            
+            // Versões antigas
+            localStorage.setItem(`userSkin_${testUserId}`, 'skin_old_format');
+            localStorage.setItem(`currentSkin_${testUserId}`, 'skin_legacy');
+            
+            log('conflict-log', '✅ Múltiplas versões criadas');
+        };
+        
+        // Testar carregamento
+        window.testPlayerSkinLoading = function() {
+            clearLog('loading-test-log');
+            log('loading-test-log', '🧪 Testando Player.loadUserSelectedSkin()...');
+            
+            try {
+                // Simular o comportamento do Player
+                const currentUser = JSON.parse(localStorage.getItem('spaceInvaders_currentUser') || 'null');
+                log('loading-test-log', `👤 Usuário encontrado: ${currentUser ? currentUser.name : 'Nenhum'}`);
+                
+                if (currentUser) {
+                    const selectedSkinData = localStorage.getItem(`selectedSkin_${currentUser.id}`);
+                    log('loading-test-log', `🎨 selectedSkin encontrada: ${selectedSkinData ? 'Sim' : 'Não'}`);
+                    
+                    if (selectedSkinData) {
+                        try {
+                            const skinData = JSON.parse(selectedSkinData);
+                            log('loading-test-log', `📋 Dados da skin: ${JSON.stringify(skinData, null, 2)}`);
+                            
+                            if (skinData.skinFile) {
+                                log('loading-test-log', `✅ Skin válida: ${skinData.skinName || skinData.skinId}`);
+                            } else {
+                                log('loading-test-log', `❌ Skin inválida: falta skinFile`);
+                            }
+                        } catch (error) {
+                            log('loading-test-log', `❌ Erro ao parsear JSON: ${error.message}`);
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                log('loading-test-log', '❌ Erro no teste: ' + error.message);
+            }
+        };
+        
+        window.testShopSkinLoading = function() {
+            clearLog('loading-test-log');
+            log('loading-test-log', '🧪 Testando Shop.getActiveSkin()...');
+            
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                log('loading-test-log', `👤 Usuário encontrado: ${currentUser ? currentUser.name : 'Nenhum'}`);
+                
+                if (currentUser) {
+                    const activeSkinData = localStorage.getItem(`activeSkin_${currentUser.id}`);
+                    log('loading-test-log', `🚀 activeSkin encontrada: ${activeSkinData ? 'Sim' : 'Não'}`);
+                    
+                    if (activeSkinData) {
+                        try {
+                            const skinData = JSON.parse(activeSkinData);
+                            log('loading-test-log', `📋 Dados da skin: ${JSON.stringify(skinData, null, 2)}`);
+                        } catch (error) {
+                            log('loading-test-log', `❌ Erro ao parsear JSON: ${error.message}`);
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                log('loading-test-log', '❌ Erro no teste: ' + error.message);
+            }
+        };
+        
+        // Propor sistema unificado
+        window.proposeUnifiedSystem = function() {
+            clearLog('fix-log');
+            log('fix-log', '💡 Proposta de Sistema Unificado:');
+            log('fix-log', '');
+            log('fix-log', '1. USAR APENAS selectedSkin_[userId]:');
+            log('fix-log', '   - Formato padrão: {skinId, skinFile, skinName, selectedAt}');
+            log('fix-log', '   - Player.js carrega apenas desta fonte');
+            log('fix-log', '   - shop.js salva apenas nesta chave');
+            log('fix-log', '');
+            log('fix-log', '2. REMOVER activeSkin_[userId]:');
+            log('fix-log', '   - Eliminar redundância');
+            log('fix-log', '   - Evitar conflitos de sincronização');
+            log('fix-log', '');
+            log('fix-log', '3. MIGRAÇÃO:');
+            log('fix-log', '   - Verificar se existe activeSkin sem selectedSkin');
+            log('fix-log', '   - Migrar dados para selectedSkin');
+            log('fix-log', '   - Limpar activeSkin após migração');
+            log('fix-log', '');
+            log('fix-log', '4. VALIDAÇÃO:');
+            log('fix-log', '   - Verificar JSON válido antes de usar');
+            log('fix-log', '   - Fallback para skin padrão em caso de erro');
+        };
+        
+        // Implementar correção
+        window.implementFix = function() {
+            clearLog('fix-log');
+            log('fix-log', '🔧 Implementando correção...');
+            
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (!currentUser) {
+                    log('fix-log', '❌ Usuário não encontrado');
+                    return;
+                }
+                
+                const userId = currentUser.id;
+                const activeSkinKey = `activeSkin_${userId}`;
+                const selectedSkinKey = `selectedSkin_${userId}`;
+                
+                const activeSkinData = localStorage.getItem(activeSkinKey);
+                const selectedSkinData = localStorage.getItem(selectedSkinKey);
+                
+                log('fix-log', `🔍 Verificando dados para usuário ${userId}:`);
+                log('fix-log', `  activeSkin: ${activeSkinData ? 'Existe' : 'Não existe'}`);
+                log('fix-log', `  selectedSkin: ${selectedSkinData ? 'Existe' : 'Não existe'}`);
+                
+                // Cenário 1: Existe activeSkin mas não selectedSkin
+                if (activeSkinData && !selectedSkinData) {
+                    try {
+                        const activeData = JSON.parse(activeSkinData);
+                        const migratedData = {
+                            skinId: activeData.skinId,
+                            skinFile: activeData.skinFile,
+                            skinName: activeData.skinName || activeData.skinId,
+                            selectedAt: activeData.setAt || new Date().toISOString()
+                        };
+                        
+                        localStorage.setItem(selectedSkinKey, JSON.stringify(migratedData));
+                        localStorage.removeItem(activeSkinKey);
+                        
+                        log('fix-log', '✅ Migração: activeSkin → selectedSkin');
+                        log('fix-log', `   Skin: ${migratedData.skinId}`);
+                    } catch (error) {
+                        log('fix-log', '❌ Erro na migração: ' + error.message);
+                        localStorage.removeItem(activeSkinKey);
+                    }
+                }
+                
+                // Cenário 2: Existem ambos - manter selectedSkin, remover activeSkin
+                else if (activeSkinData && selectedSkinData) {
+                    localStorage.removeItem(activeSkinKey);
+                    log('fix-log', '✅ Remoção: activeSkin removido (selectedSkin mantido)');
+                }
+                
+                // Cenário 3: Só existe selectedSkin - OK
+                else if (selectedSkinData) {
+                    log('fix-log', '✅ OK: Apenas selectedSkin existe');
+                }
+                
+                // Cenário 4: Nenhum existe - OK (skin padrão)
+                else {
+                    log('fix-log', '✅ OK: Nenhuma skin personalizada (usando padrão)');
+                }
+                
+                log('fix-log', '');
+                log('fix-log', '🎉 Correção implementada com sucesso!');
+                
+            } catch (error) {
+                log('fix-log', '❌ Erro na implementação: ' + error.message);
+            }
+        };
+        
+        // Inicializar
+        log('user-setup-log', '🚀 Sistema de debug inicializado');
+        log('user-setup-log', 'Configure um usuário de teste para começar');
+    </script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração do Sistema de Skins</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4ECDC4;
+        }
+        .success {
+            border-left-color: #51cf66;
+            background: #2a4a2a;
+        }
+        .warning {
+            border-left-color: #ffd43b;
+            background: #4a4a2a;
+        }
+        .error {
+            border-left-color: #ff6b6b;
+            background: #4a2a2a;
+        }
+        button {
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45b7aa;
+        }
+        button.danger {
+            background: #ff6b6b;
+        }
+        button.danger:hover {
+            background: #ff5252;
+        }
+        .log {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .stat-card {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ECDC4;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Migração do Sistema de Skins</h1>
+    
+    <div class="section">
+        <h2>📋 Objetivo da Migração</h2>
+        <p>Esta ferramenta irá:</p>
+        <ul>
+            <li>✅ Consolidar dados de <code>activeSkin_*</code> para <code>selectedSkin_*</code></li>
+            <li>🗑️ Remover campos duplicados e obsoletos</li>
+            <li>🔧 Corrigir dados corrompidos ou inválidos</li>
+            <li>📊 Gerar relatório de migração</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🔍 Análise Atual</h2>
+        <button onclick="analyzeCurrentState()">Analisar Estado Atual</button>
+        <div class="stats" id="current-stats"></div>
+        <div id="analysis-log" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>🚀 Executar Migração</h2>
+        <button onclick="runMigration()">Executar Migração Completa</button>
+        <button onclick="runMigrationDryRun()">Simulação (Dry Run)</button>
+        <div id="migration-log" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>🧹 Limpeza Manual</h2>
+        <button class="danger" onclick="clearAllActiveSkins()">Remover Todos os activeSkin_*</button>
+        <button class="danger" onclick="clearAllSkinData()">Limpar TODOS os Dados de Skin</button>
+        <div id="cleanup-log" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>✅ Verificação Pós-Migração</h2>
+        <button onclick="verifyMigration()">Verificar Integridade</button>
+        <div id="verification-log" class="log"></div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'warning': '⚠️',
+                'error': '❌'
+            }[type] || 'ℹ️';
+            
+            element.textContent += `${timestamp} ${prefix} ${message}\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function clearLog(elementId) {
+            document.getElementById(elementId).textContent = '';
+        }
+        
+        function updateStats(stats) {
+            const statsContainer = document.getElementById('current-stats');
+            statsContainer.innerHTML = Object.entries(stats).map(([key, value]) => `
+                <div class="stat-card">
+                    <div class="stat-number">${value}</div>
+                    <div class="stat-label">${key}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Analisar estado atual
+        window.analyzeCurrentState = function() {
+            clearLog('analysis-log');
+            log('analysis-log', 'Iniciando análise do localStorage...');
+            
+            const stats = {
+                'Total de Chaves': 0,
+                'activeSkin_*': 0,
+                'selectedSkin_*': 0,
+                'Usuários Únicos': 0,
+                'Dados Corrompidos': 0
+            };
+            
+            const activeSkins = new Map();
+            const selectedSkins = new Map();
+            const corruptedKeys = [];
+            const users = new Set();
+            
+            // Analisar todas as chaves
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                stats['Total de Chaves']++;
+                
+                if (key.startsWith('activeSkin_')) {
+                    stats['activeSkin_*']++;
+                    const userId = key.replace('activeSkin_', '');
+                    users.add(userId);
+                    
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        activeSkins.set(userId, data);
+                        log('analysis-log', `activeSkin encontrado para usuário ${userId}: ${data.skinId}`);
+                    } catch (error) {
+                        stats['Dados Corrompidos']++;
+                        corruptedKeys.push(key);
+                        log('analysis-log', `Dados corrompidos em ${key}`, 'error');
+                    }
+                }
+                
+                if (key.startsWith('selectedSkin_')) {
+                    stats['selectedSkin_*']++;
+                    const userId = key.replace('selectedSkin_', '');
+                    users.add(userId);
+                    
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        selectedSkins.set(userId, data);
+                        log('analysis-log', `selectedSkin encontrado para usuário ${userId}: ${data.skinId}`);
+                    } catch (error) {
+                        stats['Dados Corrompidos']++;
+                        corruptedKeys.push(key);
+                        log('analysis-log', `Dados corrompidos em ${key}`, 'error');
+                    }
+                }
+            }
+            
+            stats['Usuários Únicos'] = users.size;
+            updateStats(stats);
+            
+            // Analisar conflitos
+            log('analysis-log', '\n🔍 Analisando conflitos...');
+            let conflicts = 0;
+            
+            for (const userId of users) {
+                const active = activeSkins.get(userId);
+                const selected = selectedSkins.get(userId);
+                
+                if (active && selected) {
+                    if (active.skinId !== selected.skinId) {
+                        conflicts++;
+                        log('analysis-log', `⚠️ CONFLITO usuário ${userId}: active=${active.skinId}, selected=${selected.skinId}`, 'warning');
+                    } else {
+                        log('analysis-log', `✅ Usuário ${userId}: dados sincronizados (${active.skinId})`, 'success');
+                    }
+                } else if (active && !selected) {
+                    log('analysis-log', `📋 Usuário ${userId}: apenas activeSkin (${active.skinId}) - MIGRAÇÃO NECESSÁRIA`, 'warning');
+                } else if (!active && selected) {
+                    log('analysis-log', `✅ Usuário ${userId}: apenas selectedSkin (${selected.skinId}) - OK`, 'success');
+                }
+            }
+            
+            log('analysis-log', `\n📊 Resumo: ${conflicts} conflitos encontrados`);
+            log('analysis-log', `🗑️ ${corruptedKeys.length} chaves corrompidas para limpeza`);
+        };
+        
+        // Executar migração
+        window.runMigration = function() {
+            clearLog('migration-log');
+            log('migration-log', '🚀 Iniciando migração completa...');
+            
+            const migrationResults = {
+                migrated: 0,
+                cleaned: 0,
+                errors: 0
+            };
+            
+            try {
+                // Fase 1: Migrar activeSkin para selectedSkin
+                log('migration-log', '\n📋 Fase 1: Migrando activeSkin → selectedSkin');
+                
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    
+                    if (key && key.startsWith('activeSkin_')) {
+                        const userId = key.replace('activeSkin_', '');
+                        const selectedSkinKey = `selectedSkin_${userId}`;
+                        
+                        try {
+                            const activeData = JSON.parse(localStorage.getItem(key));
+                            const existingSelected = localStorage.getItem(selectedSkinKey);
+                            
+                            if (!existingSelected) {
+                                // Migrar activeSkin para selectedSkin
+                                const migratedData = {
+                                    skinId: activeData.skinId,
+                                    skinFile: activeData.skinFile,
+                                    skinName: activeData.skinName || activeData.skinId,
+                                    selectedAt: activeData.setAt || new Date().toISOString(),
+                                    migratedFrom: 'activeSkin'
+                                };
+                                
+                                localStorage.setItem(selectedSkinKey, JSON.stringify(migratedData));
+                                log('migration-log', `✅ Migrado usuário ${userId}: ${activeData.skinId}`, 'success');
+                                migrationResults.migrated++;
+                            } else {
+                                log('migration-log', `⚠️ selectedSkin já existe para usuário ${userId}, mantendo`, 'warning');
+                            }
+                            
+                            // Remover activeSkin após migração
+                            localStorage.removeItem(key);
+                            migrationResults.cleaned++;
+                            
+                        } catch (error) {
+                            log('migration-log', `❌ Erro ao migrar ${key}: ${error.message}`, 'error');
+                            migrationResults.errors++;
+                            
+                            // Remover dados corrompidos
+                            localStorage.removeItem(key);
+                            migrationResults.cleaned++;
+                        }
+                    }
+                }
+                
+                // Fase 2: Limpar dados corrompidos
+                log('migration-log', '\n🧹 Fase 2: Limpando dados corrompidos');
+                
+                const keysToCheck = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.includes('Skin')) {
+                        keysToCheck.push(key);
+                    }
+                }
+                
+                keysToCheck.forEach(key => {
+                    try {
+                        const data = localStorage.getItem(key);
+                        JSON.parse(data); // Testar se é JSON válido
+                    } catch (error) {
+                        log('migration-log', `🗑️ Removendo dados corrompidos: ${key}`, 'warning');
+                        localStorage.removeItem(key);
+                        migrationResults.cleaned++;
+                    }
+                });
+                
+                log('migration-log', `\n🎉 Migração concluída!`);
+                log('migration-log', `📊 Resultados:`);
+                log('migration-log', `  • ${migrationResults.migrated} skins migradas`);
+                log('migration-log', `  • ${migrationResults.cleaned} chaves removidas`);
+                log('migration-log', `  • ${migrationResults.errors} erros encontrados`);
+                
+            } catch (error) {
+                log('migration-log', `❌ Erro crítico na migração: ${error.message}`, 'error');
+            }
+        };
+        
+        // Simulação de migração
+        window.runMigrationDryRun = function() {
+            clearLog('migration-log');
+            log('migration-log', '🧪 Executando simulação (nenhuma alteração será feita)...');
+            
+            const actions = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                
+                if (key && key.startsWith('activeSkin_')) {
+                    const userId = key.replace('activeSkin_', '');
+                    const selectedSkinKey = `selectedSkin_${userId}`;
+                    
+                    try {
+                        const activeData = JSON.parse(localStorage.getItem(key));
+                        const existingSelected = localStorage.getItem(selectedSkinKey);
+                        
+                        if (!existingSelected) {
+                            actions.push(`MIGRAR: ${key} → ${selectedSkinKey} (${activeData.skinId})`);
+                        } else {
+                            actions.push(`MANTER: ${selectedSkinKey} já existe`);
+                        }
+                        
+                        actions.push(`REMOVER: ${key}`);
+                        
+                    } catch (error) {
+                        actions.push(`REMOVER: ${key} (dados corrompidos)`);
+                    }
+                }
+            }
+            
+            log('migration-log', `📋 Ações que seriam executadas:`);
+            actions.forEach(action => {
+                log('migration-log', `  • ${action}`);
+            });
+            
+            log('migration-log', `\n📊 Total: ${actions.length} ações`);
+        };
+        
+        // Limpeza manual
+        window.clearAllActiveSkins = function() {
+            if (!confirm('⚠️ Tem certeza? Isso removerá TODOS os dados de activeSkin_*')) {
+                return;
+            }
+            
+            clearLog('cleanup-log');
+            log('cleanup-log', '🗑️ Removendo todos os activeSkin_*...');
+            
+            let removed = 0;
+            const keysToRemove = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('activeSkin_')) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                log('cleanup-log', `🗑️ Removido: ${key}`);
+                removed++;
+            });
+            
+            log('cleanup-log', `✅ ${removed} chaves activeSkin_* removidas`, 'success');
+        };
+        
+        window.clearAllSkinData = function() {
+            if (!confirm('⚠️ ATENÇÃO! Isso removerá TODOS os dados de skins. Tem certeza?')) {
+                return;
+            }
+            
+            clearLog('cleanup-log');
+            log('cleanup-log', '🗑️ Removendo TODOS os dados de skin...');
+            
+            let removed = 0;
+            const keysToRemove = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('Skin') || key.includes('skin'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                log('cleanup-log', `🗑️ Removido: ${key}`);
+                removed++;
+            });
+            
+            log('cleanup-log', `✅ ${removed} chaves de skin removidas`, 'success');
+        };
+        
+        // Verificação pós-migração
+        window.verifyMigration = function() {
+            clearLog('verification-log');
+            log('verification-log', '🔍 Verificando integridade pós-migração...');
+            
+            let activeSkinCount = 0;
+            let selectedSkinCount = 0;
+            let corruptedCount = 0;
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                
+                if (key && key.startsWith('activeSkin_')) {
+                    activeSkinCount++;
+                    log('verification-log', `⚠️ activeSkin ainda existe: ${key}`, 'warning');
+                }
+                
+                if (key && key.startsWith('selectedSkin_')) {
+                    selectedSkinCount++;
+                    
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        if (data.skinId && data.skinFile) {
+                            log('verification-log', `✅ selectedSkin válido: ${key} (${data.skinId})`, 'success');
+                        } else {
+                            log('verification-log', `❌ selectedSkin inválido: ${key}`, 'error');
+                            corruptedCount++;
+                        }
+                    } catch (error) {
+                        log('verification-log', `❌ selectedSkin corrompido: ${key}`, 'error');
+                        corruptedCount++;
+                    }
+                }
+            }
+            
+            log('verification-log', `\n📊 Resultado da Verificação:`);
+            log('verification-log', `  • activeSkin_* restantes: ${activeSkinCount}`);
+            log('verification-log', `  • selectedSkin_* válidos: ${selectedSkinCount - corruptedCount}`);
+            log('verification-log', `  • Dados corrompidos: ${corruptedCount}`);
+            
+            if (activeSkinCount === 0 && corruptedCount === 0) {
+                log('verification-log', `\n🎉 MIGRAÇÃO CONCLUÍDA COM SUCESSO!`, 'success');
+            } else {
+                log('verification-log', `\n⚠️ Migração incompleta ou com problemas`, 'warning');
+            }
+        };
+        
+        // Inicializar
+        log('analysis-log', '🚀 Sistema de migração inicializado');
+        log('analysis-log', 'Clique em "Analisar Estado Atual" para começar');
+    </script>
+</body>
+</html>

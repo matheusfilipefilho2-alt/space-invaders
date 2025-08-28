@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Nave Padrão no Inventário</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #4ECDC4;
+        }
+        .skin-item {
+            background: #0f3460;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .skin-preview img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+        }
+        .btn {
+            background: #4ECDC4;
+            color: #1a1a2e;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #45b7aa;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛸 Teste - Nave Padrão no Inventário</h1>
+        
+        <div class="test-section">
+            <h2>👤 Usuário de Teste</h2>
+            <p>ID: 100 | Username: teste_user</p>
+            <button class="btn" onclick="setupTestUser()">Configurar Usuário de Teste</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📦 Inventário de Skins</h2>
+            <div id="inventory-display">Carregando...</div>
+            <button class="btn" onclick="loadInventory()">Recarregar Inventário</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎨 Teste de Aplicação de Skins</h2>
+            <div id="skin-test-buttons"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 Log de Atividades</h2>
+            <div id="log" class="log"></div>
+            <button class="btn" onclick="clearLog()">Limpar Log</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import RankingManager from './src/classes/RankingManager.js';
+        import Shop from './src/classes/ShopClass.js';
+        
+        // Inicializar managers
+        const rankingManager = new RankingManager();
+        const shop = new Shop(rankingManager);
+        
+        // Função para log
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        // Configurar usuário de teste
+        window.setupTestUser = function() {
+            const testUser = {
+                id: 100,
+                username: 'teste_user',
+                email: 'teste@example.com',
+                coins: 1000
+            };
+            
+            localStorage.setItem('spaceInvaders_currentUser', JSON.stringify(testUser));
+            rankingManager.currentUser = testUser;
+            
+            log('✅ Usuário de teste configurado: ' + testUser.username);
+        };
+        
+        // Carregar inventário
+        window.loadInventory = async function() {
+            try {
+                log('🔄 Carregando inventário...');
+                
+                const userItems = await shop.getUserItems();
+                log(`📦 ${userItems.length} itens encontrados no inventário`);
+                
+                const inventoryDisplay = document.getElementById('inventory-display');
+                const skinTestButtons = document.getElementById('skin-test-buttons');
+                
+                if (userItems.length === 0) {
+                    inventoryDisplay.innerHTML = '<p>Inventário vazio</p>';
+                    return;
+                }
+                
+                // Filtrar apenas skins
+                const skins = userItems.filter(item => {
+                    const shopItem = shop.getItemById(item.item_id);
+                    return shopItem && shopItem.category === 'skins';
+                });
+                
+                log(`🎨 ${skins.length} skins encontradas`);
+                
+                // Exibir skins no inventário
+                inventoryDisplay.innerHTML = skins.map(userItem => {
+                    const shopItem = shop.getItemById(userItem.item_id);
+                    if (!shopItem) return '';
+                    
+                    const skinImagePath = `src/assets/images/skins/${shopItem.skinFile}`;
+                    
+                    return `
+                        <div class="skin-item">
+                            <div class="skin-preview">
+                                <img src="${skinImagePath}" alt="${shopItem.name}" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                                <div style="display: none; font-size: 24px;">${shopItem.icon}</div>
+                            </div>
+                            <div>
+                                <strong>${shopItem.name}</strong><br>
+                                <small>${shopItem.description}</small><br>
+                                <small style="color: #4ECDC4;">ID: ${shopItem.id}</small>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Criar botões de teste
+                skinTestButtons.innerHTML = skins.map(userItem => {
+                    const shopItem = shop.getItemById(userItem.item_id);
+                    if (!shopItem) return '';
+                    
+                    return `
+                        <button class="btn" onclick="testUseSkin('${shopItem.id}')" style="margin: 5px;">
+                            Usar ${shopItem.name}
+                        </button>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                log('❌ Erro ao carregar inventário: ' + error.message);
+                console.error(error);
+            }
+        };
+        
+        // Testar uso de skin
+        window.testUseSkin = function(skinId) {
+            try {
+                log(`🎯 Testando aplicação da skin: ${skinId}`);
+                
+                const shopItem = shop.getItemById(skinId);
+                if (!shopItem) {
+                    log('❌ Skin não encontrada na loja');
+                    return;
+                }
+                
+                const currentUser = rankingManager.getCurrentUser();
+                if (!currentUser) {
+                    log('❌ Usuário não encontrado');
+                    return;
+                }
+                
+                // Simular aplicação da skin
+                if (skinId === 'skin_default') {
+                    localStorage.removeItem(`selectedSkin_${currentUser.id}`);
+                    log('🛸 Nave padrão aplicada - skin selecionada removida do localStorage');
+                } else {
+                    const skinData = {
+                        skinId: shopItem.id,
+                        skinFile: shopItem.skinFile,
+                        skinName: shopItem.name
+                    };
+                    
+                    localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(skinData));
+                    log(`🎨 Skin aplicada: ${shopItem.name} (${shopItem.skinFile})`);
+                }
+                
+                // Verificar o que está salvo
+                const savedSkin = localStorage.getItem(`selectedSkin_${currentUser.id}`);
+                if (savedSkin) {
+                    const skinData = JSON.parse(savedSkin);
+                    log(`💾 Skin ativa no localStorage: ${skinData.skinName}`);
+                } else {
+                    log('💾 Nenhuma skin no localStorage (usando padrão)');
+                }
+                
+            } catch (error) {
+                log('❌ Erro ao testar skin: ' + error.message);
+                console.error(error);
+            }
+        };
+        
+        // Limpar log
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+        
+        // Inicializar
+        log('🚀 Sistema de teste inicializado');
+        
+        // Configurar usuário automaticamente
+        setTimeout(() => {
+            setupTestUser();
+            setTimeout(loadInventory, 500);
+        }, 100);
+    </script>
+</body>
+</html>

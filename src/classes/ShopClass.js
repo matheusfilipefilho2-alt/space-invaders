@@ -134,6 +134,18 @@ class Shop {
             
             // Skins de Naves
             {
+                id: 'skin_default',
+                name: 'Nave Padrão',
+                description: 'A nave clássica original do jogo',
+                category: 'skins',
+                rarity: 'common',
+                price: 0,
+                icon: '🛸',
+                permanent: true,
+                skinFile: 'spaceship.png',
+                isDefault: true
+            },
+            {
                 id: 'skin_milenium',
                 name: 'Millennium Falcon',
                 description: 'A icônica nave de Han Solo',
@@ -366,9 +378,9 @@ class Shop {
             // Atualizar usuário local
             currentUser.coins = newCoins;
             
-            // Se for uma skin, salvar como skin ativa
+            // Se for uma skin, salvar como skin selecionada (fonte única)
             if (item.category === 'skins') {
-                this.setActiveSkin(itemId, item.skinFile);
+                this.setSelectedSkin(itemId, item.skinFile, item.name);
             }
             
             return {
@@ -394,7 +406,34 @@ class Shop {
         await this.inventorySync.syncInventory(currentUser.id);
         
         // Retornar itens do localStorage (já sincronizado)
-        return this.inventorySync.getLocalInventory(currentUser.id);
+        let userItems = this.inventorySync.getLocalInventory(currentUser.id);
+        
+        // Garantir que a nave padrão sempre esteja no inventário
+        const hasDefaultSkin = userItems.some(item => item.item_id === 'skin_default');
+        if (!hasDefaultSkin) {
+            const defaultSkinItem = {
+                id: Date.now(),
+                player_id: currentUser.id,
+                item_id: 'skin_default',
+                item_name: 'Nave Padrão',
+                item_category: 'skins',
+                uses_remaining: null,
+                is_permanent: true,
+                purchased_at: new Date().toISOString()
+            };
+            
+            // Adicionar ao inventário local
+            userItems.push(defaultSkinItem);
+            
+            // Salvar no localStorage
+            const localItems = JSON.parse(localStorage.getItem(`userItems_${currentUser.id}`) || '[]');
+            localItems.push(defaultSkinItem);
+            localStorage.setItem(`userItems_${currentUser.id}`, JSON.stringify(localItems));
+            
+            console.log('🛸 Nave padrão adicionada automaticamente ao inventário');
+        }
+        
+        return userItems;
     }
     
     // Usar item do inventário (com sincronização)
@@ -430,37 +469,56 @@ class Shop {
     
     // === SISTEMA DE SKINS ===
     
-    // Definir skin ativa
-    setActiveSkin(skinId, skinFile) {
+    // Definir skin selecionada (FONTE ÚNICA DE DADOS)
+    setSelectedSkin(skinId, skinFile, skinName = null) {
         const currentUser = this.rankingManager.getCurrentUser();
         if (!currentUser) {
             return false;
         }
         
-        const activeSkin = {
+        const selectedSkin = {
             skinId,
             skinFile,
-            setAt: new Date().toISOString()
+            skinName: skinName || skinId,
+            selectedAt: new Date().toISOString()
         };
         
-        localStorage.setItem(`activeSkin_${currentUser.id}`, JSON.stringify(activeSkin));
-        console.log(`🚀 Skin ativa definida: ${skinId}`);
+        localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(selectedSkin));
+        console.log(`🚀 Skin selecionada definida: ${skinId}`);
         return true;
     }
     
-    // Obter skin ativa
-    getActiveSkin() {
+    // Obter skin selecionada (FONTE ÚNICA DE DADOS)
+    getSelectedSkin() {
         const currentUser = this.rankingManager.getCurrentUser();
         if (!currentUser) {
             return null;
         }
         
-        const activeSkinData = localStorage.getItem(`activeSkin_${currentUser.id}`);
-        if (activeSkinData) {
-            return JSON.parse(activeSkinData);
+        const selectedSkinData = localStorage.getItem(`selectedSkin_${currentUser.id}`);
+        if (selectedSkinData) {
+            try {
+                return JSON.parse(selectedSkinData);
+            } catch (error) {
+                console.error('❌ JSON inválido em selectedSkin, removendo dados corrompidos:', error);
+                localStorage.removeItem(`selectedSkin_${currentUser.id}`);
+                return null;
+            }
         }
         
         return null;
+    }
+    
+    // DEPRECATED: Manter para compatibilidade temporária
+    setActiveSkin(skinId, skinFile) {
+        console.warn('⚠️ setActiveSkin está deprecated, use setSelectedSkin');
+        return this.setSelectedSkin(skinId, skinFile);
+    }
+    
+    // DEPRECATED: Manter para compatibilidade temporária
+    getActiveSkin() {
+        console.warn('⚠️ getActiveSkin está deprecated, use getSelectedSkin');
+        return this.getSelectedSkin();
     }
     
     // Obter skins do usuário

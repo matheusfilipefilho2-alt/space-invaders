@@ -368,7 +368,7 @@ window.useItem = async function(itemId) {
     }
 };
 
-// Usar skin do inventário
+// Usar skin do inventário (SISTEMA UNIFICADO)
 window.useSkin = async function(itemId) {
     console.log('🎯 useSkin chamada com itemId:', itemId);
     
@@ -382,34 +382,79 @@ window.useSkin = async function(itemId) {
             return;
         }
 
-        // Salvar skin selecionada no localStorage
         const currentUser = rankingManager.getCurrentUser();
         console.log('👤 Usuário atual:', currentUser);
         
-        if (currentUser) {
-            const skinData = {
-                skinId: shopItem.id,
-                skinFile: shopItem.skinFile,
-                skinName: shopItem.name
-            };
-            
-            console.log('💾 Salvando skin no localStorage:', skinData);
-            localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(skinData));
+        if (!currentUser) {
+            console.log('❌ Usuário não encontrado');
+            showResultModal('❌ Erro', 'Usuário não encontrado', true);
+            return;
+        }
+
+        // MIGRAÇÃO: Limpar dados antigos de activeSkin se existirem
+        const oldActiveSkinKey = `activeSkin_${currentUser.id}`;
+        if (localStorage.getItem(oldActiveSkinKey)) {
+            console.log('🔄 Removendo dados antigos de activeSkin...');
+            localStorage.removeItem(oldActiveSkinKey);
+        }
+        
+        // Tratamento especial para a nave padrão
+        if (itemId === 'skin_default') {
+            // Para a nave padrão, limpar a skin selecionada para voltar ao padrão
+            localStorage.removeItem(`selectedSkin_${currentUser.id}`);
+            console.log('🛸 Voltando para a nave padrão (removendo selectedSkin)');
             
             showResultModal(
-                '✅ Skin Aplicada!',
-                `${shopItem.name} foi definida como sua skin atual!<br>
+                '✅ Nave Padrão Aplicada!',
+                `Você voltou para a nave clássica original!<br>
                  <div style="margin-top: 10px; color: #4ECDC4;">
-                    A nova skin será aplicada na próxima partida.
+                    A nave padrão será aplicada na próxima partida.
                  </div>`,
                 true
             );
-            
-            console.log(`🎨 Skin aplicada: ${shopItem.name} (${shopItem.skinFile})`);
         } else {
-            console.log('❌ Usuário não encontrado');
-            showResultModal('❌ Erro', 'Usuário não encontrado', true);
+            // Para outras skins, usar o sistema unificado
+            const skinData = {
+                skinId: shopItem.id,
+                skinFile: shopItem.skinFile,
+                skinName: shopItem.name,
+                selectedAt: new Date().toISOString()
+            };
+            
+            console.log('💾 Salvando skin no localStorage (fonte única):', skinData);
+            
+            try {
+                localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(skinData));
+                
+                // Verificar se foi salvo corretamente
+                const savedData = localStorage.getItem(`selectedSkin_${currentUser.id}`);
+                const parsedData = JSON.parse(savedData);
+                
+                if (parsedData.skinId === shopItem.id) {
+                    console.log('✅ Skin salva e verificada com sucesso');
+                    
+                    showResultModal(
+                        '✅ Skin Aplicada!',
+                        `${shopItem.name} foi definida como sua skin atual!<br>
+                         <div style="margin-top: 10px; color: #4ECDC4;">
+                            A nova skin será aplicada na próxima partida.
+                         </div>`,
+                        true
+                    );
+                    
+                    console.log(`🎨 Skin aplicada: ${shopItem.name} (${shopItem.skinFile})`);
+                } else {
+                    throw new Error('Dados salvos não conferem');
+                }
+                
+            } catch (saveError) {
+                console.error('❌ Erro ao salvar skin:', saveError);
+                showResultModal('❌ Erro', 'Erro ao salvar a skin selecionada', true);
+            }
         }
+        
+        // Recarregar inventário para refletir mudanças
+        await loadInventory();
         
     } catch (error) {
         console.error('💥 Erro ao aplicar skin:', error);

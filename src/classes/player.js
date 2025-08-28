@@ -59,7 +59,7 @@ class Player {
     this.skinImages.set('default', this.image);
   }
 
-  // Carregar skin selecionada pelo usuário
+  // Carregar skin selecionada pelo usuário (FONTE ÚNICA DE DADOS)
   loadUserSelectedSkin() {
     try {
       // Verificar se há um usuário logado
@@ -69,21 +69,36 @@ class Player {
         return;
       }
 
-      // Buscar skin selecionada no localStorage
+      // Buscar APENAS selectedSkin no localStorage (fonte única)
       const selectedSkinData = localStorage.getItem(`selectedSkin_${currentUser.id}`);
       if (!selectedSkinData) {
         console.log('🎨 Nenhuma skin selecionada, usando skin padrão');
         return;
       }
 
-      const skinData = JSON.parse(selectedSkinData);
-      if (skinData.skinFile) {
-        console.log(`🎨 Carregando skin selecionada: ${skinData.skinName} (${skinData.skinFile})`);
+      // Validar JSON antes de usar
+      let skinData;
+      try {
+        skinData = JSON.parse(selectedSkinData);
+      } catch (parseError) {
+        console.error('❌ JSON inválido em selectedSkin, removendo dados corrompidos:', parseError);
+        localStorage.removeItem(`selectedSkin_${currentUser.id}`);
+        return;
+      }
+
+      // Verificar se os dados são válidos
+      if (skinData && skinData.skinId && skinData.skinFile) {
+        console.log(`🎨 Carregando skin selecionada: ${skinData.skinName || skinData.skinId} (${skinData.skinFile})`);
         this.loadSkin(skinData.skinId, skinData.skinFile);
         this.applySkin(skinData.skinId);
+      } else {
+        console.warn('⚠️ Dados de skin inválidos, usando skin padrão');
+        console.log('Dados recebidos:', skinData);
       }
     } catch (error) {
-      console.error('Erro ao carregar skin do usuário:', error);
+      console.error('❌ Erro ao carregar skin do usuário:', error);
+      // Em caso de erro, garantir que usamos a skin padrão
+      this.currentSkin = 'default';
     }
   }
 
