@@ -519,8 +519,13 @@ async function loadInventory() {
                             ''
                     }
                     
-                    ${/* Botão USAR para itens com usos restantes OU skins permanentes */ ''}
+                    ${/* Botão USAR para itens com usos restantes OU skins permanentes (exceto life_bonus) */ ''}
                     ${(() => {
+                        // Não mostrar botão USAR para o item life_bonus
+                        if (userItem.item_id === 'life_bonus') {
+                            return '';
+                        }
+                        
                         const shouldShowButton = (userItem.uses_remaining && userItem.uses_remaining > 0) || (isSkin && userItem.is_permanent);
                         console.log(`🔍 Debug botão para item ${userItem.item_id}:`, {
                             isSkin,
