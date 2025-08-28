@@ -40,21 +40,46 @@ async function loadCurrentUserInfo() {
       .from('players')
       .select('*')
       .eq('id', currentUser.id)
-      .single();
+      .limit(1);
     
     if (error) throw error;
     
+    // Verificar se o usuário existe
+    if (!userData || userData.length === 0) {
+      console.warn('⚠️ Usuário não encontrado no banco de dados');
+      // Usar dados do localStorage como fallback
+      const fallbackData = {
+        high_score: currentUser.high_score || 0,
+        coins: currentUser.coins || 0
+      };
+      
+      if (currentUserScore) {
+        currentUserScore.textContent = `Score: ${fallbackData.high_score}`;
+      }
+      
+      if (shopCoinIndicator && fallbackData.coins > 0) {
+        shopCoinIndicator.style.display = 'block';
+        const coinCount = shopCoinIndicator.querySelector('.coin-count');
+        if (coinCount) {
+          coinCount.textContent = fallbackData.coins;
+        }
+      }
+      return;
+    }
+    
+    const user = userData[0];
+    
     // Atualizar score do usuário
     if (currentUserScore) {
-      currentUserScore.textContent = `Score: ${userData.high_score || 0}`;
+      currentUserScore.textContent = `Score: ${user.high_score || 0}`;
     }
     
     // Atualizar indicador de moedas na loja
-    if (shopCoinIndicator && userData.coins > 0) {
+    if (shopCoinIndicator && user.coins > 0) {
       shopCoinIndicator.style.display = 'block';
       const coinCount = shopCoinIndicator.querySelector('.coin-count');
       if (coinCount) {
-        coinCount.textContent = userData.coins;
+        coinCount.textContent = user.coins;
       }
     }
     
