@@ -1,5 +1,6 @@
 import gameConfig from './GameConfig.js';
 import RewardSystem from './RewardSystem.js';
+import InventorySync from './InventorySync.js';
 import { supabase } from '../supabase.js';
 
 class Shop {
@@ -7,6 +8,7 @@ class Shop {
         this.rankingManager = rankingManager;
         this.gameConfig = gameConfig;
         this.rewardSystem = rankingManager ? rankingManager.getRewardSystem() : new RewardSystem();
+        this.inventorySync = new InventorySync();
         
         // Configurações da loja
         this.config = this.gameConfig.shop;
@@ -108,6 +110,26 @@ class Shop {
                 price: 30,
                 icon: '❤️',
                 duration: '1 partida'
+            },
+            {
+                id: 'golden_ship',
+                name: 'Nave Dourada',
+                description: 'Transforma sua nave em ouro, aumentando pontuação',
+                category: 'utility',
+                rarity: 'epic',
+                price: 150,
+                icon: '🟨',
+                permanent: true
+            },
+            {
+                id: 'rainbow_ship',
+                name: 'Nave Arco-íris',
+                description: 'Efeito visual especial com cores do arco-íris',
+                category: 'utility',
+                rarity: 'legendary',
+                price: 300,
+                icon: '🌈',
+                permanent: true
             },
             
             // Skins de Naves
@@ -325,26 +347,21 @@ class Shop {
                 throw updateError;
             }
             
-            // Salvar item no inventário
+            // Salvar item usando InventorySync
             const itemDataWithName = {
                 ...itemData,
                 item_name: item.name,
                 item_category: item.category
             };
             
-            const { data: insertData, error: insertError } = await supabase
-                .from('player_items')
-                .insert(itemDataWithName);
-                
-            if (insertError) {
-                console.error('Erro detalhado na inserção:', insertError);
-                console.error('Código do erro:', insertError.code);
-                console.error('Mensagem:', insertError.message);
-                console.error('Detalhes:', insertError.details);
-                throw insertError;
+            const saveResult = await this.inventorySync.addItemToInventory(currentUser.id, itemDataWithName);
+            
+            if (!saveResult.success) {
+                console.error('Erro ao salvar item no inventário:', saveResult.error);
+                throw new Error(saveResult.error);
             }
             
-            console.log('Item inserido com sucesso:', insertData);
+            console.log('Item salvo com sucesso no inventário');
             
             // Atualizar usuário local
             currentUser.coins = newCoins;
@@ -366,116 +383,40 @@ class Shop {
         }
     }
     
-    // Obter itens do usuário
+    // Obter itens do usuário (com sincronização)
     async getUserItems() {
         const currentUser = this.rankingManager.getCurrentUser();
         if (!currentUser) {
             return [];
         }
         
-        try {
-            const { data, error } = await supabase
-                .from('player_items')
-                .select('*')
-                .eq('player_id', currentUser.id)
-                .order('purchased_at', { ascending: false });
-                
-            if (error) {
-                console.error('Erro ao carregar inventário do Supabase:', error);
-                // Se a tabela não existe, usar localStorage como fallback
-                if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
-                    console.log('Usando localStorage para inventário...');
-                    const userItems = JSON.parse(localStorage.getItem(`userItems_${currentUser.id}`) || '[]');
-                    return userItems.sort((a, b) => new Date(b.purchased_at) - new Date(a.purchased_at));
-                }
-                throw error;
-            }
-            
-            return data || [];
-            
-        } catch (error) {
-            console.error('Erro ao carregar inventário:', error);
-            // Fallback para localStorage em caso de erro
-            const userItems = JSON.parse(localStorage.getItem(`userItems_${currentUser.id}`) || '[]');
-            return userItems.sort((a, b) => new Date(b.purchased_at) - new Date(a.purchased_at));
-        }
+        // Sincronizar inventário antes de retornar
+        await this.inventorySync.syncInventory(currentUser.id);
+        
+        // Retornar itens do localStorage (já sincronizado)
+        return this.inventorySync.getLocalInventory(currentUser.id);
     }
     
-    // Usar item do inventário
+    // Usar item do inventário (com sincronização)
     async useItem(itemId) {
         const currentUser = this.rankingManager.getCurrentUser();
         if (!currentUser) {
             return { success: false, error: 'Usuário não logado' };
         }
         
-        try {
-            // Buscar item no inventário
-            const { data: userItems, error: fetchError } = await supabase
-                .from('player_items')
-                .select('*')
-                .eq('player_id', currentUser.id)
-                .eq('item_id', itemId)
-                .gt('uses_remaining', 0)
-                .limit(1);
-                
-            if (fetchError) {
-                console.error('Erro ao buscar item no Supabase:', fetchError);
-                // Fallback para localStorage
-                if (fetchError.code === 'PGRST116' || fetchError.message.includes('does not exist')) {
-                    console.log('Usando localStorage para usar item...');
-                    const userItems = JSON.parse(localStorage.getItem(`userItems_${currentUser.id}`) || '[]');
-                    const userItem = userItems.find(item => 
-                        item.item_id === itemId && 
-                        item.uses_remaining && 
-                        item.uses_remaining > 0
-                    );
-                    
-                    if (!userItem) {
-                        return { success: false, error: 'Item não encontrado ou sem usos' };
-                    }
-                    
-                    userItem.uses_remaining -= 1;
-                    localStorage.setItem(`userItems_${currentUser.id}`, JSON.stringify(userItems));
-                    
-                    const shopItem = this.getItemById(itemId);
-                    return {
-                        success: true,
-                        item: shopItem,
-                        usesRemaining: userItem.uses_remaining
-                    };
-                }
-                throw fetchError;
-            }
-            
-            if (!userItems || userItems.length === 0) {
-                return { success: false, error: 'Item não encontrado ou sem usos' };
-            }
-            
-            const userItem = userItems[0];
-            const newUses = userItem.uses_remaining - 1;
-            
-            // Atualizar usos restantes
-            const { error: updateError } = await supabase
-                .from('player_items')
-                .update({ uses_remaining: newUses })
-                .eq('id', userItem.id);
-                
-            if (updateError) {
-                throw updateError;
-            }
-            
+        // Usar item através do InventorySync
+        const result = await this.inventorySync.useItemFromInventory(currentUser.id, itemId);
+        
+        if (result.success) {
             const shopItem = this.getItemById(itemId);
-            
             return {
                 success: true,
                 item: shopItem,
-                usesRemaining: newUses
+                usesRemaining: result.usesRemaining
             };
-            
-        } catch (error) {
-            console.error('Erro ao usar item:', error);
-            return { success: false, error: 'Erro ao usar item' };
         }
+        
+        return result;
     }
     
     // Converter duração em número de usos
@@ -558,22 +499,8 @@ class Shop {
             return false;
         }
         
-        try {
-            // Tentar usar localStorage como cache rápido
-            const userItems = JSON.parse(localStorage.getItem(`userItems_${currentUser.id}`) || '[]');
-            return userItems.some(item => {
-                const shopItem = this.getItemById(item.item_id);
-                // Para itens permanentes, verificar apenas se possui
-                if (shopItem && shopItem.permanent) {
-                    return item.item_id === itemId;
-                }
-                // Para itens temporários, verificar se ainda tem usos
-                return item.item_id === itemId && item.uses_remaining > 0;
-            });
-        } catch (error) {
-            console.error('Erro ao verificar item no cache:', error);
-            return false;
-        }
+        // Usar InventorySync para verificação
+        return this.inventorySync.hasItemInInventory(currentUser.id, itemId);
     }
 }
 

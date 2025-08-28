@@ -77,6 +77,42 @@ const registerBonusCollected = () => {
   gameStats.bonusesCollected++;
 };
 
+// NOVA FUNÇÃO: Ativar bônus automáticos do inventário
+const activateInventoryBonuses = async () => {
+  if (!shop || !currentUser) {
+    console.log('🔒 Sistema de bônus indisponível - usuário não logado');
+    return;
+  }
+  
+  console.log('🎒 Verificando bônus automáticos do inventário...');
+  
+  // Sincronizar inventário antes de verificar itens
+  await shop.inventorySync.syncInventory(currentUser.id);
+  
+  // Verificar e ativar nave dourada
+  if (shop.hasUserItemSync('golden_ship')) {
+    player.enableGoldenShip();
+    console.log('✨ Nave Dourada ativada automaticamente!');
+  }
+  
+  // Verificar e ativar nave arco-íris
+  if (shop.hasUserItemSync('rainbow_ship')) {
+    player.enableRainbowTrail();
+    console.log('🌈 Nave Arco-íris ativada automaticamente!');
+  }
+  
+  // Verificar vida bônus (não ativar automaticamente, apenas verificar disponibilidade)
+  if (shop.hasUserItemSync('life_bonus')) {
+    console.log('❤️ Vida Bônus disponível para coleta de power-ups!');
+  }
+  
+  // Verificar escudo extra
+  if (shop.hasUserItemSync('shield_extra')) {
+    console.log('🛡️ Escudo Extra disponível!');
+    // TODO: Implementar lógica de escudo extra se necessário
+  }
+};
+
 // NOVA FUNÇÃO: Registrar kill para conquistas
 const registerKill = () => {
   gameStats.killCount++;
@@ -346,7 +382,7 @@ const drawActiveBuff = (ctx) => {
 };
 
 // Função para iniciar o jogo
-const startGame = () => {
+const startGame = async () => {
   // Resetar variáveis do jogo
   gameData.score = 0;
   gameData.level = 1;
@@ -361,6 +397,9 @@ const startGame = () => {
   
   // Aplicar skin ativa do usuário
   applyUserSkin();
+  
+  // Ativar bônus automáticos baseados no inventário
+  await activateInventoryBonuses();
 
   resetGameStats();
 
@@ -1195,14 +1234,14 @@ addEventListener("keydown", (event) => {
     case "KeyR": // NOVO: Ativar/desativar rastro arco-íris
       if (currentState === GameState.PLAYING) {
         // Verificar se o jogador possui o item no inventário
-        if (shop.hasUserItemSync('trail_rainbow')) {
+        if (shop.hasUserItemSync('rainbow_ship')) {
           player.toggleRainbowTrail();
           soundEffects.playSound("powerup"); // Som de ativação
         } else {
           console.log('❌ Rastro arco-íris não disponível - item não possuído');
           // Mostrar notificação para o jogador
           if (window.NavigationHelper) {
-            NavigationHelper.showToast('🌟 Você precisa comprar o Rastro Arco-íris na loja!', 'warning', 3000);
+            NavigationHelper.showToast('🌈 Você precisa comprar a Nave Arco-íris na loja!', 'warning', 3000);
           }
         }
       }
@@ -1210,14 +1249,14 @@ addEventListener("keydown", (event) => {
     case "KeyG": // NOVO: Ativar/desativar nave dourada
       if (currentState === GameState.PLAYING) {
         // Verificar se o jogador possui o item no inventário
-        if (shop.hasUserItemSync('ship_golden')) {
+        if (shop.hasUserItemSync('golden_ship')) {
           player.toggleGoldenShip();
           soundEffects.playSound("powerup"); // Som de ativação
         } else {
           console.log('❌ Nave dourada não disponível - item não possuído');
           // Mostrar notificação para o jogador
           if (window.NavigationHelper) {
-            NavigationHelper.showToast('🚀 Você precisa comprar a Nave Dourada na loja!', 'warning', 3000);
+            NavigationHelper.showToast('✨ Você precisa comprar a Nave Dourada na loja!', 'warning', 3000);
           }
         }
       }
