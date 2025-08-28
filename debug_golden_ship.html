@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Nave Dourada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+        }
+        .button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #d63447;
+        }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .info { color: #2196f3; }
+        pre {
+            background: #0f0f23;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Debug - Nave Dourada</h1>
+        
+        <div class="section">
+            <h2>Informações do Usuário</h2>
+            <div id="userInfo"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Verificação de Inventário</h2>
+            <button class="button" onclick="checkInventory()">Verificar Inventário</button>
+            <button class="button" onclick="checkGoldenShip()">Verificar Nave Dourada</button>
+            <button class="button" onclick="addGoldenShip()">Adicionar Nave Dourada</button>
+            <div id="inventoryResults"></div>
+        </div>
+        
+        <div class="section">
+            <h2>LocalStorage Debug</h2>
+            <button class="button" onclick="showLocalStorage()">Mostrar LocalStorage</button>
+            <button class="button" onclick="clearUserItems()">Limpar Itens do Usuário</button>
+            <div id="localStorageResults"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Teste de Ativação</h2>
+            <button class="button" onclick="testGoldenShipActivation()">Testar Ativação da Nave</button>
+            <div id="activationResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simular classes necessárias
+        class MockRankingManager {
+            getCurrentUser() {
+                return {
+                    id: 94,
+                    name: 'TestUser',
+                    coins: 1000
+                };
+            }
+        }
+        
+        class MockInventorySync {
+            getLocalInventory(userId) {
+                const userItemsKey = `userItems_${userId}`;
+                const items = localStorage.getItem(userItemsKey);
+                return items ? JSON.parse(items) : [];
+            }
+            
+            hasItemInInventory(userId, itemId) {
+                try {
+                    const localItems = this.getLocalInventory(userId);
+                    console.log('🔍 Verificando item:', itemId, 'em:', localItems);
+                    const hasItem = localItems.some(item => 
+                        item.item_id === itemId && 
+                        (item.is_permanent || (item.uses_remaining && item.uses_remaining > 0))
+                    );
+                    console.log('✅ Resultado da verificação:', hasItem);
+                    return hasItem;
+                } catch (error) {
+                    console.error('❌ Erro ao verificar item no inventário:', error);
+                    return false;
+                }
+            }
+            
+            async addItemToInventory(userId, item) {
+                try {
+                    const localItems = this.getLocalInventory(userId);
+                    localItems.push(item);
+                    const userItemsKey = `userItems_${userId}`;
+                    localStorage.setItem(userItemsKey, JSON.stringify(localItems));
+                    console.log('✅ Item adicionado ao inventário:', item);
+                    return { success: true, item };
+                } catch (error) {
+                    console.error('❌ Erro ao adicionar item:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+        }
+        
+        class MockShop {
+            constructor() {
+                this.rankingManager = new MockRankingManager();
+                this.inventorySync = new MockInventorySync();
+            }
+            
+            hasUserItemSync(itemId) {
+                const currentUser = this.rankingManager.getCurrentUser();
+                if (!currentUser) {
+                    return false;
+                }
+                return this.inventorySync.hasItemInInventory(currentUser.id, itemId);
+            }
+        }
+        
+        // Instanciar objetos
+        const shop = new MockShop();
+        const inventorySync = new MockInventorySync();
+        const currentUser = { id: 94, name: 'TestUser', coins: 1000 };
+        
+        // Funções de debug
+        function updateUserInfo() {
+            document.getElementById('userInfo').innerHTML = `
+                <div class="info">
+                    <strong>ID:</strong> ${currentUser.id}<br>
+                    <strong>Nome:</strong> ${currentUser.name}<br>
+                    <strong>Moedas:</strong> ${currentUser.coins}
+                </div>
+            `;
+        }
+        
+        function checkInventory() {
+            const items = inventorySync.getLocalInventory(currentUser.id);
+            const resultsDiv = document.getElementById('inventoryResults');
+            
+            resultsDiv.innerHTML = `
+                <h3>Inventário Completo (${items.length} itens):</h3>
+                <pre>${JSON.stringify(items, null, 2)}</pre>
+            `;
+        }
+        
+        function checkGoldenShip() {
+            const hasGoldenShip = shop.hasUserItemSync('golden_ship');
+            const items = inventorySync.getLocalInventory(currentUser.id);
+            const goldenShipItems = items.filter(item => item.item_id === 'golden_ship');
+            
+            const resultsDiv = document.getElementById('inventoryResults');
+            resultsDiv.innerHTML += `
+                <h3>Verificação da Nave Dourada:</h3>
+                <div class="${hasGoldenShip ? 'success' : 'error'}">
+                    <strong>Possui Nave Dourada:</strong> ${hasGoldenShip ? 'SIM ✅' : 'NÃO ❌'}
+                </div>
+                <h4>Itens 'golden_ship' encontrados:</h4>
+                <pre>${JSON.stringify(goldenShipItems, null, 2)}</pre>
+            `;
+        }
+        
+        function addGoldenShip() {
+            const goldenShipItem = {
+                id: Date.now(),
+                item_id: 'golden_ship',
+                item_name: 'Nave Dourada',
+                item_category: 'bonus',
+                player_id: currentUser.id,
+                is_permanent: true,
+                uses_remaining: null,
+                purchased_at: new Date().toISOString()
+            };
+            
+            inventorySync.addItemToInventory(currentUser.id, goldenShipItem);
+            
+            const resultsDiv = document.getElementById('inventoryResults');
+            resultsDiv.innerHTML += `
+                <div class="success">
+                    <strong>✅ Nave Dourada adicionada ao inventário!</strong>
+                </div>
+            `;
+        }
+        
+        function showLocalStorage() {
+            const userItemsKey = `userItems_${currentUser.id}`;
+            const userItems = localStorage.getItem(userItemsKey);
+            
+            const allKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                allKeys.push({
+                    key: key,
+                    value: localStorage.getItem(key)
+                });
+            }
+            
+            const resultsDiv = document.getElementById('localStorageResults');
+            resultsDiv.innerHTML = `
+                <h3>Itens do Usuário (${userItemsKey}):</h3>
+                <pre>${userItems || 'Nenhum item encontrado'}</pre>
+                
+                <h3>Todas as chaves do LocalStorage:</h3>
+                <pre>${JSON.stringify(allKeys, null, 2)}</pre>
+            `;
+        }
+        
+        function clearUserItems() {
+            const userItemsKey = `userItems_${currentUser.id}`;
+            localStorage.removeItem(userItemsKey);
+            
+            const resultsDiv = document.getElementById('localStorageResults');
+            resultsDiv.innerHTML += `
+                <div class="info">
+                    <strong>🗑️ Itens do usuário removidos do localStorage</strong>
+                </div>
+            `;
+        }
+        
+        function testGoldenShipActivation() {
+            // Simular a lógica do game.js
+            const hasGoldenShip = shop.hasUserItemSync('golden_ship');
+            
+            const resultsDiv = document.getElementById('activationResults');
+            
+            if (hasGoldenShip) {
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <strong>✅ Nave Dourada DISPONÍVEL!</strong><br>
+                        A nave dourada pode ser ativada.
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Nave Dourada NÃO DISPONÍVEL!</strong><br>
+                        Motivo: Item não possuído no inventário.
+                    </div>
+                `;
+            }
+            
+            // Mostrar detalhes da verificação
+            const items = inventorySync.getLocalInventory(currentUser.id);
+            const goldenShipItems = items.filter(item => item.item_id === 'golden_ship');
+            
+            resultsDiv.innerHTML += `
+                <h4>Detalhes da Verificação:</h4>
+                <pre>Total de itens no inventário: ${items.length}
+Itens 'golden_ship': ${goldenShipItems.length}
+Resultado hasUserItemSync: ${hasGoldenShip}</pre>
+            `;
+        }
+        
+        // Inicializar
+        updateUserInfo();
+        
+        console.log('🚀 Debug da Nave Dourada carregado!');
+        console.log('📦 Shop:', shop);
+        console.log('🔄 InventorySync:', inventorySync);
+        console.log('👤 Current User:', currentUser);
+    </script>
+</body>
+</html>

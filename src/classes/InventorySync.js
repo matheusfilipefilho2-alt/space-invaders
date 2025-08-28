@@ -70,36 +70,22 @@ class InventorySync {
         }
     }
     
-    // Executar sincronização do inventário
+    // Executar sincronização do inventário (UNIDIRECIONAL: Banco -> localStorage)
     async performInventorySync(userId) {
-        // 1. Obter itens locais
-        const localItems = this.getLocalInventory(userId);
-        
-        // 2. Obter itens do servidor
+        // 1. Obter itens do servidor (fonte da verdade)
         const serverItems = await this.getServerInventory(userId);
         
-        // 3. Detectar conflitos e diferenças
-        const syncResult = this.compareInventories(localItems, serverItems);
+        // 2. Atualizar inventário local com dados do servidor
+        this.updateLocalInventory(userId, serverItems);
         
-        // 4. Resolver conflitos e sincronizar
-        const resolvedItems = await this.resolveInventoryConflicts(
-            syncResult, localItems, serverItems
-        );
-        
-        // 5. Salvar itens resolvidos
-        await this.saveResolvedInventory(userId, resolvedItems);
-        
-        // 6. Atualizar inventário local
-        this.updateLocalInventory(userId, resolvedItems);
+        console.log(`📦 Sincronização unidirecional: ${serverItems.length} itens carregados do servidor`);
         
         return {
             success: true,
-            itemsAdded: syncResult.toAdd.length,
-            itemsUpdated: syncResult.toUpdate.length,
-            itemsRemoved: syncResult.toRemove.length,
-            conflicts: syncResult.conflicts.length,
-            totalItems: resolvedItems.length,
-            lastSync: this.lastSyncTime
+            itemsLoaded: serverItems.length,
+            totalItems: serverItems.length,
+            lastSync: this.lastSyncTime,
+            syncDirection: 'server_to_local'
         };
     }
     
@@ -140,182 +126,15 @@ class InventorySync {
         }
     }
     
-    // Comparar inventários e detectar diferenças
-    compareInventories(localItems, serverItems) {
-        const result = {
-            toAdd: [],      // Itens para adicionar no servidor
-            toUpdate: [],   // Itens para atualizar no servidor
-            toRemove: [],   // Itens para remover localmente
-            conflicts: []   // Conflitos que precisam de resolução
-        };
-        
-        // Criar mapas para comparação eficiente
-        const localMap = new Map();
-        const serverMap = new Map();
-        
-        localItems.forEach(item => {
-            const key = `${item.item_id}_${item.purchased_at}`;
-            localMap.set(key, item);
-        });
-        
-        serverItems.forEach(item => {
-            const key = `${item.item_id}_${item.purchased_at}`;
-            serverMap.set(key, item);
-        });
-        
-        // Verificar itens locais que não estão no servidor
-        localMap.forEach((localItem, key) => {
-            if (!serverMap.has(key)) {
-                result.toAdd.push(localItem);
-            } else {
-                const serverItem = serverMap.get(key);
-                // Verificar se há diferenças nos usos restantes
-                if (localItem.uses_remaining !== serverItem.uses_remaining) {
-                    result.conflicts.push({
-                        type: 'uses_mismatch',
-                        key,
-                        local: localItem,
-                        server: serverItem
-                    });
-                }
-            }
-        });
-        
-        // Verificar itens do servidor que não estão localmente
-        serverMap.forEach((serverItem, key) => {
-            if (!localMap.has(key)) {
-                // Adicionar ao inventário local
-                result.toUpdate.push(serverItem);
-            }
-        });
-        
-        return result;
-    }
+    // Método removido: compareInventories não é mais necessário
+    // A sincronização agora é unidirecional (servidor -> localStorage)
     
-    // Resolver conflitos de inventário
-    async resolveInventoryConflicts(syncResult, localItems, serverItems) {
-        let resolvedItems = [...serverItems];
-        
-        // Adicionar itens que existem apenas localmente
-        syncResult.toAdd.forEach(item => {
-            resolvedItems.push(item);
-        });
-        
-        // Resolver conflitos de usos restantes
-        syncResult.conflicts.forEach(conflict => {
-            if (conflict.type === 'uses_mismatch') {
-                const existingIndex = resolvedItems.findIndex(item => 
-                    `${item.item_id}_${item.purchased_at}` === conflict.key
-                );
-                
-                if (existingIndex !== -1) {
-                    // Estratégia inteligente: usar o menor valor de usos (mais conservador)
-                    resolvedItems[existingIndex].uses_remaining = Math.min(
-                        conflict.local.uses_remaining || 0,
-                        conflict.server.uses_remaining || 0
-                    );
-                    
-                    console.log(`🔄 Conflito resolvido para ${conflict.local.item_id}: usando ${resolvedItems[existingIndex].uses_remaining} usos`);
-                }
-            }
-        });
-        
-        // Remover itens com 0 usos restantes (exceto permanentes)
-        resolvedItems = resolvedItems.filter(item => {
-            return item.is_permanent || (item.uses_remaining && item.uses_remaining > 0);
-        });
-        
-        return resolvedItems;
-    }
+    // Método removido: resolveInventoryConflicts não é mais necessário
+    // A sincronização agora é unidirecional (servidor -> localStorage)
     
-    // Salvar inventário resolvido no servidor
-    async saveResolvedInventory(userId, resolvedItems) {
-        try {
-            // Verificar se a tabela existe
-            const { data: tableCheck, error: tableError } = await supabase
-                .from('player_items')
-                .select('id')
-                .limit(1);
-            
-            if (tableError && (tableError.code === 'PGRST116' || tableError.message.includes('does not exist'))) {
-                console.log('📦 Tabela player_items não existe, salvando apenas no localStorage');
-                return;
-            }
-            
-            // Limpar e recriar inventário para evitar conflitos
-            if (resolvedItems.length > 0) {
-                try {
-                    // Primeiro, remover todos os itens existentes do usuário
-                    const { error: deleteError } = await supabase
-                        .from('player_items')
-                        .delete()
-                        .eq('player_id', userId);
-                    
-                    if (deleteError) {
-                        console.warn('⚠️ Erro ao limpar itens existentes:', deleteError);
-                    }
-                    
-                    // Depois, inserir todos os itens resolvidos
-                    const batches = this.createBatches(resolvedItems, this.config.batchSize);
-                    
-                    for (const batch of batches) {
-                        const itemsToInsert = batch.map(item => ({
-                            player_id: userId,
-                            item_id: item.item_id,
-                            item_name: item.item_name,
-                            item_category: item.item_category,
-                            is_permanent: item.is_permanent || false,
-                            uses_remaining: item.uses_remaining || 0,
-                            purchased_at: item.purchased_at
-                        }));
-                        
-                        const { error: insertError } = await supabase
-                            .from('player_items')
-                            .insert(itemsToInsert);
-                        
-                        if (insertError) {
-                            console.warn('⚠️ Erro ao inserir lote, tentando itens individuais:', insertError);
-                            // Fallback: tentar inserir itens individualmente com verificação
-                            for (const item of itemsToInsert) {
-                                try {
-                                    // Verificar se o item já existe antes de inserir
-                                    const { data: existingItems, error: checkError } = await supabase
-                                        .from('player_items')
-                                        .select('id')
-                                        .eq('player_id', item.player_id)
-                                        .eq('item_id', item.item_id)
-                                        .eq('is_permanent', item.is_permanent);
-                                    
-                                    if (checkError) {
-                                        console.warn('⚠️ Erro ao verificar item existente:', item.item_id, checkError);
-                                        continue;
-                                    }
-                                    
-                                    // Se não existe, inserir
-                                    if (!existingItems || existingItems.length === 0) {
-                                        await supabase
-                                            .from('player_items')
-                                            .insert(item);
-                                    } else {
-                                        console.log('📦 Item já existe, pulando:', item.item_id);
-                                    }
-                                } catch (individualError) {
-                                    console.warn('⚠️ Erro ao inserir item individual:', item.item_id, individualError);
-                                }
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error('❌ Erro durante operação de limpeza e inserção:', error);
-                }
-            }
-            
-            console.log(`✅ ${resolvedItems.length} itens salvos no servidor`);
-        } catch (error) {
-            console.error('❌ Erro ao salvar inventário no servidor:', error);
-            // Não falhar a sincronização se não conseguir salvar no servidor
-        }
-    }
+    // Método removido: saveResolvedInventory não é mais necessário
+    // A sincronização agora é unidirecional (servidor -> localStorage)
+    // Novos itens devem ser adicionados diretamente no banco via outras operações
     
     // Atualizar inventário local
     updateLocalInventory(userId, resolvedItems) {
@@ -337,15 +156,10 @@ class InventorySync {
         return batches;
     }
     
-    // Adicionar item ao inventário (com sincronização)
+    // Adicionar item ao inventário (SERVIDOR PRIMEIRO, depois sincroniza)
     async addItemToInventory(userId, item) {
         try {
-            // Adicionar localmente primeiro
-            const localItems = this.getLocalInventory(userId);
-            localItems.push(item);
-            this.updateLocalInventory(userId, localItems);
-            
-            // Tentar adicionar no servidor verificando duplicatas
+            // 1. Tentar adicionar no servidor primeiro (se online)
             if (navigator.onLine) {
                 try {
                     // Verificar se o item já existe
@@ -360,7 +174,7 @@ class InventorySync {
                         throw checkError;
                     }
                     
-                    // Se não existe, inserir
+                    // Se não existe, inserir no servidor
                     if (!existingItems || existingItems.length === 0) {
                         const { error: insertError } = await supabase
                             .from('player_items')
@@ -377,12 +191,28 @@ class InventorySync {
                         if (insertError && !(insertError.code === 'PGRST116' || insertError.message.includes('does not exist'))) {
                             throw insertError;
                         }
+                        
+                        console.log('✅ Item adicionado no servidor:', item.item_id);
                     } else {
-                        console.log('📦 Item já existe no servidor, mantendo apenas local');
+                        console.log('📦 Item já existe no servidor:', item.item_id);
                     }
+                    
+                    // 2. Sincronizar do servidor para localStorage
+                    await this.syncInventory(userId, true);
+                    
                 } catch (serverError) {
-                    console.warn('⚠️ Erro ao adicionar item no servidor, mantendo apenas local:', serverError);
+                    console.warn('⚠️ Erro ao adicionar item no servidor, adicionando apenas local:', serverError);
+                    // Fallback: adicionar apenas localmente se servidor falhar
+                    const localItems = this.getLocalInventory(userId);
+                    localItems.push(item);
+                    this.updateLocalInventory(userId, localItems);
                 }
+            } else {
+                // Offline: adicionar apenas localmente
+                console.log('📴 Offline: adicionando item apenas localmente');
+                const localItems = this.getLocalInventory(userId);
+                localItems.push(item);
+                this.updateLocalInventory(userId, localItems);
             }
             
             return { success: true, item };
@@ -392,15 +222,14 @@ class InventorySync {
         }
     }
     
-    // Usar item do inventário (com sincronização)
+    // Usar item do inventário (SERVIDOR PRIMEIRO, depois sincroniza)
     async useItemFromInventory(userId, itemId) {
         try {
-            // Atualizar localmente primeiro
+            // Verificar se o item existe localmente primeiro
             const localItems = this.getLocalInventory(userId);
             const itemIndex = localItems.findIndex(item => 
                 item.item_id === itemId && 
-                item.uses_remaining && 
-                item.uses_remaining > 0
+                (item.is_permanent || (item.uses_remaining && item.uses_remaining > 0))
             );
             
             if (itemIndex === -1) {
@@ -408,37 +237,74 @@ class InventorySync {
             }
             
             const item = localItems[itemIndex];
-            item.uses_remaining -= 1;
             
-            // Remover item se não tem mais usos e não é permanente
-            if (item.uses_remaining <= 0 && !item.is_permanent) {
-                localItems.splice(itemIndex, 1);
+            // Se é permanente, não precisa atualizar usos
+            if (item.is_permanent) {
+                return { 
+                    success: true, 
+                    item, 
+                    usesRemaining: 'permanent' 
+                };
             }
             
-            this.updateLocalInventory(userId, localItems);
-            
-            // Tentar atualizar no servidor
+            // 1. Atualizar no servidor primeiro (se online)
             if (navigator.onLine) {
                 try {
-                    if (item.uses_remaining <= 0 && !item.is_permanent) {
+                    const newUsesRemaining = item.uses_remaining - 1;
+                    
+                    if (newUsesRemaining <= 0) {
                         // Remover do servidor
-                        await supabase
+                        const { error: deleteError } = await supabase
                             .from('player_items')
                             .delete()
                             .eq('player_id', userId)
                             .eq('item_id', itemId);
+                        
+                        if (deleteError && !(deleteError.code === 'PGRST116' || deleteError.message.includes('does not exist'))) {
+                            throw deleteError;
+                        }
+                        
+                        console.log('✅ Item removido do servidor (sem usos):', itemId);
                     } else {
                         // Atualizar usos no servidor
-                        await supabase
+                        const { error: updateError } = await supabase
                             .from('player_items')
-                            .update({ uses_remaining: item.uses_remaining })
+                            .update({ uses_remaining: newUsesRemaining })
                             .eq('player_id', userId)
                             .eq('item_id', itemId);
+                        
+                        if (updateError && !(updateError.code === 'PGRST116' || updateError.message.includes('does not exist'))) {
+                            throw updateError;
+                        }
+                        
+                        console.log('✅ Usos atualizados no servidor:', itemId, newUsesRemaining);
                     }
+                    
+                    // 2. Sincronizar do servidor para localStorage
+                    await this.syncInventory(userId, true);
+                    
+                    return { 
+                        success: true, 
+                        item: { ...item, uses_remaining: newUsesRemaining }, 
+                        usesRemaining: newUsesRemaining 
+                    };
+                    
                 } catch (serverError) {
-                    console.warn('⚠️ Erro ao atualizar item no servidor, mantendo apenas local:', serverError);
+                    console.warn('⚠️ Erro ao atualizar item no servidor, atualizando apenas local:', serverError);
+                    // Fallback: atualizar apenas localmente
                 }
             }
+            
+            // Fallback ou modo offline: atualizar apenas localmente
+            console.log('📴 Offline ou erro no servidor: atualizando item apenas localmente');
+            item.uses_remaining -= 1;
+            
+            // Remover item se não tem mais usos
+            if (item.uses_remaining <= 0) {
+                localItems.splice(itemIndex, 1);
+            }
+            
+            this.updateLocalInventory(userId, localItems);
             
             return { 
                 success: true, 

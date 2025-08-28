@@ -173,7 +173,7 @@ let currentState = GameState.PLAYING;
 const gameData = {
   score: 0,
   level: 1,
-  high: localStorage.getItem("highScore") || 0,
+  high: currentUser ? (currentUser.high_score || 0) : (localStorage.getItem("highScore") || 0),
 };
 
 // Atualizar a UI com os dados iniciais
@@ -332,6 +332,11 @@ const updateHighScore = () => {
   if (gameData.score > gameData.high) {
     gameData.high = gameData.score;
     localStorage.setItem("highScore", gameData.high);
+    
+    // Sincronizar com o usuário logado se disponível
+    if (currentUser) {
+      currentUser.high_score = gameData.score;
+    }
   }
 };
 

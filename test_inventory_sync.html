@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Sincronização de Inventário</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .container {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        button {
+            background: #0f3460;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e94560;
+        }
+        .log {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        .warning { color: #ff9800; }
+    </style>
+</head>
+<body>
+    <h1>🔄 Teste de Sincronização de Inventário</h1>
+    
+    <div class="container">
+        <h3>Controles de Teste</h3>
+        <button onclick="testInventorySync()">🔄 Testar Sincronização</button>
+        <button onclick="addTestItem()">➕ Adicionar Item de Teste</button>
+        <button onclick="useTestItem()">🎯 Usar Item de Teste</button>
+        <button onclick="showLocalInventory()">📦 Mostrar Inventário Local</button>
+        <button onclick="clearLocalStorage()">🗑️ Limpar localStorage</button>
+        <button onclick="simulateConflict()">⚠️ Simular Conflito</button>
+    </div>
+    
+    <div class="container">
+        <h3>Log de Atividades</h3>
+        <div id="log" class="log"></div>
+        <button onclick="clearLog()">🧹 Limpar Log</button>
+    </div>
+    
+    <div class="container">
+        <h3>Estado do Inventário</h3>
+        <div id="inventory-status"></div>
+    </div>
+
+    <!-- Incluir dependências -->
+    <script>
+        // Configurar Supabase simulado para teste
+        window.supabase = {
+            from: () => ({
+                select: () => ({ data: [], error: null }),
+                insert: () => ({ data: [], error: null }),
+                update: () => ({ data: [], error: null }),
+                eq: function() { return this; },
+                order: function() { return this; }
+            })
+        };
+        
+        // Classe RankingManager simplificada para teste
+        class RankingManager {
+            constructor() {
+                this.currentUser = null;
+            }
+            
+            setCurrentUser(user) {
+                this.currentUser = user;
+            }
+            
+            getCurrentUser() {
+                return this.currentUser;
+            }
+        }
+        
+        // Classe InventorySync simplificada para teste
+        class InventorySync {
+            constructor() {
+                this.syncInProgress = false;
+            }
+            
+            async syncInventory(playerId) {
+                console.log(`Sincronizando inventário para jogador ${playerId}`);
+                return {
+                    success: true,
+                    conflictsResolved: 0,
+                    itemsSynced: this.getLocalInventory(playerId).length
+                };
+            }
+            
+            getLocalInventory(playerId) {
+                const key = `inventory_${playerId}`;
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            }
+            
+            async addItemToInventory(playerId, item) {
+                const inventory = this.getLocalInventory(playerId);
+                inventory.push(item);
+                const key = `inventory_${playerId}`;
+                localStorage.setItem(key, JSON.stringify(inventory));
+                
+                return { success: true };
+            }
+            
+            async useItemFromInventory(playerId, itemId) {
+                const inventory = this.getLocalInventory(playerId);
+                const item = inventory.find(i => i.item_id === itemId && i.uses_remaining > 0);
+                
+                if (!item) {
+                    return { success: false, error: 'Item não encontrado ou sem usos' };
+                }
+                
+                item.uses_remaining -= 1;
+                const key = `inventory_${playerId}`;
+                localStorage.setItem(key, JSON.stringify(inventory));
+                
+                return {
+                    success: true,
+                    usesRemaining: item.uses_remaining
+                };
+            }
+            
+            hasItemInInventory(playerId, itemId) {
+                const inventory = this.getLocalInventory(playerId);
+                return inventory.some(item => 
+                    item.item_id === itemId && 
+                    (!item.uses_remaining || item.uses_remaining > 0)
+                );
+            }
+        }
+        
+        // Classe Shop simplificada para teste
+        class Shop {
+            constructor(rankingManager) {
+                this.rankingManager = rankingManager;
+                this.inventorySync = new InventorySync();
+            }
+        }
+        
+        // Disponibilizar classes globalmente
+        window.RankingManager = RankingManager;
+        window.InventorySync = InventorySync;
+        window.Shop = Shop;
+    </script>
+
+    <script>
+        // Configurar usuário de teste
+        const testUser = {
+            id: 'test_user_123',
+            username: 'test_user',
+            coins: 1000
+        };
+
+        // Inicializar sistemas
+        const rankingManager = new RankingManager();
+        rankingManager.setCurrentUser(testUser);
+        
+        const shop = new Shop(rankingManager);
+        const inventorySync = shop.inventorySync;
+
+        // Função para log
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            logElement.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // Testar sincronização completa
+        async function testInventorySync() {
+            log('🔄 Iniciando teste de sincronização...', 'info');
+            
+            try {
+                // Sincronizar inventário
+                const result = await inventorySync.syncInventory(testUser.id);
+                
+                if (result.success) {
+                    log('✅ Sincronização bem-sucedida!', 'success');
+                    log(`📊 Conflitos resolvidos: ${result.conflictsResolved || 0}`, 'info');
+                    log(`📦 Itens sincronizados: ${result.itemsSynced || 0}`, 'info');
+                } else {
+                    log(`❌ Erro na sincronização: ${result.error}`, 'error');
+                }
+                
+                updateInventoryStatus();
+            } catch (error) {
+                log(`💥 Erro inesperado: ${error.message}`, 'error');
+            }
+        }
+
+        // Adicionar item de teste
+        async function addTestItem() {
+            log('➕ Adicionando item de teste...', 'info');
+            
+            const testItem = {
+                id: Date.now(),
+                item_id: 'test_item_' + Date.now(),
+                player_id: testUser.id,
+                item_name: 'Item de Teste',
+                item_category: 'test',
+                uses_remaining: 3,
+                is_permanent: false,
+                purchased_at: new Date().toISOString()
+            };
+            
+            try {
+                const result = await inventorySync.addItemToInventory(testUser.id, testItem);
+                
+                if (result.success) {
+                    log(`✅ Item adicionado: ${testItem.item_name}`, 'success');
+                } else {
+                    log(`❌ Erro ao adicionar item: ${result.error}`, 'error');
+                }
+                
+                updateInventoryStatus();
+            } catch (error) {
+                log(`💥 Erro inesperado: ${error.message}`, 'error');
+            }
+        }
+
+        // Usar item de teste
+        async function useTestItem() {
+            log('🎯 Procurando item para usar...', 'info');
+            
+            const inventory = inventorySync.getLocalInventory(testUser.id);
+            const testItem = inventory.find(item => item.item_id.startsWith('test_item_') && item.uses_remaining > 0);
+            
+            if (!testItem) {
+                log('⚠️ Nenhum item de teste disponível para usar', 'warning');
+                return;
+            }
+            
+            try {
+                const result = await inventorySync.useItemFromInventory(testUser.id, testItem.item_id);
+                
+                if (result.success) {
+                    log(`✅ Item usado: ${testItem.item_name} (${result.usesRemaining} usos restantes)`, 'success');
+                } else {
+                    log(`❌ Erro ao usar item: ${result.error}`, 'error');
+                }
+                
+                updateInventoryStatus();
+            } catch (error) {
+                log(`💥 Erro inesperado: ${error.message}`, 'error');
+            }
+        }
+
+        // Mostrar inventário local
+        function showLocalInventory() {
+            log('📦 Carregando inventário local...', 'info');
+            
+            const inventory = inventorySync.getLocalInventory(testUser.id);
+            
+            if (inventory.length === 0) {
+                log('📭 Inventário vazio', 'info');
+            } else {
+                log(`📦 ${inventory.length} itens no inventário:`, 'info');
+                inventory.forEach((item, index) => {
+                    const uses = item.uses_remaining ? ` (${item.uses_remaining} usos)` : ' (permanente)';
+                    log(`  ${index + 1}. ${item.item_name}${uses}`, 'info');
+                });
+            }
+            
+            updateInventoryStatus();
+        }
+
+        // Limpar localStorage
+        function clearLocalStorage() {
+            log('🗑️ Limpando localStorage...', 'warning');
+            
+            const key = `inventory_${testUser.id}`;
+            localStorage.removeItem(key);
+            
+            log('✅ localStorage limpo', 'success');
+            updateInventoryStatus();
+        }
+
+        // Simular conflito
+        async function simulateConflict() {
+            log('⚠️ Simulando conflito de dados...', 'warning');
+            
+            // Adicionar item apenas no localStorage
+            const localItem = {
+                id: Date.now(),
+                item_id: 'conflict_item_local',
+                player_id: testUser.id,
+                item_name: 'Item Local (Conflito)',
+                item_category: 'test',
+                uses_remaining: 5,
+                is_permanent: false,
+                purchased_at: new Date().toISOString()
+            };
+            
+            const inventory = inventorySync.getLocalInventory(testUser.id);
+            inventory.push(localItem);
+            localStorage.setItem(`inventory_${testUser.id}`, JSON.stringify(inventory));
+            
+            log('📦 Item adicionado apenas localmente', 'info');
+            
+            // Tentar sincronizar para detectar conflito
+            await testInventorySync();
+        }
+
+        // Atualizar status do inventário
+        function updateInventoryStatus() {
+            const statusElement = document.getElementById('inventory-status');
+            const inventory = inventorySync.getLocalInventory(testUser.id);
+            
+            let html = `<strong>📊 Status do Inventário:</strong><br>`;
+            html += `📦 Total de itens: ${inventory.length}<br>`;
+            
+            if (inventory.length > 0) {
+                html += `<br><strong>Itens:</strong><br>`;
+                inventory.forEach((item, index) => {
+                    const uses = item.uses_remaining ? ` (${item.uses_remaining} usos)` : ' (permanente)';
+                    html += `${index + 1}. ${item.item_name}${uses}<br>`;
+                });
+            }
+            
+            statusElement.innerHTML = html;
+        }
+
+        // Limpar log
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🚀 Sistema de teste inicializado', 'success');
+            log(`👤 Usuário de teste: ${testUser.username} (ID: ${testUser.id})`, 'info');
+            updateInventoryStatus();
+        });
+    </script>
+</body>
+</html>

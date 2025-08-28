@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrigir Nave Dourada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: #eee;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #16213e;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #0f3460;
+        }
+        .button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button:hover {
+            background: #d63447;
+        }
+        .success { color: #4caf50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        .info { color: #2196f3; font-weight: bold; }
+        pre {
+            background: #0f0f23;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Correção da Nave Dourada</h1>
+        <p>Esta ferramenta corrige o problema da nave dourada não estar disponível.</p>
+        
+        <div id="status" class="status"></div>
+        
+        <button class="button" onclick="checkCurrentStatus()">Verificar Status Atual</button>
+        <button class="button" onclick="fixGoldenShip()">Corrigir Nave Dourada</button>
+        <button class="button" onclick="addAllBonusItems()">Adicionar Todos os Bônus</button>
+        <button class="button" onclick="clearInventory()">Limpar Inventário</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const userId = 94; // ID do usuário
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+        
+        function updateResults(content) {
+            document.getElementById('results').innerHTML = content;
+        }
+        
+        function getLocalInventory(userId) {
+            const userItemsKey = `userItems_${userId}`;
+            const items = localStorage.getItem(userItemsKey);
+            return items ? JSON.parse(items) : [];
+        }
+        
+        function saveLocalInventory(userId, items) {
+            const userItemsKey = `userItems_${userId}`;
+            localStorage.setItem(userItemsKey, JSON.stringify(items));
+        }
+        
+        function checkCurrentStatus() {
+            const inventory = getLocalInventory(userId);
+            const goldenShipItems = inventory.filter(item => item.item_id === 'golden_ship');
+            const rainbowShipItems = inventory.filter(item => item.item_id === 'rainbow_ship');
+            const lifeBonusItems = inventory.filter(item => item.item_id === 'life_bonus');
+            
+            let statusHtml = `
+                <h3>📊 Status Atual do Inventário</h3>
+                <p><strong>Total de itens:</strong> ${inventory.length}</p>
+                <p><strong>Nave Dourada:</strong> ${goldenShipItems.length} item(s)</p>
+                <p><strong>Nave Arco-íris:</strong> ${rainbowShipItems.length} item(s)</p>
+                <p><strong>Vida Bônus:</strong> ${lifeBonusItems.length} item(s)</p>
+                
+                <h4>🔍 Detalhes dos Itens de Bônus:</h4>
+                <pre>${JSON.stringify([...goldenShipItems, ...rainbowShipItems, ...lifeBonusItems], null, 2)}</pre>
+            `;
+            
+            updateResults(statusHtml);
+            
+            if (goldenShipItems.length > 0) {
+                const goldenShip = goldenShipItems[0];
+                if (goldenShip.is_permanent) {
+                    updateStatus('✅ Nave Dourada encontrada e configurada como permanente!', 'success');
+                } else {
+                    updateStatus('⚠️ Nave Dourada encontrada mas não é permanente. Clique em "Corrigir" para resolver.', 'error');
+                }
+            } else {
+                updateStatus('❌ Nave Dourada não encontrada no inventário. Clique em "Corrigir" para adicionar.', 'error');
+            }
+        }
+        
+        function fixGoldenShip() {
+            const inventory = getLocalInventory(userId);
+            
+            // Remover naves douradas existentes (podem estar com configuração incorreta)
+            const filteredInventory = inventory.filter(item => item.item_id !== 'golden_ship');
+            
+            // Adicionar nave dourada permanente
+            const goldenShipItem = {
+                id: Date.now(),
+                item_id: 'golden_ship',
+                item_name: 'Nave Dourada',
+                item_category: 'utility',
+                player_id: userId,
+                is_permanent: true,
+                uses_remaining: null,
+                purchased_at: new Date().toISOString()
+            };
+            
+            filteredInventory.push(goldenShipItem);
+            saveLocalInventory(userId, filteredInventory);
+            
+            updateStatus('✅ Nave Dourada corrigida com sucesso! Agora ela é permanente.', 'success');
+            
+            // Verificar status novamente
+            setTimeout(checkCurrentStatus, 500);
+        }
+        
+        function addAllBonusItems() {
+            const inventory = getLocalInventory(userId);
+            
+            // Remover itens de bônus existentes
+            const filteredInventory = inventory.filter(item => 
+                !['golden_ship', 'rainbow_ship', 'life_bonus'].includes(item.item_id)
+            );
+            
+            // Adicionar todos os itens de bônus como permanentes
+            const bonusItems = [
+                {
+                    id: Date.now() + 1,
+                    item_id: 'golden_ship',
+                    item_name: 'Nave Dourada',
+                    item_category: 'utility',
+                    player_id: userId,
+                    is_permanent: true,
+                    uses_remaining: null,
+                    purchased_at: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 2,
+                    item_id: 'rainbow_ship',
+                    item_name: 'Nave Arco-íris',
+                    item_category: 'utility',
+                    player_id: userId,
+                    is_permanent: true,
+                    uses_remaining: null,
+                    purchased_at: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 3,
+                    item_id: 'life_bonus',
+                    item_name: 'Vida Bônus',
+                    item_category: 'utility',
+                    player_id: userId,
+                    is_permanent: false,
+                    uses_remaining: 5,
+                    purchased_at: new Date().toISOString()
+                }
+            ];
+            
+            filteredInventory.push(...bonusItems);
+            saveLocalInventory(userId, filteredInventory);
+            
+            updateStatus('✅ Todos os itens de bônus adicionados com sucesso!', 'success');
+            
+            // Verificar status novamente
+            setTimeout(checkCurrentStatus, 500);
+        }
+        
+        function clearInventory() {
+            if (confirm('Tem certeza que deseja limpar todo o inventário? Esta ação não pode ser desfeita.')) {
+                localStorage.removeItem(`userItems_${userId}`);
+                updateStatus('🗑️ Inventário limpo com sucesso!', 'info');
+                
+                // Verificar status novamente
+                setTimeout(checkCurrentStatus, 500);
+            }
+        }
+        
+        // Verificar status inicial
+        checkCurrentStatus();
+        
+        console.log('🔧 Ferramenta de correção da Nave Dourada carregada!');
+    </script>
+</body>
+</html>

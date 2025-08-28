@@ -38,13 +38,12 @@ class RewardSystem {
 
     // Calcular moedas ganhas baseado na pontuação
     calculateCoinsEarned(currentScore, previousHighScore = 0) {
-        if (!currentScore || currentScore <= previousHighScore) {
+        if (!currentScore) {
             return 0;
         }
 
-        // Calcular apenas as moedas das novas pontuações acima do high score anterior
-        const newPoints = currentScore - previousHighScore;
-        const coinsEarned = Math.floor(newPoints / this.config.pointsPerCoin);
+        // Calcular moedas baseadas na pontuação total da partida atual
+        const coinsEarned = Math.floor(currentScore / this.config.pointsPerCoin);
         
         // Limitar moedas por partida
         return Math.min(coinsEarned, this.config.maxCoinsPerGame);
@@ -101,14 +100,12 @@ class RewardSystem {
             }
         };
 
-        // Calcular moedas apenas se superou o high score
-        if (finalScore > previousHighScore) {
-            rewards.coinsEarned = this.calculateCoinsEarned(finalScore, previousHighScore);
-            
-            if (this.currentUser) {
-                this.currentUser.coins = (this.currentUser.coins || 0) + rewards.coinsEarned;
-                rewards.newTotal.coins = this.currentUser.coins;
-            }
+        // Calcular moedas sempre baseado na pontuação da partida
+        rewards.coinsEarned = this.calculateCoinsEarned(finalScore, previousHighScore);
+        
+        if (this.currentUser) {
+            this.currentUser.coins = (this.currentUser.coins || 0) + rewards.coinsEarned;
+            rewards.newTotal.coins = this.currentUser.coins;
         }
 
         // Verificar promoção de nível

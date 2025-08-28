@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste LocalStorage - Space Invaders</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 4px solid #4ECDC4;
+        }
+        button {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(78, 205, 196, 0.3);
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            border-left: 3px solid #FFD700;
+        }
+        .error {
+            border-left-color: #FF6B6B;
+        }
+        .success {
+            border-left-color: #4ECDC4;
+        }
+        pre {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste LocalStorage - Space Invaders</h1>
+        
+        <div class="test-section">
+            <h3>1. Teste Básico LocalStorage</h3>
+            <button onclick="testBasicLocalStorage()">Testar LocalStorage Básico</button>
+            <div id="basic-test-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Simular Compra de Item</h3>
+            <button onclick="simulatePurchase()">Simular Compra Life Bonus</button>
+            <div id="purchase-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Verificar Dados Salvos</h3>
+            <button onclick="checkSavedData()">Verificar Dados no LocalStorage</button>
+            <div id="saved-data-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. Testar com Usuário Real</h3>
+            <button onclick="testWithRealUser()">Testar com Sistema Real</button>
+            <div id="real-user-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. Limpar Dados</h3>
+            <button onclick="clearAllData()">Limpar Todos os Dados</button>
+            <div id="clear-result"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import RankingManager from './src/classes/RankingManager.js';
+        import Shop from './src/classes/ShopClass.js';
+        import { NavigationHelper } from './src/navigation.js';
+
+        // Inicializar sistemas
+        const rankingManager = new RankingManager();
+        const shop = new Shop(rankingManager);
+        
+        // Configurar usuário atual
+        const currentUser = NavigationHelper.getCurrentUser();
+        if (currentUser) {
+            rankingManager.currentUser = currentUser;
+        }
+
+        // Disponibilizar globalmente
+        window.rankingManager = rankingManager;
+        window.shop = shop;
+        window.currentUser = currentUser;
+
+        // Teste básico do localStorage
+        window.testBasicLocalStorage = function() {
+            const resultDiv = document.getElementById('basic-test-result');
+            
+            try {
+                // Testar escrita
+                const testData = { test: 'value', timestamp: Date.now() };
+                localStorage.setItem('test_key', JSON.stringify(testData));
+                
+                // Testar leitura
+                const retrieved = JSON.parse(localStorage.getItem('test_key'));
+                
+                if (retrieved && retrieved.test === 'value') {
+                    resultDiv.innerHTML = '<div class="result success">✅ LocalStorage funcionando corretamente</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ Erro na leitura do LocalStorage</div>';
+                }
+                
+                // Limpar teste
+                localStorage.removeItem('test_key');
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Erro: ${error.message}</div>`;
+            }
+        };
+
+        // Simular compra de item
+        window.simulatePurchase = function() {
+            const resultDiv = document.getElementById('purchase-result');
+            
+            if (!currentUser) {
+                resultDiv.innerHTML = '<div class="result error">❌ Usuário não logado</div>';
+                return;
+            }
+            
+            try {
+                // Simular dados de compra
+                const userItemsKey = `userItems_${currentUser.id}`;
+                const existingItems = JSON.parse(localStorage.getItem(userItemsKey) || '[]');
+                
+                const newItem = {
+                    id: Date.now(),
+                    item_id: 'life_bonus',
+                    player_id: currentUser.id,
+                    item_name: 'Vida Bônus',
+                    item_category: 'utility',
+                    uses_remaining: 1,
+                    is_permanent: false,
+                    purchased_at: new Date().toISOString()
+                };
+                
+                existingItems.push(newItem);
+                localStorage.setItem(userItemsKey, JSON.stringify(existingItems));
+                
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Item simulado com sucesso!<br>
+                        <strong>Chave:</strong> ${userItemsKey}<br>
+                        <strong>Item:</strong> ${newItem.item_name}<br>
+                        <strong>Usos:</strong> ${newItem.uses_remaining}
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Erro na simulação: ${error.message}</div>`;
+            }
+        };
+
+        // Verificar dados salvos
+        window.checkSavedData = function() {
+            const resultDiv = document.getElementById('saved-data-result');
+            
+            if (!currentUser) {
+                resultDiv.innerHTML = '<div class="result error">❌ Usuário não logado</div>';
+                return;
+            }
+            
+            try {
+                const userItemsKey = `userItems_${currentUser.id}`;
+                const savedData = localStorage.getItem(userItemsKey);
+                
+                if (!savedData) {
+                    resultDiv.innerHTML = '<div class="result">📭 Nenhum dado encontrado no LocalStorage</div>';
+                    return;
+                }
+                
+                const parsedData = JSON.parse(savedData);
+                
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Dados encontrados!<br>
+                        <strong>Chave:</strong> ${userItemsKey}<br>
+                        <strong>Quantidade de itens:</strong> ${parsedData.length}<br>
+                        <strong>Dados:</strong>
+                        <pre>${JSON.stringify(parsedData, null, 2)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Erro ao verificar dados: ${error.message}</div>`;
+            }
+        };
+
+        // Testar com sistema real
+        window.testWithRealUser = async function() {
+            const resultDiv = document.getElementById('real-user-result');
+            
+            if (!currentUser) {
+                resultDiv.innerHTML = '<div class="result error">❌ Usuário não logado</div>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = '<div class="result">🔄 Testando sistema real...</div>';
+                
+                // Testar compra real
+                const purchaseResult = await shop.purchaseItem('life_bonus');
+                
+                if (purchaseResult.success) {
+                    // Verificar se foi salvo
+                    const userItems = await shop.getUserItems();
+                    const hasLifeBonus = shop.hasUserItemSync('life_bonus');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Compra realizada com sucesso!<br>
+                            <strong>Itens no inventário:</strong> ${userItems.length}<br>
+                            <strong>Possui Life Bonus:</strong> ${hasLifeBonus ? 'Sim' : 'Não'}<br>
+                            <strong>Moedas restantes:</strong> ${purchaseResult.remainingCoins}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ Erro na compra: ${purchaseResult.error}</div>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Erro no teste: ${error.message}</div>`;
+            }
+        };
+
+        // Limpar todos os dados
+        window.clearAllData = function() {
+            const resultDiv = document.getElementById('clear-result');
+            
+            if (!currentUser) {
+                resultDiv.innerHTML = '<div class="result error">❌ Usuário não logado</div>';
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja limpar todos os dados?')) {
+                try {
+                    const userItemsKey = `userItems_${currentUser.id}`;
+                    localStorage.removeItem(userItemsKey);
+                    localStorage.removeItem('test_key');
+                    
+                    resultDiv.innerHTML = '<div class="result success">✅ Dados limpos com sucesso!</div>';
+                    
+                } catch (error) {
+                    resultDiv.innerHTML = `<div class="result error">❌ Erro ao limpar dados: ${error.message}</div>`;
+                }
+            }
+        };
+
+        // Mostrar informações do usuário na inicialização
+        if (currentUser) {
+            console.log('👤 Usuário atual:', currentUser);
+            console.log('🏪 Shop inicializada:', shop);
+            console.log('📊 RankingManager:', rankingManager);
+        } else {
+            console.warn('⚠️ Nenhum usuário logado');
+        }
+    </script>
+</body>
+</html>
