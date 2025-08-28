@@ -484,123 +484,7 @@ const endGame = async () => {
   // Atualizar high score
   updateHighScore();
 
-  // Salvar pontuação no ranking
-  const updated = rankingManager.updateHighScore(gameData.score); // Mudança aqui: saveScore -> updateHighScore
-  if (updated === true) {
-    const userDataNew = rankingManager.getUser(currentUser.username);
-
-    // Salvar dados do usuário
-    NavigationHelper.setCurrentUser(userDataNew);
-  }
-
-  // NOVO: Sistema completo de recompensas
-  let gameResult = null;
-  if (currentUser && rankingManager.isLoggedIn()) {
-    console.log("🎯 Processando recompensas e conquistas...");
-
-    // Calcular estatísticas finais
-    const finalStats = calculateFinalGameStats();
-    console.log("📊 Estatísticas da partida:", finalStats);
-
-    // Processar recompensas de pontuação
-    gameResult = await rankingManager.updateHighScore(gameData.score);
-
-    if (gameResult.success || gameResult.rewards) {
-      // Atualizar usuário local
-      const updatedUser = rankingManager.getCurrentUser();
-      NavigationHelper.setCurrentUser(updatedUser);
-      rewardUI.setUser(updatedUser);
-
-      // Verificar conquistas
-      console.log("🏆 Verificando conquistas...");
-      const achievementResults = await achievementSystem.checkAchievements(
-        finalStats
-      );
-
-      if (achievementResults.length > 0) {
-        console.log(
-          `🎉 ${achievementResults.length} conquista(s) desbloqueada(s)!`
-        );
-
-        // Adicionar conquistas ao resultado
-        gameResult.achievements = achievementResults;
-
-        // Atualizar moedas com recompensas das conquistas
-        let totalAchievementCoins = 0;
-        achievementResults.forEach((result) => {
-          totalAchievementCoins += result.coinReward || 0;
-        });
-
-        if (totalAchievementCoins > 0) {
-          console.log(`💰 +${totalAchievementCoins} moedas de conquistas!`);
-
-          // Atualizar usuário final
-          const finalUser = rankingManager.getCurrentUser();
-          NavigationHelper.setCurrentUser(finalUser);
-          rewardUI.setUser(finalUser);
-        }
-      }
-
-      // Mostrar notificações de recompensas
-      if (gameResult.rewards) {
-        rewardUI.showRewardNotifications(gameResult.rewards);
-      }
-
-      // Mostrar conquistas desbloqueadas
-      if (achievementResults.length > 0) {
-        achievementResults.forEach((achievementResult, index) => {
-          setTimeout(() => {
-            const notification =
-              achievementSystem.createAchievementNotification(
-                achievementResult
-              );
-            rewardUI.createNotificationElement(notification);
-
-            // Usar função global se existir (para compatibilidade)
-            if (window.showAchievement) {
-              window.showAchievement(
-                achievementResult.achievement.name,
-                achievementResult.achievement.description
-              );
-            }
-          }, 3000 + index * 2000); // Espaçar conquistas por 2 segundos
-        });
-      }
-
-      // Mostrar resumo completo após todas as notificações
-      setTimeout(() => {
-        // Adicionar estatísticas da partida ao resultado
-        gameResult.gameStats = finalStats;
-        rewardUI.showGameEndSummary(gameResult);
-      }, 5000 + achievementResults.length * 2000);
-    } else {
-      console.log(
-        "📊 Pontuação não superou o recorde, verificando conquistas mesmo assim..."
-      );
-
-      // Mesmo sem novo recorde, verificar conquistas
-      const finalStats = calculateFinalGameStats();
-      const achievementResults = await achievementSystem.checkAchievements(
-        finalStats
-      );
-
-      if (achievementResults.length > 0) {
-        achievementResults.forEach((achievementResult, index) => {
-          setTimeout(() => {
-            const notification =
-              achievementSystem.createAchievementNotification(
-                achievementResult
-              );
-            rewardUI.createNotificationElement(notification);
-          }, 2000 + index * 2000);
-        });
-      }
-    }
-  } else {
-    console.log("ℹ️ Usuário não logado - sem recompensas nem conquistas");
-  }
-
-  // Mostrar tela de game over
+  // OTIMIZAÇÃO: Mostrar tela de game over IMEDIATAMENTE
   document.body.appendChild(gameOverScreen);
   gameOverScreen.style.display = "flex";
 
@@ -610,6 +494,131 @@ const endGame = async () => {
   // Parar música do nível e iniciar música de menu
   soundEffects.stopLevelMusic();
   soundEffects.playMenuMusic();
+
+  // Processar recompensas e conquistas em segundo plano (não bloquear UI)
+  processGameRewards();
+};
+
+// NOVA FUNÇÃO: Processar recompensas em segundo plano
+const processGameRewards = async () => {
+  // Salvar pontuação no ranking
+  const updated = rankingManager.updateHighScore(gameData.score);
+  if (updated === true) {
+    const userDataNew = rankingManager.getUser(currentUser.username);
+    NavigationHelper.setCurrentUser(userDataNew);
+  }
+
+  // Sistema de recompensas (em segundo plano)
+  let gameResult = null;
+  if (currentUser && rankingManager.isLoggedIn()) {
+    console.log("🎯 Processando recompensas e conquistas em segundo plano...");
+
+    try {
+      // Calcular estatísticas finais
+      const finalStats = calculateFinalGameStats();
+      console.log("📊 Estatísticas da partida:", finalStats);
+
+      // Processar recompensas de pontuação
+      gameResult = await rankingManager.updateHighScore(gameData.score);
+
+      if (gameResult.success || gameResult.rewards) {
+        // Atualizar usuário local
+        const updatedUser = rankingManager.getCurrentUser();
+        NavigationHelper.setCurrentUser(updatedUser);
+        rewardUI.setUser(updatedUser);
+
+        // Verificar conquistas
+        console.log("🏆 Verificando conquistas...");
+        const achievementResults = await achievementSystem.checkAchievements(
+          finalStats
+        );
+
+        if (achievementResults.length > 0) {
+          console.log(
+            `🎉 ${achievementResults.length} conquista(s) desbloqueada(s)!`
+          );
+
+          // Adicionar conquistas ao resultado
+          gameResult.achievements = achievementResults;
+
+          // Atualizar moedas com recompensas das conquistas
+          let totalAchievementCoins = 0;
+          achievementResults.forEach((result) => {
+            totalAchievementCoins += result.coinReward || 0;
+          });
+
+          if (totalAchievementCoins > 0) {
+            console.log(`💰 +${totalAchievementCoins} moedas de conquistas!`);
+
+            // Atualizar usuário final
+            const finalUser = rankingManager.getCurrentUser();
+            NavigationHelper.setCurrentUser(finalUser);
+            rewardUI.setUser(finalUser);
+          }
+        }
+
+        // Mostrar notificações de recompensas (com delay reduzido)
+        if (gameResult.rewards) {
+          setTimeout(() => {
+            rewardUI.showRewardNotifications(gameResult.rewards);
+          }, 500); // Delay mínimo
+        }
+
+        // Mostrar conquistas desbloqueadas (com delay reduzido)
+        if (achievementResults.length > 0) {
+          achievementResults.forEach((achievementResult, index) => {
+            setTimeout(() => {
+              const notification =
+                achievementSystem.createAchievementNotification(
+                  achievementResult
+                );
+              rewardUI.createNotificationElement(notification);
+
+              // Usar função global se existir (para compatibilidade)
+              if (window.showAchievement) {
+                window.showAchievement(
+                  achievementResult.achievement.name,
+                  achievementResult.achievement.description
+                );
+              }
+            }, 1000 + index * 1000); // Delay reduzido de 2s para 1s
+          });
+        }
+
+        // Mostrar resumo completo (com delay reduzido)
+        setTimeout(() => {
+          gameResult.gameStats = finalStats;
+          rewardUI.showGameEndSummary(gameResult);
+        }, 2000 + achievementResults.length * 1000); // Delay muito reduzido
+      } else {
+        console.log(
+          "📊 Pontuação não superou o recorde, verificando conquistas mesmo assim..."
+        );
+
+        // Mesmo sem novo recorde, verificar conquistas
+        const finalStats = calculateFinalGameStats();
+        const achievementResults = await achievementSystem.checkAchievements(
+          finalStats
+        );
+
+        if (achievementResults.length > 0) {
+          achievementResults.forEach((achievementResult, index) => {
+            setTimeout(() => {
+              const notification =
+                achievementSystem.createAchievementNotification(
+                  achievementResult
+                );
+              rewardUI.createNotificationElement(notification);
+            }, 1000 + index * 1000); // Delay reduzido
+          });
+        }
+      }
+    } catch (error) {
+      console.error("❌ Erro ao processar recompensas:", error);
+    }
+  } else {
+    console.log("ℹ️ Usuário não logado - sem recompensas nem conquistas");
+  }
 };
 
 // NOVA FUNÇÃO: Mostrar progresso de conquistas próximas durante o jogo
