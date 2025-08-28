@@ -189,6 +189,30 @@ class Shop {
                 icon: '💰',
                 permanent: false
             },
+            {
+                id: 'coin_pack_499',
+                name: 'Pacote de 499 Moedas',
+                description: 'Compre 499 moedas por R$ 9,99',
+                category: 'coin_packs',
+                rarity: 'uncommon',
+                price: 9.99,
+                priceType: 'real',
+                coinAmount: 499,
+                icon: '💰',
+                permanent: false
+            },
+            {
+                id: 'coin_pack_999',
+                name: 'Pacote de 999 Moedas',
+                description: 'Compre 999 moedas por R$ 14,99',
+                category: 'coin_packs',
+                rarity: 'rare',
+                price: 14.99,
+                priceType: 'real',
+                coinAmount: 999,
+                icon: '💰',
+                permanent: false
+            },
         ];
         
         this.dailyOffers = [];
