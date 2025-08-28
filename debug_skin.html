@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Skin Button</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45b7aa;
+        }
+        .log {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 Debug: Botão de Usar Skin</h1>
+    
+    <div class="debug-section">
+        <h2>1. Teste da Função useSkin</h2>
+        <button onclick="testUseSkin()">Testar useSkin Diretamente</button>
+        <div id="useSkinLog" class="log"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2. Verificar localStorage</h2>
+        <button onclick="checkLocalStorage()">Verificar localStorage</button>
+        <div id="localStorageLog" class="log"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>3. Simular Clique no Botão</h2>
+        <button onclick="simulateButtonClick()">Simular Clique</button>
+        <div id="buttonClickLog" class="log"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>4. Verificar Funções Globais</h2>
+        <button onclick="checkGlobalFunctions()">Verificar Funções</button>
+        <div id="globalFunctionsLog" class="log"></div>
+    </div>
+
+    <script>
+        // Simular dados de usuário para teste
+        const mockUser = {
+            id: 1,
+            name: 'Teste User',
+            coins: 1000
+        };
+        
+        const mockRankingManager = {
+            getCurrentUser: () => mockUser
+        };
+        
+        const mockShop = {
+            getItemById: (id) => ({
+                id: id,
+                name: 'Skin Teste',
+                category: 'skins',
+                skinFile: 'milenium.png'
+            })
+        };
+        
+        // Simular função useSkin
+        window.useSkin = async function(itemId) {
+            const log = document.getElementById('useSkinLog');
+            log.textContent += `\n🎯 useSkin chamada com itemId: ${itemId}`;
+            
+            try {
+                const shopItem = mockShop.getItemById(itemId);
+                log.textContent += `\n📦 Item encontrado: ${JSON.stringify(shopItem, null, 2)}`;
+                
+                if (!shopItem || shopItem.category !== 'skins') {
+                    log.textContent += '\n❌ Item não é uma skin válida';
+                    return;
+                }
+        
+                const currentUser = mockRankingManager.getCurrentUser();
+                log.textContent += `\n👤 Usuário atual: ${JSON.stringify(currentUser, null, 2)}`;
+                
+                if (currentUser) {
+                    const skinData = {
+                        skinId: shopItem.id,
+                        skinFile: shopItem.skinFile,
+                        skinName: shopItem.name
+                    };
+                    
+                    localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(skinData));
+                    log.textContent += `\n✅ Skin salva no localStorage: ${JSON.stringify(skinData, null, 2)}`;
+                    
+                    alert(`✅ Skin Aplicada! ${shopItem.name} foi definida como sua skin atual!`);
+                } else {
+                    log.textContent += '\n❌ Usuário não encontrado';
+                }
+                
+            } catch (error) {
+                log.textContent += `\n💥 Erro: ${error.message}`;
+                console.error('Erro ao aplicar skin:', error);
+            }
+        };
+        
+        function testUseSkin() {
+            const log = document.getElementById('useSkinLog');
+            log.textContent = '🚀 Iniciando teste da função useSkin...';
+            useSkin('skin_blue');
+        }
+        
+        function checkLocalStorage() {
+            const log = document.getElementById('localStorageLog');
+            log.textContent = '🔍 Verificando localStorage...\n';
+            
+            // Listar todas as chaves relacionadas a skins
+            const keys = Object.keys(localStorage);
+            const skinKeys = keys.filter(key => key.includes('selectedSkin') || key.includes('activeSkin'));
+            
+            if (skinKeys.length === 0) {
+                log.textContent += 'Nenhuma skin encontrada no localStorage';
+            } else {
+                skinKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    log.textContent += `${key}: ${value}\n`;
+                });
+            }
+        }
+        
+        function simulateButtonClick() {
+            const log = document.getElementById('buttonClickLog');
+            log.textContent = '🖱️ Simulando clique no botão...\n';
+            
+            // Criar um botão similar ao do inventário
+            const testButton = document.createElement('button');
+            testButton.textContent = 'USAR SKIN';
+            testButton.onclick = () => useSkin('skin_test');
+            
+            log.textContent += 'Botão criado, simulando clique...\n';
+            testButton.click();
+            log.textContent += 'Clique simulado!';
+        }
+        
+        function checkGlobalFunctions() {
+            const log = document.getElementById('globalFunctionsLog');
+            log.textContent = '🌐 Verificando funções globais...\n';
+            
+            const functions = ['useSkin', 'useItem', 'rankingManager', 'shop'];
+            
+            functions.forEach(func => {
+                if (typeof window[func] !== 'undefined') {
+                    log.textContent += `✅ ${func}: ${typeof window[func]}\n`;
+                } else {
+                    log.textContent += `❌ ${func}: undefined\n`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

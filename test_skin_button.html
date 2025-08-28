@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Botão Skin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #2a2a2a;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45b7aa;
+        }
+        .inventory-item {
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #333;
+        }
+        .buy-btn {
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .buy-btn:hover {
+            background: #45b7aa;
+        }
+        .log {
+            background: #111;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste: Botão de Usar Skin</h1>
+    
+    <div class="test-section">
+        <h2>1. Simular Item de Skin no Inventário</h2>
+        <p>Vamos simular como um item de skin aparece no inventário:</p>
+        <div id="inventory-test"></div>
+        <button onclick="simulateInventoryItem()">Simular Item de Skin</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Testar Condições do Botão</h2>
+        <button onclick="testButtonConditions()">Testar Condições</button>
+        <div id="conditions-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Testar Função useSkin</h2>
+        <button onclick="testUseSkinFunction()">Testar useSkin</button>
+        <div id="useskin-log" class="log"></div>
+    </div>
+
+    <script>
+        // Simular dados
+        const mockUserItem = {
+            item_id: 'skin_test',
+            player_id: 1,
+            uses_remaining: null,
+            is_permanent: true,
+            purchased_at: new Date().toISOString()
+        };
+        
+        const mockShopItem = {
+            id: 'skin_test',
+            name: 'Skin Teste',
+            description: 'Uma skin para teste',
+            category: 'skins',
+            rarity: 'common',
+            price: 0,
+            icon: '🧪',
+            permanent: true,
+            skinFile: 'milenium.png'
+        };
+        
+        // Simular função useSkin
+        window.useSkin = function(itemId) {
+            const log = document.getElementById('useskin-log');
+            log.textContent += `\n🎯 useSkin chamada com: ${itemId}`;
+            log.textContent += `\n✅ Função executada com sucesso!`;
+            alert(`Skin ${itemId} aplicada!`);
+        };
+        
+        function simulateInventoryItem() {
+            const userItem = mockUserItem;
+            const shopItem = mockShopItem;
+            
+            // Verificar se é uma skin
+            const isSkin = shopItem.category === 'skins' && shopItem.skinFile;
+            const skinImagePath = isSkin ? `src/assets/images/skins/${shopItem.skinFile}` : null;
+            
+            console.log('🔍 Debug dados do item:', {
+                userItem,
+                shopItem,
+                isSkin,
+                is_permanent: userItem.is_permanent,
+                uses_remaining: userItem.uses_remaining
+            });
+            
+            // Lógica do botão (copiada do shop.js)
+            const shouldShowButton = (userItem.uses_remaining && userItem.uses_remaining > 0) || (isSkin && userItem.is_permanent);
+            
+            console.log('🔍 Condição do botão:', {
+                condition1: userItem.uses_remaining && userItem.uses_remaining > 0,
+                condition2: isSkin && userItem.is_permanent,
+                shouldShowButton
+            });
+            
+            const html = `
+                <div class="inventory-item">
+                    ${isSkin ? 
+                        `<div class="skin-preview" style="margin-bottom: 8px;">
+                            <img src="${skinImagePath}" alt="${shopItem.name}" 
+                                 style="width: 32px; height: 32px; object-fit: contain; border-radius: 6px; background: rgba(255,255,255,0.1);" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                            <div class="item-icon" style="font-size: 24px; display: none;">${shopItem.icon}</div>
+                         </div>` : 
+                        `<div class="item-icon" style="font-size: 24px;">${shopItem.icon}</div>`
+                    }
+                    <div class="item-name" style="font-size: 14px; margin: 8px 0; font-weight: bold;">${shopItem.name}</div>
+                    
+                    ${userItem.uses_remaining ? 
+                        `<div class="uses-remaining">${userItem.uses_remaining} usos restantes</div>` :
+                        userItem.is_permanent ? 
+                            '<div style="color: #FFD700; font-size: 12px;">♾️ Permanente</div>' :
+                            ''
+                    }
+                    
+                    <div style="margin: 10px 0; padding: 10px; background: #444; border-radius: 4px;">
+                        <strong>Debug Info:</strong><br>
+                        isSkin: ${isSkin}<br>
+                        is_permanent: ${userItem.is_permanent}<br>
+                        uses_remaining: ${userItem.uses_remaining}<br>
+                        shouldShowButton: ${shouldShowButton}
+                    </div>
+                    
+                    ${shouldShowButton ?
+                        `<button class="buy-btn" style="margin-top: 10px;" onclick="${isSkin ? `useSkin('${userItem.item_id}')` : `useItem('${userItem.item_id}')`}">
+                            ${isSkin ? 'USAR SKIN' : 'USAR'}
+                         </button>` : 
+                        '<div style="color: #ff6b6b; font-size: 12px;">❌ Botão não deveria aparecer</div>'
+                    }
+                    
+                    <div style="font-size: 10px; color: #888; margin-top: 8px;">
+                        Comprado em ${new Date(userItem.purchased_at).toLocaleDateString('pt-BR')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('inventory-test').innerHTML = html;
+        }
+        
+        function testButtonConditions() {
+            const log = document.getElementById('conditions-log');
+            log.textContent = 'Testando condições do botão...\n\n';
+            
+            const testCases = [
+                {
+                    name: 'Skin Permanente (deveria mostrar botão)',
+                    userItem: { item_id: 'skin1', uses_remaining: null, is_permanent: true },
+                    shopItem: { category: 'skins', skinFile: 'test.png' }
+                },
+                {
+                    name: 'Skin com Usos (deveria mostrar botão)',
+                    userItem: { item_id: 'skin2', uses_remaining: 3, is_permanent: false },
+                    shopItem: { category: 'skins', skinFile: 'test.png' }
+                },
+                {
+                    name: 'Skin sem Usos e não Permanente (NÃO deveria mostrar)',
+                    userItem: { item_id: 'skin3', uses_remaining: 0, is_permanent: false },
+                    shopItem: { category: 'skins', skinFile: 'test.png' }
+                },
+                {
+                    name: 'Item não-skin com Usos (deveria mostrar)',
+                    userItem: { item_id: 'boost1', uses_remaining: 2, is_permanent: false },
+                    shopItem: { category: 'boosts' }
+                }
+            ];
+            
+            testCases.forEach(testCase => {
+                const isSkin = testCase.shopItem.category === 'skins' && testCase.shopItem.skinFile;
+                const shouldShowButton = (testCase.userItem.uses_remaining && testCase.userItem.uses_remaining > 0) || (isSkin && testCase.userItem.is_permanent);
+                
+                log.textContent += `${testCase.name}:\n`;
+                log.textContent += `  isSkin: ${isSkin}\n`;
+                log.textContent += `  is_permanent: ${testCase.userItem.is_permanent}\n`;
+                log.textContent += `  uses_remaining: ${testCase.userItem.uses_remaining}\n`;
+                log.textContent += `  shouldShowButton: ${shouldShowButton}\n\n`;
+            });
+        }
+        
+        function testUseSkinFunction() {
+            const log = document.getElementById('useskin-log');
+            log.textContent = 'Testando função useSkin...\n';
+            
+            if (typeof window.useSkin === 'function') {
+                log.textContent += '✅ Função useSkin existe\n';
+                log.textContent += 'Chamando useSkin(\'skin_test\')...\n';
+                useSkin('skin_test');
+            } else {
+                log.textContent += '❌ Função useSkin não encontrada\n';
+            }
+        }
+        
+        // Executar simulação automaticamente
+        document.addEventListener('DOMContentLoaded', () => {
+            simulateInventoryItem();
+        });
+    </script>
+</body>
+</html>

@@ -63,7 +63,7 @@ class Player {
   loadUserSelectedSkin() {
     try {
       // Verificar se há um usuário logado
-      const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      const currentUser = JSON.parse(localStorage.getItem('spaceInvaders_currentUser') || 'null');
       if (!currentUser) {
         console.log('🎨 Nenhum usuário logado, usando skin padrão');
         return;

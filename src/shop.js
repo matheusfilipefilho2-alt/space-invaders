@@ -262,6 +262,7 @@ window.closeResultModal = function() {
 async function loadInventory() {
     try {
         userItems = await shop.getUserItems();
+        console.log('📦 Itens do usuário carregados:', userItems);
         
         if (userItems.length === 0) {
             inventoryGrid.innerHTML = `
@@ -277,7 +278,11 @@ async function loadInventory() {
 
         inventoryGrid.innerHTML = userItems.map(userItem => {
             const shopItem = shop.getItemById(userItem.item_id);
-            if (!shopItem) return '';
+            console.log(`🔍 Processando item ${userItem.item_id}:`, { userItem, shopItem });
+            if (!shopItem) {
+                console.log(`❌ Item ${userItem.item_id} não encontrado na loja`);
+                return '';
+            }
 
             // Verificar se é uma skin para mostrar preview e botão usar
             const isSkin = shopItem.category === 'skins' && shopItem.skinFile;
@@ -304,11 +309,22 @@ async function loadInventory() {
                     }
                     
                     ${/* Botão USAR para itens com usos restantes OU skins permanentes */ ''}
-                    ${(userItem.uses_remaining && userItem.uses_remaining > 0) || (isSkin && userItem.is_permanent) ?
-                        `<button class="buy-btn" style="margin-top: 10px;" onclick="${isSkin ? `useSkin('${userItem.item_id}')` : `useItem('${userItem.item_id}')`}">
-                            ${isSkin ? 'USAR SKIN' : 'USAR'}
-                         </button>` : 
-                        ''
+                    ${(() => {
+                        const shouldShowButton = (userItem.uses_remaining && userItem.uses_remaining > 0) || (isSkin && userItem.is_permanent);
+                        console.log(`🔍 Debug botão para item ${userItem.item_id}:`, {
+                            isSkin,
+                            is_permanent: userItem.is_permanent,
+                            uses_remaining: userItem.uses_remaining,
+                            shouldShowButton,
+                            shopItem: shopItem ? shopItem.name : 'não encontrado'
+                        });
+                        
+                        return shouldShowButton ?
+                            `<button class="buy-btn" style="margin-top: 10px;" onclick="${isSkin ? `useSkin('${userItem.item_id}')` : `useItem('${userItem.item_id}')`}">
+                                ${isSkin ? 'USAR SKIN' : 'USAR'}
+                             </button>` : 
+                            '';
+                    })()
                     }
                     
                     <div style="font-size: 8px; color: #888; margin-top: 8px;">
@@ -354,15 +370,22 @@ window.useItem = async function(itemId) {
 
 // Usar skin do inventário
 window.useSkin = async function(itemId) {
+    console.log('🎯 useSkin chamada com itemId:', itemId);
+    
     try {
         const shopItem = shop.getItemById(itemId);
+        console.log('📦 Item encontrado:', shopItem);
+        
         if (!shopItem || shopItem.category !== 'skins') {
+            console.log('❌ Item não é uma skin válida');
             showResultModal('❌ Erro', 'Item não é uma skin válida', true);
             return;
         }
 
         // Salvar skin selecionada no localStorage
         const currentUser = rankingManager.getCurrentUser();
+        console.log('👤 Usuário atual:', currentUser);
+        
         if (currentUser) {
             const skinData = {
                 skinId: shopItem.id,
@@ -370,6 +393,7 @@ window.useSkin = async function(itemId) {
                 skinName: shopItem.name
             };
             
+            console.log('💾 Salvando skin no localStorage:', skinData);
             localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(skinData));
             
             showResultModal(
@@ -383,11 +407,12 @@ window.useSkin = async function(itemId) {
             
             console.log(`🎨 Skin aplicada: ${shopItem.name} (${shopItem.skinFile})`);
         } else {
+            console.log('❌ Usuário não encontrado');
             showResultModal('❌ Erro', 'Usuário não encontrado', true);
         }
         
     } catch (error) {
-        console.error('Erro ao aplicar skin:', error);
+        console.error('💥 Erro ao aplicar skin:', error);
         showResultModal('❌ Erro', 'Ocorreu um erro ao aplicar a skin', true);
     }
 };

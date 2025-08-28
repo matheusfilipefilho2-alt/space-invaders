@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Teste: Skins no Jogo</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff88;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .test-section {
+            background: #2a2a2a;
+            border: 2px solid #4ECDC4;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .log {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        button {
+            background: #4ECDC4;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #45b7aa;
+        }
+        
+        .skin-option {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px;
+            background: #333;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .skin-option:hover {
+            border-color: #4ECDC4;
+        }
+        
+        .skin-option.selected {
+            border-color: #00ff88;
+            background: #2a4a2a;
+        }
+        
+        .skin-option img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        
+        .game-link {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        
+        .game-link:hover {
+            background: #ff5252;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Teste: Skins no Jogo</h1>
+    
+    <div class="test-section">
+        <h2>1. Configurar Usuário de Teste</h2>
+        <p>Simular um usuário logado com dados completos:</p>
+        <button onclick="setupGameUser()">Criar Usuário</button>
+        <button onclick="clearGameUser()">Limpar Usuário</button>
+        <div id="user-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Selecionar Skin para Teste</h2>
+        <p>Escolha uma skin para testar no jogo:</p>
+        <div id="skin-selector"></div>
+        <div id="skin-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Verificar Dados no LocalStorage</h2>
+        <p>Verificar se os dados estão sendo salvos corretamente:</p>
+        <button onclick="checkLocalStorage()">Verificar Dados</button>
+        <div id="storage-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Testar no Jogo Real</h2>
+        <p>Abrir o jogo com a skin configurada:</p>
+        <a href="game.html" class="game-link" target="_blank">🚀 Abrir Jogo</a>
+        <a href="shop.html" class="game-link" target="_blank">🛒 Abrir Loja</a>
+        <div id="game-instructions" class="log">Instruções:
+1. Configure um usuário de teste
+2. Selecione uma skin
+3. Abra o jogo e verifique se a skin está aplicada
+4. Observe o console do navegador para logs de depuração</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Simular Sistema de Loja</h2>
+        <p>Testar a função useSkin diretamente:</p>
+        <button onclick="testUseSkinFunction()">Testar useSkin</button>
+        <div id="shop-log" class="log"></div>
+    </div>
+
+    <script>
+        // Dados de teste
+        const testUser = {
+            id: 888,
+            username: 'skin_tester',
+            name: 'Testador de Skins',
+            coins: 5000,
+            high_score: 15000,
+            created_at: new Date().toISOString()
+        };
+        
+        const availableSkins = [
+            { id: 'skin_milenium', name: 'Millennium Falcon', file: 'milenium.png', price: 500 },
+            { id: 'skin_orange', name: 'Orange Fighter', file: 'orange.png', price: 300 },
+            { id: 'skin_xwing', name: 'X-Wing', file: 'xwing.png', price: 800 },
+            { id: 'skin_yellow', name: 'Yellow Wing', file: 'yellowwing.png', price: 400 }
+        ];
+        
+        let selectedSkin = null;
+        
+        // Configurar usuário de teste
+        window.setupGameUser = function() {
+            const log = document.getElementById('user-log');
+            log.textContent = '👤 Configurando usuário de teste...\n\n';
+            
+            try {
+                // Salvar usuário atual
+                localStorage.setItem('currentUser', JSON.stringify(testUser));
+                log.textContent += '✅ Usuário salvo no localStorage\n';
+                
+                // Simular login
+                localStorage.setItem('isLoggedIn', 'true');
+                log.textContent += '✅ Status de login definido\n';
+                
+                // Simular inventário com todas as skins
+                const inventory = availableSkins.map(skin => ({
+                    itemId: skin.id,
+                    itemType: 'skin',
+                    quantity: 1,
+                    purchasedAt: new Date().toISOString()
+                }));
+                
+                localStorage.setItem(`inventory_${testUser.id}`, JSON.stringify(inventory));
+                log.textContent += `✅ Inventário criado com ${inventory.length} skins\n`;
+                
+                log.textContent += '\n🎉 Usuário de teste configurado com sucesso!';
+                log.textContent += `\n📋 ID: ${testUser.id}`;
+                log.textContent += `\n📋 Nome: ${testUser.name}`;
+                log.textContent += `\n💰 Moedas: ${testUser.coins}`;
+                
+                // Atualizar seletor de skins
+                createSkinSelector();
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro ao configurar usuário:', error);
+            }
+        };
+        
+        // Limpar usuário de teste
+        window.clearGameUser = function() {
+            const log = document.getElementById('user-log');
+            log.textContent = '🧹 Limpando dados de teste...\n\n';
+            
+            try {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem(`inventory_${testUser.id}`);
+                localStorage.removeItem(`selectedSkin_${testUser.id}`);
+                localStorage.removeItem(`activeSkin_${testUser.id}`);
+                
+                // Limpar todas as possíveis chaves relacionadas
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.includes(testUser.id.toString())) {
+                        localStorage.removeItem(key);
+                        i--; // Ajustar índice após remoção
+                    }
+                }
+                
+                log.textContent += '✅ Dados de teste removidos!';
+                
+                // Limpar seletor
+                document.getElementById('skin-selector').innerHTML = '';
+                selectedSkin = null;
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro ao limpar dados:', error);
+            }
+        };
+        
+        // Criar seletor de skins
+        function createSkinSelector() {
+            const container = document.getElementById('skin-selector');
+            container.innerHTML = '<h3>🎨 Escolha uma skin:</h3>';
+            
+            availableSkins.forEach(skin => {
+                const skinDiv = document.createElement('div');
+                skinDiv.className = 'skin-option';
+                skinDiv.onclick = () => selectSkin(skin);
+                
+                skinDiv.innerHTML = `
+                    <img src="src/assets/images/skins/${skin.file}" 
+                         alt="${skin.name}" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                    <div style="display: none; font-size: 24px;">🚀</div>
+                    <div style="margin-top: 8px; font-size: 12px;">${skin.name}</div>
+                    <div style="font-size: 10px; color: #888;">${skin.file}</div>
+                `;
+                
+                container.appendChild(skinDiv);
+            });
+        }
+        
+        // Selecionar skin
+        function selectSkin(skin) {
+            const log = document.getElementById('skin-log');
+            log.textContent = `🎨 Selecionando skin: ${skin.name}...\n\n`;
+            
+            try {
+                // Remover seleção anterior
+                document.querySelectorAll('.skin-option').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Marcar como selecionada
+                event.currentTarget.classList.add('selected');
+                selectedSkin = skin;
+                
+                // Salvar skin selecionada (formato do shop.js)
+                const skinData = {
+                    skinId: skin.id,
+                    skinFile: skin.file,
+                    skinName: skin.name,
+                    selectedAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem(`selectedSkin_${testUser.id}`, JSON.stringify(skinData));
+                log.textContent += '✅ Skin selecionada salva\n';
+                
+                // Salvar como skin ativa (formato do ShopClass)
+                const activeSkinData = {
+                    skinId: skin.id,
+                    skinFile: skin.file,
+                    setAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem(`activeSkin_${testUser.id}`, JSON.stringify(activeSkinData));
+                log.textContent += '✅ Skin ativa definida\n';
+                
+                log.textContent += `\n🎉 Skin ${skin.name} configurada!`;
+                log.textContent += `\n📋 ID: ${skin.id}`;
+                log.textContent += `\n🖼️ Arquivo: ${skin.file}`;
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro ao selecionar skin:', error);
+            }
+        }
+        
+        // Verificar localStorage
+        window.checkLocalStorage = function() {
+            const log = document.getElementById('storage-log');
+            log.textContent = '🔍 Verificando dados no localStorage...\n\n';
+            
+            try {
+                // Verificar usuário
+                const currentUser = localStorage.getItem('currentUser');
+                log.textContent += `👤 currentUser: ${currentUser ? 'Encontrado' : 'Não encontrado'}\n`;
+                
+                if (currentUser) {
+                    const userData = JSON.parse(currentUser);
+                    log.textContent += `   Nome: ${userData.name}\n`;
+                    log.textContent += `   ID: ${userData.id}\n`;
+                }
+                
+                // Verificar skin selecionada
+                const selectedSkinData = localStorage.getItem(`selectedSkin_${testUser.id}`);
+                log.textContent += `\n🎨 selectedSkin: ${selectedSkinData ? 'Encontrada' : 'Não encontrada'}\n`;
+                
+                if (selectedSkinData) {
+                    const skinData = JSON.parse(selectedSkinData);
+                    log.textContent += `   Skin: ${skinData.skinName}\n`;
+                    log.textContent += `   Arquivo: ${skinData.skinFile}\n`;
+                }
+                
+                // Verificar skin ativa
+                const activeSkinData = localStorage.getItem(`activeSkin_${testUser.id}`);
+                log.textContent += `\n🚀 activeSkin: ${activeSkinData ? 'Encontrada' : 'Não encontrada'}\n`;
+                
+                if (activeSkinData) {
+                    const activeData = JSON.parse(activeSkinData);
+                    log.textContent += `   Skin ID: ${activeData.skinId}\n`;
+                    log.textContent += `   Arquivo: ${activeData.skinFile}\n`;
+                }
+                
+                // Verificar inventário
+                const inventory = localStorage.getItem(`inventory_${testUser.id}`);
+                log.textContent += `\n📦 inventory: ${inventory ? 'Encontrado' : 'Não encontrado'}\n`;
+                
+                if (inventory) {
+                    const items = JSON.parse(inventory);
+                    log.textContent += `   Itens: ${items.length}\n`;
+                }
+                
+                // Verificar login
+                const isLoggedIn = localStorage.getItem('isLoggedIn');
+                log.textContent += `\n🔐 isLoggedIn: ${isLoggedIn}\n`;
+                
+                log.textContent += '\n✅ Verificação concluída!';
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro ao verificar localStorage:', error);
+            }
+        };
+        
+        // Testar função useSkin
+        window.testUseSkinFunction = function() {
+            const log = document.getElementById('shop-log');
+            log.textContent = '🛒 Testando função useSkin...\n\n';
+            
+            if (!selectedSkin) {
+                log.textContent += '⚠️ Nenhuma skin selecionada. Selecione uma skin primeiro.\n';
+                return;
+            }
+            
+            try {
+                // Simular a função useSkin do shop.js
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                if (!currentUser) {
+                    log.textContent += '❌ Usuário não encontrado\n';
+                    return;
+                }
+                
+                log.textContent += `🎯 Aplicando skin ${selectedSkin.name}...\n`;
+                
+                // Salvar skin selecionada
+                const skinData = {
+                    skinId: selectedSkin.id,
+                    skinFile: selectedSkin.file,
+                    skinName: selectedSkin.name
+                };
+                
+                localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(skinData));
+                log.textContent += '✅ Skin salva no localStorage\n';
+                
+                // Simular aplicação no player (se disponível)
+                if (window.player && typeof window.player.applySkin === 'function') {
+                    const applied = window.player.applySkin(selectedSkin.id, selectedSkin.file);
+                    log.textContent += `🚀 Aplicação no Player: ${applied ? 'Sucesso' : 'Falhou'}\n`;
+                } else {
+                    log.textContent += '⚠️ Player não disponível nesta página\n';
+                }
+                
+                log.textContent += '\n✅ Função useSkin simulada com sucesso!';
+                log.textContent += '\n💡 Abra o jogo para ver a skin aplicada.';
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro ao testar useSkin:', error);
+            }
+        };
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🧪 Página de teste de skins carregada');
+            
+            // Verificar se já existe um usuário
+            const existingUser = localStorage.getItem('currentUser');
+            if (existingUser) {
+                createSkinSelector();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Teste: Integração de Skins no Jogo</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff88;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .test-section {
+            background: #2a2a2a;
+            border: 2px solid #4ECDC4;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .log {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        button {
+            background: #4ECDC4;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #45b7aa;
+        }
+        
+        .skin-preview {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px;
+            background: #333;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .skin-preview img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste: Integração de Skins no Jogo</h1>
+    
+    <div class="test-section">
+        <h2>1. Verificar Sistema de Skins do Player</h2>
+        <p>Testando se o Player.js carrega e aplica skins corretamente:</p>
+        <button onclick="testPlayerSkinSystem()">Testar Player</button>
+        <div id="player-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Simular Dados de Usuário e Skin</h2>
+        <p>Configurando dados de teste no localStorage:</p>
+        <button onclick="setupTestData()">Configurar Dados</button>
+        <button onclick="clearTestData()">Limpar Dados</button>
+        <div id="setup-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Testar Carregamento de Skin</h2>
+        <p>Verificando se a skin é carregada automaticamente:</p>
+        <button onclick="testSkinLoading()">Testar Carregamento</button>
+        <div id="loading-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Visualizar Skins Disponíveis</h2>
+        <p>Mostrando as skins disponíveis no diretório:</p>
+        <div id="skins-preview"></div>
+        <button onclick="showAvailableSkins()">Mostrar Skins</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Testar Aplicação Manual de Skin</h2>
+        <p>Testando aplicação direta de skin no Player:</p>
+        <button onclick="testManualSkinApplication()">Aplicar Skin Teste</button>
+        <div id="manual-log" class="log"></div>
+    </div>
+
+    <script type="module">
+        // Importar classes necessárias
+        let Player;
+        
+        try {
+            // Tentar importar Player
+            const playerModule = await import('./src/classes/player.js');
+            Player = playerModule.default;
+            console.log('✅ Player importado com sucesso');
+        } catch (error) {
+            console.error('❌ Erro ao importar Player:', error);
+        }
+        
+        // Dados de teste
+        const testUser = {
+            id: 999,
+            name: 'Teste User',
+            coins: 1000
+        };
+        
+        const testSkins = [
+            { id: 'skin_milenium', name: 'Millennium Falcon', file: 'milenium.png' },
+            { id: 'skin_orange', name: 'Orange Fighter', file: 'orange.png' },
+            { id: 'skin_xwing', name: 'X-Wing', file: 'xwing.png' },
+            { id: 'skin_yellow', name: 'Yellow Wing', file: 'yellowwing.png' }
+        ];
+        
+        // Funções de teste
+        window.testPlayerSkinSystem = function() {
+            const log = document.getElementById('player-log');
+            log.textContent = '🚀 Testando sistema de skins do Player...\n\n';
+            
+            if (!Player) {
+                log.textContent += '❌ Classe Player não disponível\n';
+                return;
+            }
+            
+            try {
+                // Criar instância do Player
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                
+                const player = new Player(canvas.width, canvas.height);
+                log.textContent += '✅ Player criado com sucesso\n';
+                
+                // Testar métodos de skin
+                log.textContent += `📋 Skin atual: ${player.getCurrentSkin()}\n`;
+                log.textContent += `🖼️ Imagem atual: ${player.getCurrentSkinImage() ? 'Carregada' : 'Não carregada'}\n`;
+                
+                // Testar carregamento de skin
+                player.loadSkin('test_skin', 'milenium.png');
+                log.textContent += '🔄 Skin de teste carregada\n';
+                
+                // Testar aplicação de skin
+                const applied = player.applySkin('test_skin');
+                log.textContent += `🎨 Aplicação de skin: ${applied ? 'Sucesso' : 'Falhou'}\n`;
+                log.textContent += `📋 Nova skin atual: ${player.getCurrentSkin()}\n`;
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro no teste do Player:', error);
+            }
+        };
+        
+        window.setupTestData = function() {
+            const log = document.getElementById('setup-log');
+            log.textContent = '⚙️ Configurando dados de teste...\n\n';
+            
+            try {
+                // Salvar usuário atual
+                localStorage.setItem('currentUser', JSON.stringify(testUser));
+                log.textContent += '👤 Usuário de teste salvo\n';
+                
+                // Salvar skin selecionada
+                const selectedSkin = {
+                    skinId: 'skin_milenium',
+                    skinFile: 'milenium.png',
+                    skinName: 'Millennium Falcon'
+                };
+                
+                localStorage.setItem(`selectedSkin_${testUser.id}`, JSON.stringify(selectedSkin));
+                log.textContent += '🎨 Skin selecionada salva\n';
+                
+                // Salvar skin ativa (formato do ShopClass)
+                const activeSkin = {
+                    skinId: 'skin_milenium',
+                    skinFile: 'milenium.png',
+                    setAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem(`activeSkin_${testUser.id}`, JSON.stringify(activeSkin));
+                log.textContent += '🚀 Skin ativa salva\n';
+                
+                log.textContent += '\n✅ Dados de teste configurados com sucesso!';
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro ao configurar dados:', error);
+            }
+        };
+        
+        window.clearTestData = function() {
+            const log = document.getElementById('setup-log');
+            log.textContent = '🧹 Limpando dados de teste...\n\n';
+            
+            try {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem(`selectedSkin_${testUser.id}`);
+                localStorage.removeItem(`activeSkin_${testUser.id}`);
+                
+                log.textContent += '✅ Dados de teste removidos!';
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro ao limpar dados:', error);
+            }
+        };
+        
+        window.testSkinLoading = function() {
+            const log = document.getElementById('loading-log');
+            log.textContent = '🔄 Testando carregamento automático de skin...\n\n';
+            
+            if (!Player) {
+                log.textContent += '❌ Classe Player não disponível\n';
+                return;
+            }
+            
+            try {
+                // Verificar dados no localStorage
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                log.textContent += `👤 Usuário no localStorage: ${currentUser ? currentUser.name : 'Nenhum'}\n`;
+                
+                if (currentUser) {
+                    const selectedSkinData = localStorage.getItem(`selectedSkin_${currentUser.id}`);
+                    log.textContent += `🎨 Skin selecionada: ${selectedSkinData ? 'Encontrada' : 'Não encontrada'}\n`;
+                    
+                    if (selectedSkinData) {
+                        const skinData = JSON.parse(selectedSkinData);
+                        log.textContent += `📋 Dados da skin: ${JSON.stringify(skinData, null, 2)}\n`;
+                    }
+                }
+                
+                // Criar Player e verificar se carrega a skin
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                
+                const player = new Player(canvas.width, canvas.height);
+                log.textContent += `\n🚀 Player criado - Skin atual: ${player.getCurrentSkin()}\n`;
+                
+                // Verificar se a skin foi aplicada
+                if (player.getCurrentSkin() !== 'default') {
+                    log.textContent += '✅ Skin customizada carregada automaticamente!\n';
+                } else {
+                    log.textContent += '⚠️ Usando skin padrão\n';
+                }
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro no teste de carregamento:', error);
+            }
+        };
+        
+        window.showAvailableSkins = function() {
+            const container = document.getElementById('skins-preview');
+            container.innerHTML = '<h3>🎨 Skins Disponíveis:</h3>';
+            
+            testSkins.forEach(skin => {
+                const skinDiv = document.createElement('div');
+                skinDiv.className = 'skin-preview';
+                skinDiv.innerHTML = `
+                    <img src="src/assets/images/skins/${skin.file}" 
+                         alt="${skin.name}" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                    <div style="display: none; font-size: 32px;">🚀</div>
+                    <div style="margin-top: 8px; font-size: 12px;">${skin.name}</div>
+                    <div style="font-size: 10px; color: #888;">${skin.file}</div>
+                `;
+                container.appendChild(skinDiv);
+            });
+        };
+        
+        window.testManualSkinApplication = function() {
+            const log = document.getElementById('manual-log');
+            log.textContent = '🎯 Testando aplicação manual de skin...\n\n';
+            
+            if (!Player) {
+                log.textContent += '❌ Classe Player não disponível\n';
+                return;
+            }
+            
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                
+                const player = new Player(canvas.width, canvas.height);
+                log.textContent += '✅ Player criado\n';
+                log.textContent += `📋 Skin inicial: ${player.getCurrentSkin()}\n\n`;
+                
+                // Testar cada skin disponível
+                testSkins.forEach((skin, index) => {
+                    log.textContent += `🔄 Testando ${skin.name}...\n`;
+                    
+                    // Carregar e aplicar skin
+                    player.loadSkin(skin.id, skin.file);
+                    const applied = player.applySkin(skin.id);
+                    
+                    log.textContent += `   Resultado: ${applied ? '✅ Sucesso' : '❌ Falhou'}\n`;
+                    log.textContent += `   Skin atual: ${player.getCurrentSkin()}\n\n`;
+                });
+                
+                // Voltar para skin padrão
+                player.applySkin('default');
+                log.textContent += `🔄 Voltando para skin padrão: ${player.getCurrentSkin()}\n`;
+                
+            } catch (error) {
+                log.textContent += `💥 Erro: ${error.message}\n`;
+                console.error('Erro no teste manual:', error);
+            }
+        };
+        
+        // Executar teste inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🧪 Página de teste carregada');
+            showAvailableSkins();
+        });
+    </script>
+</body>
+</html>
