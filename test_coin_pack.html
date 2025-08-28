@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Pacote de Moedas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.3);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .coin-pack {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2E8B57;
+        }
+        .coins {
+            font-size: 18px;
+            color: #4169E1;
+            margin: 10px 0;
+        }
+        button {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196F3;
+            color: #2196F3;
+        }
+        .user-info {
+            background: rgba(156, 39, 176, 0.2);
+            border: 1px solid #9C27B0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste - Pacote de Moedas</h1>
+        <p>Teste do sistema de compra de pacotes de moedas com dinheiro real</p>
+        
+        <div class="test-section">
+            <h2>👤 Informações do Usuário</h2>
+            <div id="user-info" class="user-info">
+                Carregando informações do usuário...
+            </div>
+            <button onclick="createTestUser()">Criar Usuário de Teste</button>
+            <button onclick="addTestCoins()">Adicionar 100 Moedas (Teste)</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>💰 Pacote de Moedas Disponível</h2>
+            <div id="coin-pack-display">
+                Carregando pacote de moedas...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🛒 Teste de Compra</h2>
+            <button onclick="testCoinPackPurchase()">Comprar Pacote de 199 Moedas</button>
+            <button onclick="checkPurchaseHistory()">Ver Histórico de Compras</button>
+            <div id="purchase-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 Debug</h2>
+            <button onclick="showShopItems()">Mostrar Todos os Itens da Loja</button>
+            <button onclick="clearTestData()">Limpar Dados de Teste</button>
+            <div id="debug-info"></div>
+        </div>
+    </div>
+
+    <!-- Scripts necessários -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/classes/GameConfig.js"></script>
+    <script src="src/classes/RankingManager.js"></script>
+    <script src="src/classes/InventorySync.js"></script>
+    <script src="src/classes/ShopClass.js"></script>
+    
+    <script>
+        let shop, rankingManager;
+        
+        // Inicializar sistema
+        async function init() {
+            try {
+                rankingManager = new RankingManager();
+                shop = new ShopClass(rankingManager);
+                
+                updateUserInfo();
+                displayCoinPack();
+                
+                console.log('✅ Sistema inicializado com sucesso');
+            } catch (error) {
+                console.error('❌ Erro na inicialização:', error);
+                document.getElementById('user-info').innerHTML = `
+                    <div class="result error">❌ Erro na inicialização: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Atualizar informações do usuário
+        function updateUserInfo() {
+            const currentUser = rankingManager.getCurrentUser();
+            const userInfoDiv = document.getElementById('user-info');
+            
+            if (currentUser) {
+                userInfoDiv.innerHTML = `
+                    <strong>Nome:</strong> ${currentUser.name}<br>
+                    <strong>ID:</strong> ${currentUser.id}<br>
+                    <strong>Moedas:</strong> 🪙 ${currentUser.coins || 0}<br>
+                    <strong>Pontuação:</strong> ${currentUser.score || 0}
+                `;
+            } else {
+                userInfoDiv.innerHTML = `
+                    <div class="result error">❌ Nenhum usuário logado</div>
+                `;
+            }
+        }
+        
+        // Exibir pacote de moedas
+        function displayCoinPack() {
+            const coinPack = shop.getItemById('coin_pack_199');
+            const displayDiv = document.getElementById('coin-pack-display');
+            
+            if (coinPack) {
+                displayDiv.innerHTML = `
+                    <div class="coin-pack">
+                        <div style="font-size: 32px; margin-bottom: 10px;">${coinPack.icon}</div>
+                        <h3>${coinPack.name}</h3>
+                        <p>${coinPack.description}</p>
+                        <div class="price">R$ ${coinPack.price}</div>
+                        <div class="coins">+${coinPack.coinAmount} moedas</div>
+                        <div style="font-size: 12px; margin-top: 10px; opacity: 0.8;">
+                            Categoria: ${coinPack.category} | Tipo: ${coinPack.priceType}
+                        </div>
+                    </div>
+                `;
+            } else {
+                displayDiv.innerHTML = `
+                    <div class="result error">❌ Pacote de moedas não encontrado</div>
+                `;
+            }
+        }
+        
+        // Criar usuário de teste
+        function createTestUser() {
+            const testUser = {
+                id: Date.now(),
+                name: `TestUser_${Date.now()}`,
+                score: 1000,
+                coins: 50,
+                level: 1
+            };
+            
+            localStorage.setItem('currentUser', JSON.stringify(testUser));
+            updateUserInfo();
+            
+            document.getElementById('purchase-result').innerHTML = `
+                <div class="result success">✅ Usuário de teste criado: ${testUser.name}</div>
+            `;
+        }
+        
+        // Adicionar moedas de teste
+        function addTestCoins() {
+            const currentUser = rankingManager.getCurrentUser();
+            if (!currentUser) {
+                document.getElementById('purchase-result').innerHTML = `
+                    <div class="result error">❌ Nenhum usuário logado</div>
+                `;
+                return;
+            }
+            
+            currentUser.coins = (currentUser.coins || 0) + 100;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            updateUserInfo();
+            
+            document.getElementById('purchase-result').innerHTML = `
+                <div class="result success">✅ +100 moedas adicionadas para teste</div>
+            `;
+        }
+        
+        // Testar compra do pacote de moedas
+        async function testCoinPackPurchase() {
+            const resultDiv = document.getElementById('purchase-result');
+            
+            try {
+                resultDiv.innerHTML = `
+                    <div class="result info">⏳ Processando compra do pacote de moedas...</div>
+                `;
+                
+                const result = await shop.purchaseItem('coin_pack_199');
+                
+                if (result.success) {
+                    updateUserInfo();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ <strong>Compra realizada com sucesso!</strong><br><br>
+                            💰 Moedas adicionadas: ${result.coinsAdded}<br>
+                            🪙 Total de moedas: ${result.totalCoins}<br>
+                            💳 Valor pago: R$ ${result.paymentAmount}<br>
+                            💱 Moeda: ${result.currency}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">❌ Erro na compra: ${result.error}</div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Erro na compra:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">❌ Erro inesperado: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Verificar histórico de compras
+        function checkPurchaseHistory() {
+            const currentUser = rankingManager.getCurrentUser();
+            if (!currentUser) {
+                document.getElementById('purchase-result').innerHTML = `
+                    <div class="result error">❌ Nenhum usuário logado</div>
+                `;
+                return;
+            }
+            
+            const history = JSON.parse(localStorage.getItem(`coinPurchases_${currentUser.id}`) || '[]');
+            const resultDiv = document.getElementById('purchase-result');
+            
+            if (history.length === 0) {
+                resultDiv.innerHTML = `
+                    <div class="result info">📋 Nenhuma compra de moedas encontrada</div>
+                `;
+                return;
+            }
+            
+            const historyHtml = history.map(purchase => `
+                <div style="background: rgba(255,255,255,0.1); padding: 10px; margin: 5px 0; border-radius: 5px;">
+                    <strong>${purchase.item_name}</strong><br>
+                    💰 ${purchase.coins_received} moedas por ${purchase.currency} ${purchase.price_paid}<br>
+                    📅 ${new Date(purchase.purchased_at).toLocaleString('pt-BR')}
+                </div>
+            `).join('');
+            
+            resultDiv.innerHTML = `
+                <div class="result success">
+                    📋 <strong>Histórico de Compras (${history.length} compras)</strong><br><br>
+                    ${historyHtml}
+                </div>
+            `;
+        }
+        
+        // Mostrar todos os itens da loja
+        function showShopItems() {
+            const items = shop.getAllItems();
+            const debugDiv = document.getElementById('debug-info');
+            
+            const coinPacks = items.filter(item => item.category === 'coin_packs');
+            
+            debugDiv.innerHTML = `
+                <div class="result info">
+                    <strong>📦 Total de itens na loja:</strong> ${items.length}<br>
+                    <strong>💰 Pacotes de moedas:</strong> ${coinPacks.length}<br><br>
+                    <strong>Pacotes encontrados:</strong><br>
+                    ${coinPacks.map(pack => `
+                        • ${pack.name} - ${pack.priceType === 'real' ? 'R$' : '🪙'} ${pack.price} (+${pack.coinAmount} moedas)
+                    `).join('<br>')}
+                </div>
+            `;
+        }
+        
+        // Limpar dados de teste
+        function clearTestData() {
+            const currentUser = rankingManager.getCurrentUser();
+            if (currentUser) {
+                localStorage.removeItem(`coinPurchases_${currentUser.id}`);
+            }
+            localStorage.removeItem('currentUser');
+            
+            document.getElementById('purchase-result').innerHTML = `
+                <div class="result success">✅ Dados de teste limpos</div>
+            `;
+            
+            updateUserInfo();
+        }
+        
+        // Inicializar quando a página carregar
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

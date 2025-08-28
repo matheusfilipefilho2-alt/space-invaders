@@ -512,6 +512,222 @@ body.admin-page {
   50% { transform: scale(1.5); opacity: 1; }
 }
 
+/* Modal PIX */
+.pix-modal-content {
+    max-width: 500px;
+    width: 90%;
+}
+
+.pix-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.pix-item-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(78, 205, 196, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.pix-item-icon {
+    font-size: 32px;
+    min-width: 50px;
+    text-align: center;
+}
+
+.pix-item-details h4 {
+    margin: 0 0 5px 0;
+    color: #4ECDC4;
+    font-size: 16px;
+}
+
+.pix-item-details p {
+    margin: 0 0 10px 0;
+    color: #ccc;
+    font-size: 14px;
+}
+
+.pix-price {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.pix-coins {
+    color: #4ECDC4;
+    font-size: 14px;
+}
+
+.pix-qr-section {
+    text-align: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 2px dashed rgba(78, 205, 196, 0.3);
+}
+
+.pix-qr-code {
+    display: inline-block;
+    padding: 15px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.pix-qr-code img {
+    width: 150px;
+    height: 150px;
+    display: block;
+}
+
+.pix-instruction {
+    color: #4ECDC4;
+    font-size: 14px;
+    margin: 0 0 15px 0;
+    font-weight: 500;
+}
+
+.pix-copy-paste {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(78, 205, 196, 0.2);
+}
+
+.pix-copy-label {
+    color: #ccc;
+    font-size: 12px;
+    margin: 0 0 8px 0;
+    text-align: center;
+}
+
+.pix-code-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.pix-code-container input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ccc;
+    font-size: 11px;
+    font-family: monospace;
+}
+
+.copy-btn {
+    padding: 8px 12px;
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 6px;
+    background: rgba(78, 205, 196, 0.1);
+    color: #4ECDC4;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.copy-btn:hover {
+    background: rgba(78, 205, 196, 0.2);
+    border-color: #4ECDC4;
+}
+
+.pix-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pix-form label {
+    color: #4ECDC4;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.pix-form input {
+    padding: 12px 15px;
+    border: 2px solid rgba(78, 205, 196, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.pix-form input:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}
+
+.pix-form input::placeholder {
+    color: #888;
+}
+
+/* Modal de Processamento */
+.processing-modal-content {
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.processing-animation {
+    margin: 20px 0;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(78, 205, 196, 0.2);
+    border-top: 4px solid #4ECDC4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.processing-modal-content h3 {
+    color: #4ECDC4;
+    margin: 15px 0 10px 0;
+}
+
+.processing-modal-content p {
+    color: #ccc;
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsividade para modais PIX */
+@media (max-width: 600px) {
+    .pix-modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .pix-item-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .pix-qr-code img {
+        width: 120px;
+        height: 120px;
+    }
+}
+
 /* Estilos específicos para a página de ranking */
 .user-info-card {
   display: flex;
@@ -987,6 +1203,45 @@ body.admin-page {
   position: absolute;
   top: 10px;
   right: 10px;
+}
+
+.coming-soon-badge {
+  background: linear-gradient(135deg, #FF6B35, #F7931E);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 7px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  animation: pulse-glow 2s infinite;
+}
+
+.disabled-badge {
+  background: #666;
+  color: #ccc;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 8px;
+  font-weight: bold;
+  opacity: 0.8;
+}
+
+.shop-item.disabled {
+  pointer-events: none;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 107, 53, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255, 107, 53, 0.8);
+    transform: scale(1.05);
+  }
 }
 
 .buy-btn {

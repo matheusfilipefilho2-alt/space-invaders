@@ -108,14 +108,17 @@ function createItemCard(item, isDailyOffer = false) {
     const canAfford = userCoins >= item.price;
     const rarity = shop.rarities[item.rarity];
     const isOwned = userItems.some(userItem => userItem.item_id === item.id && userItem.is_permanent);
+    const isDisabled = item.disabled || false;
+    const isComingSoon = item.comingSoon || false;
 
     // Verificar se é uma skin para mostrar a imagem
     const isSkin = item.category === 'skins' && item.skinFile;
     const skinImagePath = isSkin ? `src/assets/images/skins/${item.skinFile}` : null;
 
     return `
-        <div class="shop-item ${item.rarity}" style="--rarity-color: ${rarity.color}">
+        <div class="shop-item ${item.rarity} ${isDisabled ? 'disabled' : ''}" style="--rarity-color: ${rarity.color}; ${isDisabled ? 'opacity: 0.6; filter: grayscale(50%);' : ''}">
             ${item.isDailyOffer ? `<div class="discount-badge">-${item.discount}%</div>` : ''}
+            ${isComingSoon ? '<div class="coming-soon-badge">EM BREVE</div>' : ''}
             
             <div class="item-header">
                 <div>
@@ -140,16 +143,19 @@ function createItemCard(item, isDailyOffer = false) {
             
             <div class="item-footer">
                 <div class="item-price ${item.isDailyOffer ? 'discounted' : ''}">
-                    ${item.isDailyOffer ? `<div class="original-price">🪙 ${item.originalPrice}</div>` : ''}
-                    <div>🪙 ${item.price}</div>
+                    ${item.isDailyOffer ? `<div class="original-price">${item.priceType === 'real' ? 'R$' : '🪙'} ${item.originalPrice}</div>` : ''}
+                    <div>${item.priceType === 'real' ? 'R$' : '🪙'} ${item.price}</div>
+                    ${item.category === 'coin_packs' ? `<div style="font-size: 10px; color: #4ECDC4; margin-top: 4px;">+${item.coinAmount} moedas</div>` : ''}
                 </div>
                 
                 ${isOwned ? 
                     '<div class="owned-badge">POSSUI</div>' :
-                    `<button class="buy-btn" ${!canAfford ? 'disabled' : ''} 
-                             onclick="openPurchaseModal('${item.id}')">
-                        ${canAfford ? 'COMPRAR' : 'SEM MOEDAS'}
-                     </button>`
+                    isDisabled ? 
+                        '<div class="disabled-badge">INDISPONÍVEL</div>' :
+                        `<button class="buy-btn" ${(!canAfford && item.priceType !== 'real') ? 'disabled' : ''} 
+                                 onclick="openPurchaseModal('${item.id}')">
+                            ${item.priceType === 'real' ? 'COMPRAR' : (canAfford ? 'COMPRAR' : 'SEM MOEDAS')}
+                         </button>`
                 }
             </div>
         </div>
@@ -160,8 +166,20 @@ function createItemCard(item, isDailyOffer = false) {
 window.openPurchaseModal = function(itemId) {
     const item = shop.getItemById(itemId);
     if (!item) return;
+    
+    // Verificar se o item está desabilitado
+    if (item.disabled) {
+        showResultModal('🚧 Item Indisponível', 'Este item estará disponível em breve!', true);
+        return;
+    }
 
     currentPurchaseItem = item;
+    
+    // Se for um pacote de moedas, abrir modal PIX
+    if (item.category === 'coin_packs' && item.priceType === 'real') {
+        openPixModal(item);
+        return;
+    }
     
     // Verificar se é uma skin para mostrar a imagem
     const isSkin = item.category === 'skins' && item.skinFile;
@@ -180,7 +198,10 @@ window.openPurchaseModal = function(itemId) {
                 `<div style="font-size: 32px; margin-bottom: 15px;">${item.icon}</div>`
             }
             <div style="margin-bottom: 12px; font-size: 14px;">${item.description}</div>
-            <div style="color: #FFD700; font-weight: bold; font-size: 16px;">Preço: 🪙 ${item.price}</div>
+            <div style="color: #FFD700; font-weight: bold; font-size: 16px;">
+                Preço: ${item.priceType === 'real' ? 'R$' : '🪙'} ${item.price}
+            </div>
+            ${item.category === 'coin_packs' ? `<div style="color: #4ECDC4; margin-top: 8px; font-size: 14px;">💰 Você receberá: ${item.coinAmount} moedas</div>` : ''}
             ${item.duration ? `<div style="color: #4ECDC4; margin-top: 8px;">⏱️ ${item.duration} usos</div>` : ''}
             ${item.permanent ? `<div style="color: #FFD700; margin-top: 8px;">♾️ Permanente</div>` : ''}
         </div>
@@ -222,14 +243,27 @@ window.confirmPurchase = async function() {
             loadItems();
             loadDailyOffers();
             
-            showResultModal(
-                '✅ Compra Realizada!', 
-                `${result.item.name} foi adicionado ao seu inventário!<br>
-                 <div style="margin-top: 10px; color: #4ECDC4;">
-                    Moedas restantes: 🪙 ${result.remainingCoins}
-                 </div>`,
-                true
-            );
+            // Mensagem específica para pacotes de moedas
+            if (result.item.category === 'coin_packs') {
+                showResultModal(
+                    '✅ Compra Realizada!', 
+                    `Pagamento de R$ ${result.paymentAmount} aprovado!<br>
+                     <div style="margin-top: 10px; color: #4ECDC4;">
+                        💰 +${result.coinsAdded} moedas adicionadas<br>
+                        🪙 Total de moedas: ${result.totalCoins}
+                     </div>`,
+                    true
+                );
+            } else {
+                showResultModal(
+                    '✅ Compra Realizada!', 
+                    `${result.item.name} foi adicionado ao seu inventário!<br>
+                     <div style="margin-top: 10px; color: #4ECDC4;">
+                        Moedas restantes: 🪙 ${result.remainingCoins || result.totalCoins}
+                     </div>`,
+                    true
+                );
+            }
             
         } else {
             showResultModal('❌ Erro na Compra', result.error, true);
@@ -257,6 +291,183 @@ function showResultModal(title, message, showOk = true) {
 window.closeResultModal = function() {
     resultModal.style.display = 'none';
 };
+
+// Abrir modal PIX para pacotes de moedas
+window.openPixModal = function(item) {
+    // Criar modal PIX se não existir
+    let pixModal = document.getElementById('pix-modal');
+    if (!pixModal) {
+        pixModal = document.createElement('div');
+        pixModal.id = 'pix-modal';
+        pixModal.className = 'modal';
+        pixModal.innerHTML = `
+            <div class="modal-content pix-modal-content">
+                <h3>💳 Pagamento PIX</h3>
+                <div class="pix-content">
+                    <div class="pix-item-info">
+                        <div class="pix-item-icon">${item.icon}</div>
+                        <div class="pix-item-details">
+                            <h4>${item.name}</h4>
+                            <p>${item.description}</p>
+                            <div class="pix-price">R$ ${item.price}</div>
+                            <div class="pix-coins">💰 ${item.coinAmount} moedas</div>
+                        </div>
+                    </div>
+                    
+                    <div class="pix-qr-section">
+                        <div class="pix-qr-code">
+                            <div id="qr-code-container"></div>
+                        </div>
+                        <p class="pix-instruction">Escaneie o QR Code com seu app do banco</p>
+                        <div class="pix-copy-paste">
+                            <p class="pix-copy-label">Ou copie o código PIX:</p>
+                            <div class="pix-code-container">
+                                <input type="text" id="pix-code" value="00020126580014br.gov.bcb.pix013636401234-5678-9012-3456-789012345678520400005303986540${item.price}5802BR5925Space Invaders Loja6009SAO PAULO62070503***6304" readonly />
+                                <button class="copy-btn" onclick="copyPixCode()">📋</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pix-form">
+                        <label for="pix-user-name">Nome do usuário:</label>
+                        <input type="text" id="pix-user-name" placeholder="Digite seu nome completo" required />
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn confirm" onclick="confirmPixPayment()">CONFIRMAR PAGAMENTO</button>
+                    <button class="modal-btn cancel" onclick="closePixModal()">CANCELAR</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(pixModal);
+    }
+    
+    // Atualizar informações do item no modal
+    const itemIcon = pixModal.querySelector('.pix-item-icon');
+    const itemName = pixModal.querySelector('.pix-item-details h4');
+    const itemDesc = pixModal.querySelector('.pix-item-details p');
+    const itemPrice = pixModal.querySelector('.pix-price');
+    const itemCoins = pixModal.querySelector('.pix-coins');
+    
+    itemIcon.textContent = item.icon;
+    itemName.textContent = item.name;
+    itemDesc.textContent = item.description;
+    itemPrice.textContent = `R$ ${item.price}`;
+    itemCoins.textContent = `💰 ${item.coinAmount} moedas`;
+    
+    // Atualizar código PIX com o preço correto
+    const pixCode = `00020126330014br.gov.bcb.pix01111414050879552040000530398654044.995802BR5925Matheus Felipe Marinho Do6009Sao Paulo62290525REC68B0DA804C95901388581863042EE`;
+    document.getElementById('pix-code').value = pixCode;
+    
+    // Gerar QR Code
+    generateQRCode(pixCode);
+    
+    // Limpar campo de nome
+    document.getElementById('pix-user-name').value = '';
+    
+    // Mostrar modal
+    pixModal.style.display = 'flex';
+};
+
+// Fechar modal PIX
+window.closePixModal = function() {
+    const pixModal = document.getElementById('pix-modal');
+    if (pixModal) {
+        pixModal.style.display = 'none';
+    }
+};
+
+// Confirmar pagamento PIX
+window.confirmPixPayment = function() {
+    const userName = document.getElementById('pix-user-name').value.trim();
+    
+    if (!userName) {
+        showResultModal('⚠️ Campo Obrigatório', 'Por favor, digite seu nome completo.', true);
+        return;
+    }
+    
+    // Fechar modal PIX
+    closePixModal();
+    
+    // Mostrar modal de processamento
+    showProcessingModal();
+    
+    // Simular processamento (em produção, aqui seria a integração real com PIX)
+    setTimeout(() => {
+        closeProcessingModal();
+        showResultModal(
+            '⏳ Pagamento em Processamento', 
+            `Obrigado, ${userName}! Seu pagamento PIX está sendo processado. As moedas serão creditadas em sua conta em até 5 minutos.`,
+            false
+        );
+    }, 3000);
+};
+
+// Mostrar modal de processamento
+function showProcessingModal() {
+    let processingModal = document.getElementById('processing-modal');
+    if (!processingModal) {
+        processingModal = document.createElement('div');
+        processingModal.id = 'processing-modal';
+        processingModal.className = 'modal';
+        processingModal.innerHTML = `
+            <div class="modal-content processing-modal-content">
+                <div class="processing-animation">
+                    <div class="spinner"></div>
+                </div>
+                <h3>🔄 Processando Pagamento</h3>
+                <p>Aguarde enquanto processamos sua transação PIX...</p>
+            </div>
+        `;
+        document.body.appendChild(processingModal);
+    }
+    processingModal.style.display = 'flex';
+}
+
+// Fechar modal de processamento
+function closeProcessingModal() {
+    const processingModal = document.getElementById('processing-modal');
+    if (processingModal) {
+        processingModal.style.display = 'none';
+    }
+}
+
+// Gerar QR Code PIX
+function generateQRCode(pixCode) {
+    const qrContainer = document.getElementById('qr-code-container');
+    qrContainer.innerHTML = '';
+    
+    // Usar imagem QR Code local
+    const qrImg = document.createElement('img');
+    qrImg.src = 'src/assets/images/pix/qrcode_pix.png';
+    qrImg.alt = 'QR Code PIX';
+    qrImg.style.width = '150px';
+    qrImg.style.height = '150px';
+    qrImg.style.border = '2px solid #4ECDC4';
+    qrImg.style.borderRadius = '8px';
+    
+    qrContainer.appendChild(qrImg);
+}
+
+// Copiar código PIX
+window.copyPixCode = function() {
+    const pixCodeInput = document.getElementById('pix-code');
+    pixCodeInput.select();
+    pixCodeInput.setSelectionRange(0, 99999); // Para dispositivos móveis
+    
+    try {
+        document.execCommand('copy');
+        showResultModal('✅ Copiado!', 'Código PIX copiado para a área de transferência.', false);
+    } catch (err) {
+        // Fallback para navegadores mais antigos
+        navigator.clipboard.writeText(pixCodeInput.value).then(() => {
+            showResultModal('✅ Copiado!', 'Código PIX copiado para a área de transferência.', false);
+        }).catch(() => {
+            showResultModal('❌ Erro', 'Não foi possível copiar o código. Tente selecionar e copiar manualmente.', true);
+        });
+    }
+}
 
 // Carregar inventário do usuário
 async function loadInventory() {

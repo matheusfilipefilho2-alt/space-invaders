@@ -31,9 +31,11 @@ class Shop {
                 description: 'Interface com cores vibrantes e efeitos neon',
                 category: 'theme',
                 rarity: 'uncommon',
-                price: 45,
+                price: 450,
                 icon: '🌈',
-                permanent: true
+                permanent: true,
+                disabled: true,
+                comingSoon: true
             },
             {
                 id: 'theme_retro',
@@ -41,9 +43,11 @@ class Shop {
                 description: 'Visual clássico dos anos 80',
                 category: 'theme',
                 rarity: 'rare',
-                price: 75,
+                price: 750,
                 icon: '📺',
-                permanent: true
+                permanent: true,
+                disabled: true,
+                comingSoon: true
             },
             
             // Boosts
@@ -53,7 +57,7 @@ class Shop {
                 description: 'Dobra as moedas ganhas por 5 partidas',
                 category: 'boost',
                 rarity: 'common',
-                price: 25,
+                price: 250,
                 icon: '💰',
                 duration: '5 partidas'
             },
@@ -63,7 +67,7 @@ class Shop {
                 description: '+50% de experiência por 3 partidas',
                 category: 'boost',
                 rarity: 'uncommon',
-                price: 40,
+                price: 400,
                 icon: '⚡',
                 duration: '3 partidas'
             },
@@ -75,18 +79,8 @@ class Shop {
                 description: 'Nave com acabamento dourado luxuoso',
                 category: 'cosmetic',
                 rarity: 'epic',
-                price: 200,
+                price: 500,
                 icon: '🚀',
-                permanent: true
-            },
-            {
-                id: 'trail_rainbow',
-                name: 'Rastro Arco-íris',
-                description: 'Deixa um rastro colorido ao se mover',
-                category: 'cosmetic',
-                rarity: 'rare',
-                price: 120,
-                icon: '🌟',
                 permanent: true
             },
             
@@ -97,37 +91,29 @@ class Shop {
                 description: 'Começa a partida com escudo adicional',
                 category: 'utility',
                 rarity: 'common',
-                price: 15,
+                price: 150,
                 icon: '🛡️',
-                duration: '1 partida'
+                duration: '1 partida',
+                disabled: true,
+                comingSoon: true
             },
             {
                 id: 'life_bonus',
                 name: 'Vida Bônus',
-                description: 'Ganha uma vida extra no início',
+                description: 'Tem a chance de receber um bonus de até 3 vidas durante a partida',
                 category: 'utility',
                 rarity: 'uncommon',
-                price: 30,
+                price: 300,
                 icon: '❤️',
                 duration: '1 partida'
             },
             {
-                id: 'golden_ship',
-                name: 'Nave Dourada',
-                description: 'Transforma sua nave em ouro, aumentando pontuação',
-                category: 'utility',
-                rarity: 'epic',
-                price: 150,
-                icon: '🟨',
-                permanent: true
-            },
-            {
-                id: 'rainbow_ship',
+                id: 'trail_rainbow',
                 name: 'Nave Arco-íris',
                 description: 'Efeito visual especial com cores do arco-íris',
                 category: 'utility',
                 rarity: 'legendary',
-                price: 300,
+                price: 500,
                 icon: '🌈',
                 permanent: true
             },
@@ -151,7 +137,7 @@ class Shop {
                 description: 'A icônica nave de Han Solo',
                 category: 'skins',
                 rarity: 'legendary',
-                price: 250,
+                price: 2500,
                 icon: '🚀',
                 permanent: true,
                 skinFile: 'milenium.png'
@@ -162,7 +148,7 @@ class Shop {
                 description: 'Caça estelar da Aliança Rebelde',
                 category: 'skins',
                 rarity: 'epic',
-                price: 180,
+                price: 1800,
                 icon: '✈️',
                 permanent: true,
                 skinFile: 'xwing.png'
@@ -173,7 +159,7 @@ class Shop {
                 description: 'Design moderno com acabamento laranja vibrante',
                 category: 'skins',
                 rarity: 'rare',
-                price: 120,
+                price: 1200,
                 icon: '🟠',
                 permanent: true,
                 skinFile: 'orange.png'
@@ -184,11 +170,25 @@ class Shop {
                 description: 'Caça amarelo de alta velocidade',
                 category: 'skins',
                 rarity: 'uncommon',
-                price: 90,
+                price: 900,
                 icon: '🟡',
                 permanent: true,
                 skinFile: 'yellowwing.png'
-            }
+            },
+            
+            // Pacotes de Moedas
+            {
+                id: 'coin_pack_199',
+                name: 'Pacote de 199 Moedas',
+                description: 'Compre 199 moedas por R$ 4,99',
+                category: 'coin_packs',
+                rarity: 'common',
+                price: 4.99,
+                priceType: 'real',
+                coinAmount: 199,
+                icon: '💰',
+                permanent: false
+            },
         ];
         
         this.dailyOffers = [];
@@ -197,7 +197,16 @@ class Shop {
     
     // Obter categorias disponíveis
     getCategories() {
-        return this.config.categories;
+        // Categorias de itens
+        const categories = [
+            { id: 'theme', name: 'Temas', icon: '🎨', description: 'Personalize a aparência do jogo' },
+            { id: 'boost', name: 'Impulsos', icon: '⚡', description: 'Melhorias temporárias' },
+            { id: 'cosmetic', name: 'Cosméticos', icon: '✨', description: 'Itens visuais especiais' },
+            { id: 'utility', name: 'Utilitários', icon: '🛠️', description: 'Ferramentas úteis' },
+            { id: 'skins', name: 'Skins de Naves', icon: '🚀', description: 'Personalize a aparência da sua nave' },
+            { id: 'coin_packs', name: 'Pacotes de Moedas', icon: '💰', description: 'Compre moedas com dinheiro real' }
+        ];
+        return categories;
     }
     
     // Obter todos os itens
@@ -273,6 +282,11 @@ class Shop {
         const currentUser = this.rankingManager.getCurrentUser();
         if (!currentUser) {
             return { success: false, error: 'Usuário não logado' };
+        }
+        
+        // Verificar se é um pacote de moedas (compra com dinheiro real)
+        if (item.category === 'coin_packs' && item.priceType === 'real') {
+            return await this.purchaseCoinPack(item, currentUser);
         }
         
         const userCoins = currentUser.coins || 0;
@@ -465,6 +479,81 @@ class Shop {
             return matches ? parseInt(matches[0]) : 1;
         }
         return 1;
+    }
+    
+    // Comprar pacote de moedas com dinheiro real
+    async purchaseCoinPack(item, currentUser) {
+        try {
+            // Simular confirmação de pagamento (em produção, integrar com gateway de pagamento)
+            const paymentConfirmed = await this.simulatePayment(item.price, 'BRL');
+            
+            if (!paymentConfirmed) {
+                return { success: false, error: 'Pagamento não autorizado' };
+            }
+            
+            // Adicionar moedas ao usuário
+            const currentCoins = currentUser.coins || 0;
+            const newCoins = currentCoins + item.coinAmount;
+            
+            // Atualizar no banco de dados
+            const { error: updateError } = await supabase
+                .from('players')
+                .update({ coins: newCoins })
+                .eq('id', currentUser.id);
+                
+            if (updateError) {
+                console.error('Erro ao atualizar moedas:', updateError);
+                return { success: false, error: 'Erro ao processar pagamento' };
+            }
+            
+            // Atualizar usuário local
+            currentUser.coins = newCoins;
+            
+            // Registrar a compra no histórico
+            const purchaseRecord = {
+                id: Date.now(),
+                player_id: currentUser.id,
+                item_id: item.id,
+                item_name: item.name,
+                price_paid: item.price,
+                currency: 'BRL',
+                coins_received: item.coinAmount,
+                purchased_at: new Date().toISOString()
+            };
+            
+            // Salvar histórico no localStorage
+            const purchaseHistory = JSON.parse(localStorage.getItem(`coinPurchases_${currentUser.id}`) || '[]');
+            purchaseHistory.push(purchaseRecord);
+            localStorage.setItem(`coinPurchases_${currentUser.id}`, JSON.stringify(purchaseHistory));
+            
+            console.log(`💰 Pacote de moedas comprado: +${item.coinAmount} moedas por R$ ${item.price}`);
+            
+            return {
+                success: true,
+                item,
+                coinsAdded: item.coinAmount,
+                totalCoins: newCoins,
+                paymentAmount: item.price,
+                currency: 'BRL'
+            };
+            
+        } catch (error) {
+            console.error('Erro na compra do pacote de moedas:', error);
+            return { success: false, error: 'Erro ao processar compra' };
+        }
+    }
+    
+    // Simular pagamento (em produção, integrar com gateway real)
+    async simulatePayment(amount, currency) {
+        // Simular delay de processamento
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Simular confirmação (95% de sucesso)
+        const success = Math.random() > 0.05;
+        
+        console.log(`💳 Simulando pagamento: ${currency} ${amount} - ${success ? 'APROVADO' : 'REJEITADO'}`);
+        
+        return success;
     }
     
     // === SISTEMA DE SKINS ===
