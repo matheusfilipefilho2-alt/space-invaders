@@ -52,16 +52,24 @@ class RewardSystem {
 
     // Obter nível atual baseado na pontuação
     getCurrentLevel(highScore) {
-        let currentLevel = this.levels[0]; // Nível padrão
+        if (!highScore) highScore = 0;
         
         for (let i = this.levels.length - 1; i >= 0; i--) {
             if (highScore >= this.levels[i].minScore) {
-                currentLevel = this.levels[i];
-                break;
+                return this.levels[i];
             }
         }
         
-        return currentLevel;
+        // Se não encontrou nenhum nível, retornar o primeiro
+        return this.levels[0];
+    }
+
+    // Função para calcular nível do jogador (compatibilidade com possíveis chamadas SQL)
+    calculate_player_level(score) {
+        if (typeof score === 'bigint') {
+            score = Number(score);
+        }
+        return this.getCurrentLevel(score).id;
     }
 
     // Obter próximo nível

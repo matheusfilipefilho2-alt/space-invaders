@@ -5,6 +5,7 @@ class AchievementSystem {
     constructor(rankingManager) {
         this.rankingManager = rankingManager;
         this.rewardSystem = rankingManager.getRewardSystem();
+        this.achievementIdCache = new Map(); // Cache para mapear string IDs para numeric IDs
         
         // Definir todas as conquistas disponíveis
         this.achievements = [
@@ -269,6 +270,64 @@ class AchievementSystem {
         return this.achievements.find(achievement => achievement.id === id);
     }
 
+    // Buscar ou criar ID numérico da conquista no banco
+    async getNumericAchievementId(stringId) {
+        // Verificar cache primeiro
+        if (this.achievementIdCache.has(stringId)) {
+            return this.achievementIdCache.get(stringId);
+        }
+
+        const achievement = this.getAchievementById(stringId);
+        if (!achievement) {
+            throw new Error(`Conquista não encontrada: ${stringId}`);
+        }
+
+        try {
+            // Buscar na tabela achievements
+            const { data: existingAchievement, error: searchError } = await supabase
+                .from('achievements')
+                .select('id')
+                .eq('name', achievement.name)
+                .eq('requirement_type', achievement.type)
+                .eq('requirement_value', achievement.requirement)
+                .limit(1);
+
+            if (searchError) throw searchError;
+
+            let numericId;
+            
+            if (existingAchievement && existingAchievement.length > 0) {
+                // Conquista já existe
+                numericId = existingAchievement[0].id;
+            } else {
+                // Criar nova conquista
+                const { data: newAchievement, error: insertError } = await supabase
+                    .from('achievements')
+                    .insert({
+                        name: achievement.name,
+                        description: achievement.description,
+                        icon: achievement.icon,
+                        requirement_type: achievement.type,
+                        requirement_value: achievement.requirement,
+                        coin_reward: achievement.coinReward
+                    })
+                    .select('id')
+                    .limit(1);
+
+                if (insertError) throw insertError;
+                numericId = newAchievement[0].id;
+            }
+
+            // Armazenar no cache
+            this.achievementIdCache.set(stringId, numericId);
+            return numericId;
+
+        } catch (error) {
+            console.error('Erro ao buscar/criar conquista:', error);
+            throw error;
+        }
+    }
+
     // Verificar conquistas do usuário atual
     async getUserAchievements() {
         const currentUser = this.rankingManager.getCurrentUser();
@@ -298,14 +357,15 @@ class AchievementSystem {
         if (!currentUser) return false;
 
         try {
+            const numericId = await this.getNumericAchievementId(achievementId);
             const { data, error } = await supabase
                 .from('player_achievements')
                 .select('id')
                 .eq('player_id', currentUser.id)
-                .eq('achievement_id', achievementId)
-                .single();
+                .eq('achievement_id', numericId)
+                .limit(1);
 
-            return !error && data;
+            return !error && data && data.length > 0;
         } catch (error) {
             return false;
         }
@@ -324,12 +384,15 @@ class AchievementSystem {
             const hasIt = await this.hasAchievement(achievementId);
             if (hasIt) return { success: false, error: 'Conquista já desbloqueada' };
 
+            // Obter ID numérico da conquista
+            const numericId = await this.getNumericAchievementId(achievementId);
+
             // Inserir na tabela de conquistas do jogador
             const { error: insertError } = await supabase
                 .from('player_achievements')
                 .insert({
                     player_id: currentUser.id,
-                    achievement_id: achievementId,
+                    achievement_id: numericId,
                     unlocked_at: new Date().toISOString()
                 });
 

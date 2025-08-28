@@ -221,7 +221,7 @@ function addShopButton() {
 
 // NOVO: Atualizar botão de login para logout
 function updateLoginButton() {
-    if (buttonViewRanking) {
+    if (buttonViewRanking && buttonViewRanking.parentNode) {
         // Mudar texto e função do botão
         buttonViewRanking.innerHTML = `
             <span class="button-icon">🚪</span>
@@ -241,6 +241,11 @@ function updateLoginButton() {
                 }
             );
         });
+        
+        // Atualizar referência global
+        window.buttonViewRanking = newButton;
+    } else {
+        console.warn('⚠️ Elemento buttonViewRanking não encontrado ou sem parentNode');
     }
 }
 

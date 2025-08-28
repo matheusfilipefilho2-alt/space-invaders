@@ -1,6 +1,6 @@
-import RankingManager from "./RankingManager.js";
-import Shop from "./ShopClass.js";
-import { NavigationHelper } from "../navigation.js";
+import RankingManager from "./classes/RankingManager.js";
+import Shop from "./classes/ShopClass.js";
+import { NavigationHelper } from "./navigation.js";
 
 // Inicializar managers
 const rankingManager = new RankingManager();
@@ -109,13 +109,25 @@ function createItemCard(item, isDailyOffer = false) {
     const rarity = shop.rarities[item.rarity];
     const isOwned = userItems.some(userItem => userItem.item_id === item.id && userItem.is_permanent);
 
+    // Verificar se é uma skin para mostrar a imagem
+    const isSkin = item.category === 'skins' && item.skinFile;
+    const skinImagePath = isSkin ? `src/assets/images/skins/${item.skinFile}` : null;
+
     return `
         <div class="shop-item ${item.rarity}" style="--rarity-color: ${rarity.color}">
             ${item.isDailyOffer ? `<div class="discount-badge">-${item.discount}%</div>` : ''}
             
             <div class="item-header">
                 <div>
-                    <div class="item-icon">${item.icon}</div>
+                    ${isSkin ? 
+                        `<div class="skin-preview">
+                            <img src="${skinImagePath}" alt="${item.name}" class="skin-image" 
+                                 style="width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: rgba(255,255,255,0.1);" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                            <div class="item-icon" style="display: none;">${item.icon}</div>
+                         </div>` : 
+                        `<div class="item-icon">${item.icon}</div>`
+                    }
                     <div class="item-rarity" style="background: ${rarity.color}">${rarity.name}</div>
                 </div>
             </div>
@@ -151,14 +163,26 @@ window.openPurchaseModal = function(itemId) {
 
     currentPurchaseItem = item;
     
+    // Verificar se é uma skin para mostrar a imagem
+    const isSkin = item.category === 'skins' && item.skinFile;
+    const skinImagePath = isSkin ? `src/assets/images/skins/${item.skinFile}` : null;
+    
     document.getElementById('modal-title').textContent = `Comprar ${item.name}`;
     document.getElementById('modal-message').innerHTML = `
-        <div style="margin: 15px 0;">
-            <div style="font-size: 24px; margin-bottom: 10px;">${item.icon}</div>
-            <div style="margin-bottom: 8px;">${item.description}</div>
-            <div style="color: #FFD700; font-weight: bold;">Preço: 🪙 ${item.price}</div>
-            ${item.duration ? `<div style="color: #4ECDC4; margin-top: 5px;">⏱️ ${item.duration} usos</div>` : ''}
-            ${item.permanent ? `<div style="color: #FFD700; margin-top: 5px;">♾️ Permanente</div>` : ''}
+        <div style="margin: 15px 0; text-align: center;">
+            ${isSkin ? 
+                `<div style="margin-bottom: 15px;">
+                    <img src="${skinImagePath}" alt="${item.name}" 
+                         style="width: 64px; height: 64px; object-fit: contain; border-radius: 12px; background: rgba(255,255,255,0.1); border: 2px solid #4ECDC4;" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                    <div style="font-size: 32px; margin-bottom: 10px; display: none;">${item.icon}</div>
+                 </div>` : 
+                `<div style="font-size: 32px; margin-bottom: 15px;">${item.icon}</div>`
+            }
+            <div style="margin-bottom: 12px; font-size: 14px;">${item.description}</div>
+            <div style="color: #FFD700; font-weight: bold; font-size: 16px;">Preço: 🪙 ${item.price}</div>
+            ${item.duration ? `<div style="color: #4ECDC4; margin-top: 8px;">⏱️ ${item.duration} usos</div>` : ''}
+            ${item.permanent ? `<div style="color: #FFD700; margin-top: 8px;">♾️ Permanente</div>` : ''}
         </div>
     `;
     
@@ -176,12 +200,14 @@ window.confirmPurchase = async function() {
     if (!currentPurchaseItem) return;
 
     try {
-        closePurchaseModal();
+        purchaseModal.style.display = 'none';
         
         // Mostrar loading
         showResultModal('Comprando...', 'Processando sua compra...', false);
         
         const result = await shop.purchaseItem(currentPurchaseItem.id);
+
+        console.log('Resultado da compra:', result);
         
         if (result.success) {
             // Atualizar dados locais

@@ -12,12 +12,14 @@ import Bonus from "./classes/Bonus.js";
 import { GameState, NUMBER_STARS } from "../utils/constantes.js";
 import { supabase } from "./supabase.js";
 import AchievementSystem from "./classes/AchievementSystem.js"; // NOVO
+import Shop from "./classes/ShopClass.js"; // Sistema de skins
 
 // Inicializar efeitos sonoros
 const soundEffects = new SoundEffects();
 const rewardUI = new RewardUI();
 const rankingManager = new RankingManager();
 const achievementSystem = new AchievementSystem(rankingManager); // NOVO
+const shop = new Shop(rankingManager); // Sistema de loja e skins
 
 const gameStats = {
   startTime: Date.now(),
@@ -38,6 +40,7 @@ const gameStats = {
 const scoreElement = document.querySelector(".score");
 const levelElement = document.querySelector(".level");
 const highElement = document.querySelector(".high");
+const livesElement = document.querySelector(".lives");
 const buttonRestart = document.querySelector(".button-restart");
 const buttonViewRanking = document.querySelector(".button-view-ranking");
 const gameOverScreen = document.querySelector(".game-over");
@@ -142,11 +145,27 @@ const updateUI = () => {
   scoreElement.textContent = gameData.score;
   levelElement.textContent = gameData.level;
   highElement.textContent = gameData.high;
+  livesElement.textContent = player.getLives();
 };
 
 // Inicializar jogador e grid
 const player = new Player(canvas.width, canvas.height);
 const grid = new Grid(3, 6);
+
+// Aplicar skin ativa do usuário
+const applyUserSkin = () => {
+  const activeSkin = shop.getActiveSkin();
+  if (activeSkin && activeSkin.skinId !== 'default') {
+    const skinItem = shop.items.find(item => item.id === activeSkin.skinId);
+    if (skinItem && skinItem.skinFile) {
+      player.applySkin(activeSkin.skinId, skinItem.skinFile);
+      console.log(`🎨 Skin aplicada: ${skinItem.name}`);
+    }
+  }
+};
+
+// Aplicar skin na inicialização
+applyUserSkin();
 
 // Inicializar estrelas de fundo
 const stars = [];
@@ -337,6 +356,12 @@ const startGame = () => {
   totalPausedTime = 0;
   gameStartTime = Date.now();
 
+  // Resetar vidas do jogador
+  player.resetLives();
+  
+  // Aplicar skin ativa do usuário
+  applyUserSkin();
+
   resetGameStats();
 
   // Limpar arrays
@@ -388,6 +413,23 @@ const startGame = () => {
 
 // Função para finalizar o jogo
 const endGame = async () => {
+  // Verificar se o jogador ainda tem vidas
+  if (player.getLives() > 1) {
+    // Perder uma vida e continuar jogando
+    player.loseLife();
+    updateUI();
+    
+    // Efeito visual e sonoro de perda de vida
+    soundEffects.playSound("hit");
+    
+    // Resetar posição do jogador
+    player.position.x = canvas.width / 2 - player.width / 2;
+    player.position.y = canvas.height - player.height - 20;
+    
+    return; // Não terminar o jogo, apenas perder uma vida
+  }
+  
+  // Se não há mais vidas, terminar o jogo
   currentState = GameState.GAME_OVER;
   player.alive = false;
 
@@ -569,6 +611,7 @@ const showGameData = () => {
   scoreElement.textContent = gameData.score;
   levelElement.textContent = gameData.level;
   highElement.textContent = gameData.high;
+  livesElement.textContent = player.getLives();
 };
 
 const incrementScore = async (value) => {
@@ -577,7 +620,9 @@ const incrementScore = async (value) => {
 };
 
 const spawnBonusGame = () => {
-  bonusSystem.bonuses.push(new Bonus(canvas.width, canvas.height));
+  // 20% de chance de spawnar power-up de vida extra
+  const bonusType = Math.random() < 0.2 ? 'life' : 'score';
+  bonusSystem.bonuses.push(new Bonus(canvas.width, canvas.height, bonusType));
 };
 
 const updateBonuses = () => {
@@ -617,20 +662,71 @@ const checkBonusCollision = () => {
 
       registerBonusCollected();
 
-      // Ativar buff
-      bonusSystem.playerBuff.active = true;
-      bonusSystem.playerBuff.startTime = Date.now();
+      if (bonus.type === 'life') {
+        // Verificar se o jogador possui o item de vida bônus no inventário
+        if (shop.hasUserItemSync('life_bonus')) {
+          // Power-up de vida extra
+          player.gainLife();
+          updateUI();
+          
+          // Consumir o item (diminuir uses_remaining)
+          shop.useItem('life_bonus').then(result => {
+            if (result.success) {
+              console.log('💚 Item life_bonus consumido. Usos restantes:', result.usesRemaining);
+            }
+          }).catch(error => {
+            console.error('Erro ao consumir life_bonus:', error);
+          });
+          
+          createExplosion(
+            {
+              x: bonus.position.x + bonus.width / 2,
+              y: bonus.position.y + bonus.height / 2,
+            },
+            15,
+            "#FF1744"
+          );
+          
+          soundEffects.playSound("bonus");
+        } else {
+          // Jogador não possui o item, apenas dar pontos
+          incrementScore(50);
+          
+          createExplosion(
+            {
+              x: bonus.position.x + bonus.width / 2,
+              y: bonus.position.y + bonus.height / 2,
+            },
+            10,
+            "#FFA500"
+          );
+          
+          soundEffects.playSound("bonus");
+          
+          // Mostrar notificação
+          if (window.NavigationHelper) {
+            NavigationHelper.showToast('❤️ Compre Vida Bônus na loja para ganhar vidas extras!', 'info', 3000);
+          }
+        }
+      } else {
+        // Bônus de pontuação/buff
+        incrementScore(bonus.value || 100);
+        
+        // Ativar buff
+        bonusSystem.playerBuff.active = true;
+        bonusSystem.playerBuff.startTime = Date.now();
 
-      createExplosion(
-        {
-          x: bonus.position.x + bonus.width / 2,
-          y: bonus.position.y + bonus.height / 2,
-        },
-        15,
-        "#FFD700"
-      );
+        createExplosion(
+          {
+            x: bonus.position.x + bonus.width / 2,
+            y: bonus.position.y + bonus.height / 2,
+          },
+          15,
+          "#FFD700"
+        );
 
-      soundEffects.playSound("bonus");
+        soundEffects.playSound("bonus");
+      }
     }
   });
 };
@@ -1094,6 +1190,36 @@ addEventListener("keydown", (event) => {
     case "KeyC": // NOVO: Mostrar conquistas próximas
       if (currentState === GameState.PLAYING) {
         showNearbyAchievements();
+      }
+      break;
+    case "KeyR": // NOVO: Ativar/desativar rastro arco-íris
+      if (currentState === GameState.PLAYING) {
+        // Verificar se o jogador possui o item no inventário
+        if (shop.hasUserItemSync('trail_rainbow')) {
+          player.toggleRainbowTrail();
+          soundEffects.playSound("powerup"); // Som de ativação
+        } else {
+          console.log('❌ Rastro arco-íris não disponível - item não possuído');
+          // Mostrar notificação para o jogador
+          if (window.NavigationHelper) {
+            NavigationHelper.showToast('🌟 Você precisa comprar o Rastro Arco-íris na loja!', 'warning', 3000);
+          }
+        }
+      }
+      break;
+    case "KeyG": // NOVO: Ativar/desativar nave dourada
+      if (currentState === GameState.PLAYING) {
+        // Verificar se o jogador possui o item no inventário
+        if (shop.hasUserItemSync('ship_golden')) {
+          player.toggleGoldenShip();
+          soundEffects.playSound("powerup"); // Som de ativação
+        } else {
+          console.log('❌ Nave dourada não disponível - item não possuído');
+          // Mostrar notificação para o jogador
+          if (window.NavigationHelper) {
+            NavigationHelper.showToast('🚀 Você precisa comprar a Nave Dourada na loja!', 'warning', 3000);
+          }
+        }
       }
       break;
   }

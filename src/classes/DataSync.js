@@ -121,9 +121,14 @@ class DataSync {
                 .from('players')
                 .select('*')
                 .eq('id', userId)
-                .single();
+                .limit(1);
 
             if (playerError) throw playerError;
+            if (!playerData || playerData.length === 0) {
+                throw new Error('Jogador não encontrado');
+            }
+            
+            const player = playerData[0];
 
             // Itens do jogador
             const { data: itemsData, error: itemsError } = await supabase
@@ -150,11 +155,11 @@ class DataSync {
             if (effectsError) throw effectsError;
 
             return {
-                user: playerData,
+                user: player,
                 items: itemsData || [],
                 achievements: achievementsData || [],
                 activeEffects: effectsData || [],
-                lastModified: playerData.last_played ? new Date(playerData.last_played).getTime() : 0,
+                lastModified: player.last_played ? new Date(player.last_played).getTime() : 0,
                 version: this.getDataVersion()
             };
 
@@ -462,11 +467,16 @@ class DataSync {
                 .select('*')
                 .eq('id', backupId)
                 .eq('player_id', userId)
-                .single();
+                .limit(1);
 
             if (error) throw error;
+            if (!backup || backup.length === 0) {
+                throw new Error('Backup não encontrado');
+            }
+            
+            const backupRecord = backup[0];
 
-            let backupData = backup.backup_data;
+            let backupData = backupRecord.backup_data;
             if (this.config.compressionEnabled && typeof backupData === 'string') {
                 backupData = this.decompressData(backupData);
             }

@@ -13,9 +13,9 @@ class RankingManager {
                 .from('players')
                 .select('username')
                 .eq('username', username)
-                .single()
+                .limit(1)
 
-            if (existing) {
+            if (existing && existing.length > 0) {
                 throw new Error('Nome de usuário já existe!')
             }
 
@@ -205,16 +205,18 @@ class RankingManager {
                 .from('players')
                 .select('*')
                 .eq('username', username)
-                .single()
+                .limit(1)
 
             if (error) throw error;
+            if (!data || data.length === 0) return null;
 
+            const user = data[0];
             // Garantir que campos novos existem
-            if (data.coins === undefined) data.coins = 0;
-            if (data.level_id === undefined) data.level_id = 1;
-            if (data.total_games === undefined) data.total_games = 0;
+            if (user.coins === undefined) user.coins = 0;
+            if (user.level_id === undefined) user.level_id = 1;
+            if (user.total_games === undefined) user.total_games = 0;
 
-            return data;
+            return user;
         } catch (error) {
             console.error('Erro ao buscar usuário:', error);
             return null;

@@ -57,11 +57,12 @@
         import globalMenuMusic from './src/globalMenuMusic.js';
     </script>
     <script>
-        // Configuração do Supabase (use suas credenciais)
-        const SUPABASE_URL = "https://apbbhuhtdqfwfmlzxnwv.supabase.co/";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwYmJodWh0ZHFmd2ZtbHp4bnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTcyNjUsImV4cCI6MjA3MTI5MzI2NX0.D330nS8F9ZIMqnZHzvFIST-wv4ccCyyumV6s4zSmAGs";
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Usar instância global do Supabase para evitar conflitos de token
+        const supabase = window.globalSupabaseClient || window.getSupabaseClient?.() || window.supabase?.createClient(
+            "https://apbbhuhtdqfwfmlzxnwv.supabase.co/",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwYmJodWh0ZHFmd2ZtbHp4bnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTcyNjUsImV4cCI6MjA3MTI5MzI2NX0.D330nS8F9ZIMqnZHzvFIST-wv4ccCyyumV6s4zSmAgs",
+            { auth: { persistSession: false, autoRefreshToken: false } }
+        );
         
         let autoRefreshInterval = null;
         let allLogs = [];

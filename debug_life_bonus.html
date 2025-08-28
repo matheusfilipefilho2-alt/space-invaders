@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Life Bonus</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+        .debug-info {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        button {
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45b7aa;
+        }
+        .result {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #4ECDC4;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 Debug Life Bonus System</h1>
+    
+    <div class="debug-info">
+        <h3>Informações do Usuário</h3>
+        <div id="user-info">Carregando...</div>
+    </div>
+    
+    <div class="debug-info">
+        <h3>Inventário do Usuário</h3>
+        <button onclick="checkInventory()">Verificar Inventário</button>
+        <div id="inventory-info"></div>
+    </div>
+    
+    <div class="debug-info">
+        <h3>Teste Life Bonus</h3>
+        <button onclick="testLifeBonus()">Testar hasUserItemSync('life_bonus')</button>
+        <button onclick="addLifeBonusToInventory()">Adicionar Life Bonus ao Inventário</button>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="debug-info">
+        <h3>LocalStorage Debug</h3>
+        <button onclick="showLocalStorage()">Mostrar LocalStorage</button>
+        <button onclick="clearUserItems()">Limpar Itens do Usuário</button>
+        <div id="localStorage-info"></div>
+    </div>
+
+    <script type="module">
+        import RankingManager from './src/classes/RankingManager.js';
+        import Shop from './src/classes/ShopClass.js';
+        import { NavigationHelper } from './src/navigation.js';
+
+        // Inicializar sistemas
+        const rankingManager = new RankingManager();
+        const shop = new Shop(rankingManager);
+        
+        // Configurar usuário atual
+        const currentUser = NavigationHelper.getCurrentUser();
+        if (currentUser) {
+            rankingManager.currentUser = currentUser;
+        }
+
+        // Disponibilizar globalmente para os botões
+        window.rankingManager = rankingManager;
+        window.shop = shop;
+        window.currentUser = currentUser;
+
+        // Mostrar informações do usuário
+        function updateUserInfo() {
+            const userInfoDiv = document.getElementById('user-info');
+            if (currentUser) {
+                userInfoDiv.innerHTML = `
+                    <strong>ID:</strong> ${currentUser.id}<br>
+                    <strong>Nome:</strong> ${currentUser.name}<br>
+                    <strong>Moedas:</strong> ${currentUser.coins || 0}<br>
+                    <strong>Pontuação:</strong> ${currentUser.high_score || 0}
+                `;
+            } else {
+                userInfoDiv.innerHTML = '<span style="color: #ff6b6b;">❌ Usuário não logado</span>';
+            }
+        }
+
+        window.checkInventory = async function() {
+            const inventoryDiv = document.getElementById('inventory-info');
+            inventoryDiv.innerHTML = 'Carregando inventário...';
+            
+            try {
+                const userItems = await shop.getUserItems();
+                console.log('Inventário completo:', userItems);
+                
+                if (userItems.length === 0) {
+                    inventoryDiv.innerHTML = '<div class="result">📦 Inventário vazio</div>';
+                } else {
+                    let html = '<div class="result">';
+                    userItems.forEach(item => {
+                        const shopItem = shop.getItemById(item.item_id);
+                        html += `
+                            <strong>${shopItem ? shopItem.name : item.item_id}</strong><br>
+                            - ID: ${item.item_id}<br>
+                            - Permanente: ${item.is_permanent ? 'Sim' : 'Não'}<br>
+                            - Usos restantes: ${item.uses_remaining || 'N/A'}<br>
+                            - Comprado em: ${new Date(item.purchased_at).toLocaleString()}<br><br>
+                        `;
+                    });
+                    html += '</div>';
+                    inventoryDiv.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar inventário:', error);
+                inventoryDiv.innerHTML = `<div class="result" style="border-left-color: #ff6b6b;">❌ Erro: ${error.message}</div>`;
+            }
+        };
+
+        window.testLifeBonus = function() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            try {
+                const hasLifeBonus = shop.hasUserItemSync('life_bonus');
+                console.log('Resultado hasUserItemSync("life_bonus"):', hasLifeBonus);
+                
+                resultsDiv.innerHTML = `
+                    <div class="result">
+                        <strong>hasUserItemSync('life_bonus'):</strong> ${hasLifeBonus ? '✅ TRUE' : '❌ FALSE'}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Erro no teste:', error);
+                resultsDiv.innerHTML = `<div class="result" style="border-left-color: #ff6b6b;">❌ Erro: ${error.message}</div>`;
+            }
+        };
+
+        window.addLifeBonusToInventory = function() {
+            if (!currentUser) {
+                alert('Usuário não logado!');
+                return;
+            }
+            
+            const userItems = JSON.parse(localStorage.getItem(`userItems_${currentUser.id}`) || '[]');
+            
+            // Verificar se já existe
+            const existingItem = userItems.find(item => item.item_id === 'life_bonus');
+            if (existingItem) {
+                alert('Life Bonus já existe no inventário!');
+                return;
+            }
+            
+            // Adicionar life_bonus
+            const lifeBonusItem = {
+                item_id: 'life_bonus',
+                item_name: 'Vida Bônus',
+                item_category: 'utility',
+                is_permanent: false,
+                uses_remaining: 1,
+                purchased_at: new Date().toISOString()
+            };
+            
+            userItems.push(lifeBonusItem);
+            localStorage.setItem(`userItems_${currentUser.id}`, JSON.stringify(userItems));
+            
+            alert('Life Bonus adicionado ao inventário!');
+            checkInventory();
+        };
+
+        window.showLocalStorage = function() {
+            const localStorageDiv = document.getElementById('localStorage-info');
+            
+            if (!currentUser) {
+                localStorageDiv.innerHTML = '<div class="result">❌ Usuário não logado</div>';
+                return;
+            }
+            
+            const userItemsKey = `userItems_${currentUser.id}`;
+            const userItems = localStorage.getItem(userItemsKey);
+            
+            localStorageDiv.innerHTML = `
+                <div class="result">
+                    <strong>Chave:</strong> ${userItemsKey}<br>
+                    <strong>Dados:</strong><br>
+                    <pre style="background: #0a0a0a; padding: 10px; border-radius: 5px; overflow-x: auto;">${userItems || 'null'}</pre>
+                </div>
+            `;
+        };
+
+        window.clearUserItems = function() {
+            if (!currentUser) {
+                alert('Usuário não logado!');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja limpar todos os itens do usuário?')) {
+                localStorage.removeItem(`userItems_${currentUser.id}`);
+                alert('Itens do usuário removidos!');
+                checkInventory();
+                showLocalStorage();
+            }
+        };
+
+        // Inicializar
+        updateUserInfo();
+        checkInventory();
+    </script>
+</body>
+</html>

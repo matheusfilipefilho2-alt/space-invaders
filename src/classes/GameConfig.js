@@ -107,7 +107,8 @@ class GameConfig {
                 theme: { min: 30, max: 100 },
                 boost: { min: 20, max: 80 },
                 cosmetic: { min: 50, max: 500 },
-                utility: { min: 10, max: 50 }
+                utility: { min: 10, max: 50 },
+                skins: { min: 80, max: 300 }
             },
 
             // Multiplicadores por raridade
@@ -124,7 +125,8 @@ class GameConfig {
                 { id: 'theme', name: 'Temas', icon: '🎨', description: 'Personalize a aparência do jogo' },
                 { id: 'boost', name: 'Impulsos', icon: '⚡', description: 'Melhorias temporárias' },
                 { id: 'cosmetic', name: 'Cosméticos', icon: '✨', description: 'Itens visuais especiais' },
-                { id: 'utility', name: 'Utilitários', icon: '🛠️', description: 'Ferramentas úteis' }
+                { id: 'utility', name: 'Utilitários', icon: '🛠️', description: 'Ferramentas úteis' },
+                { id: 'skins', name: 'Skins de Naves', icon: '🚀', description: 'Personalize a aparência da sua nave' }
             ]
         };
 
@@ -328,9 +330,12 @@ class GameConfig {
 
     // Verificar se está em modo debug
     isDebugMode() {
+        const isBrowser = typeof window !== 'undefined';
+        const hasLocalStorage = typeof localStorage !== 'undefined';
+        
         return this.development.debug.enabled || 
-               window.location.hostname === 'localhost' ||
-               localStorage.getItem('spaceInvaders_debug') === 'true';
+               (isBrowser && window.location.hostname === 'localhost') ||
+               (hasLocalStorage && localStorage.getItem('spaceInvaders_debug') === 'true');
     }
 
     // Verificar se recurso experimental está habilitado
@@ -341,7 +346,8 @@ class GameConfig {
     // Obter configurações por ambiente
     getEnvironmentConfig() {
         const isDev = this.isDebugMode();
-        const isProd = window.location.protocol === 'https:';
+        const isBrowser = typeof window !== 'undefined';
+        const isProd = isBrowser && window.location.protocol === 'https:';
         
         if (isDev) {
             return {
@@ -495,15 +501,17 @@ class GameConfig {
 // Instância global da configuração
 const gameConfig = new GameConfig();
 
-// Permitir override via localStorage (para testes)
-const localConfig = localStorage.getItem('spaceInvaders_config');
-if (localConfig) {
-    try {
-        const parsedConfig = JSON.parse(localConfig);
-        Object.assign(gameConfig, parsedConfig);
-        console.log('🔧 Configuração local carregada');
-    } catch (error) {
-        console.warn('⚠️ Erro ao carregar configuração local:', error);
+// Permitir override via localStorage (para testes) - apenas no browser
+if (typeof localStorage !== 'undefined') {
+    const localConfig = localStorage.getItem('spaceInvaders_config');
+    if (localConfig) {
+        try {
+            const parsedConfig = JSON.parse(localConfig);
+            Object.assign(gameConfig, parsedConfig);
+            console.log('🔧 Configuração local carregada');
+        } catch (error) {
+            console.warn('⚠️ Erro ao carregar configuração local:', error);
+        }
     }
 }
 
