@@ -279,9 +279,21 @@ async function loadInventory() {
             const shopItem = shop.getItemById(userItem.item_id);
             if (!shopItem) return '';
 
+            // Verificar se é uma skin para mostrar preview e botão usar
+            const isSkin = shopItem.category === 'skins' && shopItem.skinFile;
+            const skinImagePath = isSkin ? `src/assets/images/skins/${shopItem.skinFile}` : null;
+            
             return `
                 <div class="inventory-item">
-                    <div class="item-icon" style="font-size: 24px;">${shopItem.icon}</div>
+                    ${isSkin ? 
+                        `<div class="skin-preview" style="margin-bottom: 8px;">
+                            <img src="${skinImagePath}" alt="${shopItem.name}" 
+                                 style="width: 32px; height: 32px; object-fit: contain; border-radius: 6px; background: rgba(255,255,255,0.1);" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                            <div class="item-icon" style="font-size: 24px; display: none;">${shopItem.icon}</div>
+                         </div>` : 
+                        `<div class="item-icon" style="font-size: 24px;">${shopItem.icon}</div>`
+                    }
                     <div class="item-name" style="font-size: 10px; margin: 8px 0;">${shopItem.name}</div>
                     
                     ${userItem.uses_remaining ? 
@@ -291,9 +303,10 @@ async function loadInventory() {
                             ''
                     }
                     
-                    ${userItem.uses_remaining && userItem.uses_remaining > 0 ?
-                        `<button class="buy-btn" style="margin-top: 10px;" onclick="useItem('${userItem.item_id}')">
-                            USAR
+                    ${/* Botão USAR para itens com usos restantes OU skins permanentes */ ''}
+                    ${(userItem.uses_remaining && userItem.uses_remaining > 0) || (isSkin && userItem.is_permanent) ?
+                        `<button class="buy-btn" style="margin-top: 10px;" onclick="${isSkin ? `useSkin('${userItem.item_id}')` : `useItem('${userItem.item_id}')`}">
+                            ${isSkin ? 'USAR SKIN' : 'USAR'}
                          </button>` : 
                         ''
                     }
@@ -336,6 +349,46 @@ window.useItem = async function(itemId) {
     } catch (error) {
         console.error('Erro ao usar item:', error);
         showResultModal('❌ Erro', 'Ocorreu um erro ao usar o item', true);
+    }
+};
+
+// Usar skin do inventário
+window.useSkin = async function(itemId) {
+    try {
+        const shopItem = shop.getItemById(itemId);
+        if (!shopItem || shopItem.category !== 'skins') {
+            showResultModal('❌ Erro', 'Item não é uma skin válida', true);
+            return;
+        }
+
+        // Salvar skin selecionada no localStorage
+        const currentUser = rankingManager.getCurrentUser();
+        if (currentUser) {
+            const skinData = {
+                skinId: shopItem.id,
+                skinFile: shopItem.skinFile,
+                skinName: shopItem.name
+            };
+            
+            localStorage.setItem(`selectedSkin_${currentUser.id}`, JSON.stringify(skinData));
+            
+            showResultModal(
+                '✅ Skin Aplicada!',
+                `${shopItem.name} foi definida como sua skin atual!<br>
+                 <div style="margin-top: 10px; color: #4ECDC4;">
+                    A nova skin será aplicada na próxima partida.
+                 </div>`,
+                true
+            );
+            
+            console.log(`🎨 Skin aplicada: ${shopItem.name} (${shopItem.skinFile})`);
+        } else {
+            showResultModal('❌ Erro', 'Usuário não encontrado', true);
+        }
+        
+    } catch (error) {
+        console.error('Erro ao aplicar skin:', error);
+        showResultModal('❌ Erro', 'Ocorreu um erro ao aplicar a skin', true);
     }
 };
 

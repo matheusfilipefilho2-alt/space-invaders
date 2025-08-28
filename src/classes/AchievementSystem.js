@@ -283,16 +283,32 @@ class AchievementSystem {
         }
 
         try {
-            // Buscar na tabela achievements
+            // Buscar na tabela achievements com timeout e retry
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+            
             const { data: existingAchievement, error: searchError } = await supabase
                 .from('achievements')
                 .select('id')
                 .eq('name', achievement.name)
                 .eq('requirement_type', achievement.type)
                 .eq('requirement_value', achievement.requirement)
-                .limit(1);
+                .limit(1)
+                .abortSignal(controller.signal);
 
-            if (searchError) throw searchError;
+            clearTimeout(timeoutId);
+
+            if (searchError) {
+                // Se for erro de abort ou timeout, usar fallback
+                if (searchError.name === 'AbortError' || searchError.code === 'PGRST301') {
+                    console.warn(`⚠️ Timeout na consulta de conquista ${achievement.name}, usando ID local`);
+                    // Usar hash simples como fallback ID
+                    const fallbackId = this.generateFallbackId(stringId);
+                    this.achievementIdCache.set(stringId, fallbackId);
+                    return fallbackId;
+                }
+                throw searchError;
+            }
 
             let numericId;
             
@@ -300,7 +316,10 @@ class AchievementSystem {
                 // Conquista já existe
                 numericId = existingAchievement[0].id;
             } else {
-                // Criar nova conquista
+                // Criar nova conquista com timeout
+                const insertController = new AbortController();
+                const insertTimeoutId = setTimeout(() => insertController.abort(), 5000);
+                
                 const { data: newAchievement, error: insertError } = await supabase
                     .from('achievements')
                     .insert({
@@ -312,9 +331,20 @@ class AchievementSystem {
                         coin_reward: achievement.coinReward
                     })
                     .select('id')
-                    .limit(1);
+                    .limit(1)
+                    .abortSignal(insertController.signal);
 
-                if (insertError) throw insertError;
+                clearTimeout(insertTimeoutId);
+
+                if (insertError) {
+                    if (insertError.name === 'AbortError' || insertError.code === 'PGRST301') {
+                        console.warn(`⚠️ Timeout na criação de conquista ${achievement.name}, usando ID local`);
+                        const fallbackId = this.generateFallbackId(stringId);
+                        this.achievementIdCache.set(stringId, fallbackId);
+                        return fallbackId;
+                    }
+                    throw insertError;
+                }
                 numericId = newAchievement[0].id;
             }
 
@@ -324,8 +354,25 @@ class AchievementSystem {
 
         } catch (error) {
             console.error('Erro ao buscar/criar conquista:', error);
-            throw error;
+            
+            // Fallback para evitar quebrar o sistema
+            const fallbackId = this.generateFallbackId(stringId);
+            this.achievementIdCache.set(stringId, fallbackId);
+            console.warn(`⚠️ Usando ID fallback ${fallbackId} para conquista ${achievement.name}`);
+            return fallbackId;
         }
+    }
+
+    // Gerar ID fallback baseado no stringId
+    generateFallbackId(stringId) {
+        // Usar hash simples para gerar ID consistente
+        let hash = 0;
+        for (let i = 0; i < stringId.length; i++) {
+            const char = stringId.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Converter para 32bit integer
+        }
+        return Math.abs(hash) % 10000; // Garantir que seja positivo e não muito grande
     }
 
     // Verificar conquistas do usuário atual
@@ -334,6 +381,10 @@ class AchievementSystem {
         if (!currentUser) return [];
 
         try {
+            // Adicionar timeout para evitar ERR_ABORTED
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+            
             const { data, error } = await supabase
                 .from('player_achievements')
                 .select(`
@@ -341,9 +392,19 @@ class AchievementSystem {
                     achievement:achievements(*)
                 `)
                 .eq('player_id', currentUser.id)
-                .order('unlocked_at', { ascending: false });
+                .order('unlocked_at', { ascending: false })
+                .abortSignal(controller.signal);
 
-            if (error) throw error;
+            clearTimeout(timeoutId);
+
+            if (error) {
+                // Se for timeout ou abort, retornar array vazio
+                if (error.name === 'AbortError' || error.code === 'PGRST301') {
+                    console.warn('⚠️ Timeout ao buscar conquistas do usuário, retornando lista vazia');
+                    return [];
+                }
+                throw error;
+            }
             return data || [];
         } catch (error) {
             console.error('Erro ao buscar conquistas do usuário:', error);
@@ -358,15 +419,34 @@ class AchievementSystem {
 
         try {
             const numericId = await this.getNumericAchievementId(achievementId);
+            
+            // Adicionar timeout para evitar ERR_ABORTED
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout
+            
             const { data, error } = await supabase
                 .from('player_achievements')
                 .select('id')
                 .eq('player_id', currentUser.id)
                 .eq('achievement_id', numericId)
-                .limit(1);
+                .limit(1)
+                .abortSignal(controller.signal);
 
-            return !error && data && data.length > 0;
+            clearTimeout(timeoutId);
+
+            if (error) {
+                // Se for timeout ou abort, assumir que não possui a conquista
+                if (error.name === 'AbortError' || error.code === 'PGRST301') {
+                    console.warn(`⚠️ Timeout ao verificar conquista ${achievementId}, assumindo não possui`);
+                    return false;
+                }
+                console.error('Erro ao verificar conquista:', error);
+                return false;
+            }
+
+            return data && data.length > 0;
         } catch (error) {
+            console.error('Erro ao verificar conquista:', error);
             return false;
         }
     }

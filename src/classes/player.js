@@ -45,6 +45,7 @@ class Player {
     this.currentSkin = 'default'; // Skin padrão
     this.skinImages = new Map(); // Cache de imagens de skins
     this.loadDefaultSkin();
+    this.loadUserSelectedSkin();
   }
 
   getImage(path) {
@@ -56,6 +57,34 @@ class Player {
   // Carregar skin padrão
   loadDefaultSkin() {
     this.skinImages.set('default', this.image);
+  }
+
+  // Carregar skin selecionada pelo usuário
+  loadUserSelectedSkin() {
+    try {
+      // Verificar se há um usuário logado
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (!currentUser) {
+        console.log('🎨 Nenhum usuário logado, usando skin padrão');
+        return;
+      }
+
+      // Buscar skin selecionada no localStorage
+      const selectedSkinData = localStorage.getItem(`selectedSkin_${currentUser.id}`);
+      if (!selectedSkinData) {
+        console.log('🎨 Nenhuma skin selecionada, usando skin padrão');
+        return;
+      }
+
+      const skinData = JSON.parse(selectedSkinData);
+      if (skinData.skinFile) {
+        console.log(`🎨 Carregando skin selecionada: ${skinData.skinName} (${skinData.skinFile})`);
+        this.loadSkin(skinData.skinId, skinData.skinFile);
+        this.applySkin(skinData.skinId);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar skin do usuário:', error);
+    }
   }
 
   // Carregar uma nova skin

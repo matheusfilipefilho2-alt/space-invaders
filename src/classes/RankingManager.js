@@ -136,9 +136,12 @@ class RankingManager {
 
       let updated = false;
 
+      // ⭐ CORREÇÃO: Incluir moedas ganhas na partida
+      const newCoinsTotal = (this.currentUser.coins || 0) + (rewards.coinsEarned || 0);
+      
       // Preparar dados para atualização (SEM triggers SQL problemáticos)
       const updateData = {
-        coins: parseInt(this.currentUser.coins) || 0,
+        coins: parseInt(newCoinsTotal), // Incluir moedas ganhas na partida
         level_id: parseInt(newLevelId), // Calculado localmente
         total_games: parseInt((this.currentUser.total_games || 0) + 1),
         last_played: new Date().toISOString(),
@@ -162,7 +165,7 @@ class RankingManager {
         this.currentUser.high_score = finalHighScore;
         this.currentUser.level_id = newLevelId;
         this.currentUser.total_games = (this.currentUser.total_games || 0) + 1;
-        this.currentUser.coins = updateData.coins;
+        this.currentUser.coins = newCoinsTotal; // Usar o total calculado
 
         updated = true;
       } else {
@@ -182,7 +185,7 @@ class RankingManager {
           this.currentUser.level_id = newLevelId;
           this.currentUser.total_games =
             (this.currentUser.total_games || 0) + 1;
-          this.currentUser.coins = updateData.coins;
+          this.currentUser.coins = newCoinsTotal; // Usar o total calculado
 
           updated = true; // Considerar como sucesso para não quebrar o fluxo
 
@@ -192,7 +195,7 @@ class RankingManager {
               .from("players")
               .update({
                 high_score: parseInt(finalHighScore),
-                coins: parseInt(updateData.coins),
+                coins: parseInt(newCoinsTotal), // Usar o total calculado
                 total_games: parseInt(updateData.total_games),
                 last_played: updateData.last_played,
               })
