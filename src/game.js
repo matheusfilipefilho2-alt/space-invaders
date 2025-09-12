@@ -14,6 +14,7 @@ import { supabase } from "./supabase.js";
 import AchievementSystem from "./classes/AchievementSystem.js"; // NOVO
 import Shop from "./classes/ShopClass.js"; // Sistema de skins
 import LoadingComponent from "./classes/LoadingComponent.js"; // Loading para recompensas
+import MobileControls from "./classes/MobileControls.js"; // Controles mobile
 
 // Inicializar efeitos sonoros
 const soundEffects = new SoundEffects();
@@ -22,6 +23,7 @@ const rankingManager = new RankingManager();
 const achievementSystem = new AchievementSystem(rankingManager); // NOVO
 const shop = new Shop(rankingManager); // Sistema de loja e skins
 const loadingComponent = new LoadingComponent(); // Loading para recompensas
+const mobileControls = new MobileControls(); // Controles mobile
 
 const gameStats = {
   startTime: Date.now(),
@@ -338,6 +340,28 @@ const keys = {
   },
 };
 
+// Configurar controles mobile
+if (mobileControls.mobile) {
+  // Callback para movimento por acelerômetro
+  mobileControls.setMoveCallback((direction, intensity) => {
+    if (direction === 'left') {
+      keys.left = true;
+      keys.right = false;
+    } else if (direction === 'right') {
+      keys.right = true;
+      keys.left = false;
+    }
+  });
+
+  // Callback para botão de tiro
+  mobileControls.setShootCallback((isPressed) => {
+    keys.shoot.pressed = isPressed;
+    keys.shoot.releassed = !isPressed;
+  });
+
+  console.log('📱 Controles mobile configurados');
+}
+
 // Variáveis de controle
 let frames = 0;
 let randomInterval = Math.floor(Math.random() * 500) + 500;
@@ -506,6 +530,12 @@ const startGame = async () => {
   // Atualizar UI
   updateUI();
 
+  // Inicializar controles mobile se necessário
+  if (mobileControls.mobile) {
+    mobileControls.init();
+    console.log('📱 Controles mobile inicializados para o jogo');
+  }
+
   // Parar música global de menu e música local, depois iniciar música do nível
   if (window.globalMenuMusic) {
     window.globalMenuMusic.stopMenuMusic();
@@ -571,6 +601,12 @@ const endGame = async () => {
 
   // Parar spawn de projéteis
   clearInterval(spawnProjectilesInterval);
+
+  // Limpar controles mobile se necessário
+  if (mobileControls.mobile) {
+    mobileControls.cleanup();
+    console.log('📱 Controles mobile limpos após fim do jogo');
+  }
 
   // Parar música do nível e iniciar música de menu
   soundEffects.stopLevelMusic();
@@ -1398,6 +1434,59 @@ const resetGameStats = () => {
 };
 
 startGame();
+
+// Listener para redimensionamento mobile - recriar elementos do jogo
+window.addEventListener('mobileResize', (event) => {
+  const { isMobile, screenWidth, screenHeight } = event.detail;
+  
+  // Recriar player com novo tamanho
+  const oldPlayerPosition = { ...player.position };
+  const oldPlayerLives = player.lives;
+  const oldPlayerSkin = player.currentSkin;
+  const oldPlayerBuffs = {
+    trailEnabled: player.trailEnabled,
+    goldenShipEnabled: player.goldenShipEnabled,
+    invulnerable: player.invulnerable
+  };
+  
+  // Criar novo player com tamanho ajustado
+  const newPlayer = new Player(canvas.width, canvas.height);
+  newPlayer.position = oldPlayerPosition;
+  newPlayer.lives = oldPlayerLives;
+  newPlayer.currentSkin = oldPlayerSkin;
+  newPlayer.trailEnabled = oldPlayerBuffs.trailEnabled;
+  newPlayer.goldenShipEnabled = oldPlayerBuffs.goldenShipEnabled;
+  newPlayer.invulnerable = oldPlayerBuffs.invulnerable;
+  
+  // Substituir player global
+  Object.assign(player, newPlayer);
+  
+  // Recriar grid com invasores de novo tamanho
+  const oldGridData = {
+    invaders: grid.invaders.map(invader => ({
+      position: { ...invader.position },
+      velocity: invader.velocity,
+      alive: invader.alive,
+      image: invader.image
+    })),
+    direction: grid.direction,
+    invadersVelocity: grid.invadersVelocity
+  };
+  
+  // Recriar invasores com novo tamanho - microscópico
+  grid.invaders.forEach((invader, index) => {
+    if (invader.alive) {
+      const oldData = oldGridData.invaders[index];
+      const isMobileNow = window.innerWidth <= 480;
+      const sizeMultiplier = isMobileNow ? 0.0125 : 0.8; // Usar mesmo multiplicador do invader.js
+      
+      invader.width = 50 * sizeMultiplier;
+      invader.height = 37 * sizeMultiplier;
+    }
+  });
+  
+  console.log(`🔄 Elementos do jogo redimensionados para ${isMobile ? 'mobile' : 'desktop'}`);
+});
 
 // NOVO: Exportar funções para debug/testes
 if (window.location.hostname === 'localhost') {

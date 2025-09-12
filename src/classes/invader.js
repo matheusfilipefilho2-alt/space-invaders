@@ -2,8 +2,11 @@ import Projectile from "./Projectile.js";
 
 class Invader {
   constructor(position, velocity, path) {
-    this.width = 50 * 0.8;
-    this.height = 37 * 0.8;
+    // Reduzir tamanho dos invasores em dispositivos móveis - microscópico
+    const isMobile = window.innerWidth <= 480;
+    const sizeMultiplier = isMobile ? 0.00625 : 0.8; // Tamanho subatômico para mobile - mínimo visível
+    this.width = 50 * sizeMultiplier;
+    this.height = 37 * sizeMultiplier;
     this.velocity = velocity;
     this.alive = true; // Propriedade para controlar se o invasor está vivo
 

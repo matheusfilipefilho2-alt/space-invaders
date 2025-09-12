@@ -327,62 +327,210 @@ body.admin-page {
 
 @media (max-width: 480px) {
   .score-ui {
-    width: 98%;
-    gap: 6px;
+    display: none; /* Ocultar completamente durante o jogo para maximizar espaço */
   }
   
   .game-stats {
-    padding: 8px 12px;
+    display: none; /* Ocultar estatísticas durante o jogo */
   }
   
   .score-item {
-    padding: 0 8px;
-    min-width: 60px;
+    display: none;
   }
   
-  /* Informações do jogador em mobile */
+  /* Mostrar apenas informações essenciais no canto */
+  .mobile-minimal-ui {
+    position: fixed;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #00ff00;
+    font-size: 8px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    z-index: 1001;
+    font-family: monospace;
+  }
+  
+  /* Informações do jogador em mobile - ultra compacto */
   .player-info {
-    padding: 6px 8px;
-    gap: 10px;
-    flex-wrap: wrap;
+    padding: 1px 2px;
+    gap: 1px;
+    flex-wrap: nowrap;
+    width: 100%;
+    justify-content: center;
+    font-size: 4px;
+    max-height: 15px;
+    overflow: hidden;
   }
   
   .player-header {
-    gap: 6px;
+    gap: 1px;
   }
   
   .player-icon {
-    font-size: 12px;
+    font-size: 5px;
   }
   
   .player-name {
-    font-size: 9px;
+    font-size: 4px;
   }
   
   .player-status {
-    font-size: 6px;
+    font-size: 3px;
   }
   
   .player-stats {
-    gap: 4px;
-    flex-wrap: wrap;
+    gap: 1px;
+    flex-wrap: nowrap;
+    width: 100%;
+    justify-content: center;
   }
   
   .player-stats .stat-item {
-    padding: 3px 2px;
-    min-width: 35px;
+    padding: 0px;
+    min-width: 15px;
+    flex: 0 1 auto;
+    height: 8px;
   }
   
   .stat-icon {
-    font-size: 10px;
+    font-size: 4px;
   }
   
   .stat-label {
-    font-size: 6px;
+    font-size: 2px;
   }
   
   .stat-value {
+    font-size: 3px;
+  }
+  
+  /* Canvas adaptado para mobile */
+  #game-canvas {
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  
+  /* Tela de game over adaptada - reduzido 70% */
+  .game-over {
+    padding: 10px;
+  }
+  
+  .game-over-title {
+    font-size: clamp(14px, 4vw, 22px);
+    margin-bottom: 8px;
+  }
+  
+  .game-over-subtitle {
+    font-size: clamp(7px, 2vw, 10px);
+    margin-bottom: 10px;
+  }
+  
+  /* Botões adaptados para touch - reduzido 70% */
+  button {
+    min-height: 30px;
+    min-width: 30px;
+    font-size: 10px;
+    padding: 6px 8px;
+    margin: 4px 2px;
+    touch-action: manipulation;
+    border-radius: 4px;
+  }
+  
+  /* Evitar zoom em inputs */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  
+  /* Redução do tamanho da nave e invaders para mobile - nano */
+  .invader-sprite {
+    font-size: 0.2px; /* Reduzido de 28px para 0.2px (99.3% menor) */
+  }
+}
+
+/* Media queries específicas para mobile landscape - reduzido 70% */
+@media (max-width: 896px) and (orientation: landscape) {
+  .score-ui {
+    top: 2px;
+    font-size: clamp(6px, 1.5vw, 8px);
+  }
+  
+  .game-stats {
+    padding: 2px 4px;
+    flex-direction: row;
+    gap: 2px;
+    max-height: 35px;
+  }
+  
+  .player-info {
+    padding: 1px 2px;
+    gap: 2px;
+    font-size: 5px;
+  }
+  
+  .player-stats .stat-item {
+    padding: 0px;
+    min-width: 15px;
+    height: 10px;
+  }
+  
+  .stat-icon {
+    font-size: 4px;
+  }
+  
+  .stat-label {
+    font-size: 2px;
+  }
+  
+  .stat-value {
+    font-size: 3px;
+  }
+  
+  /* Botão de tiro otimizado para landscape - reduzido 70% */
+  #mobile-shoot-button {
+    right: 10px !important;
+    bottom: 10px !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Media queries para dispositivos muito pequenos - reduzido 70% */
+@media (max-width: 320px) {
+  .score-ui {
     font-size: 7px;
+    gap: 2px;
+  }
+  
+  .game-stats {
+    padding: 3px 4px;
+  }
+  
+  .score-item {
+    min-width: 30px;
+    padding: 0 2px;
+  }
+  
+  .player-info {
+    padding: 2px 3px;
+  }
+  
+  .player-stats .stat-item {
+    min-width: 18px;
+    padding: 1px;
+    height: 10px;
+  }
+  
+  button {
+    font-size: 8px;
+    padding: 4px 6px;
+    min-height: 25px;
+    min-width: 25px;
   }
 }
 

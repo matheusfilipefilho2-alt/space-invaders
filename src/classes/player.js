@@ -10,8 +10,11 @@ import RainbowTrail from "./RainbowTrail.js";
 class Player {
   constructor(canvasWidth, canvasHeight) {
     this.alive = true;
-    this.width = 48 * 2;
-    this.height = 48 * 2;
+    // Reduzir tamanho da nave em dispositivos móveis - subatômico
+    const isMobile = window.innerWidth <= 480;
+    const sizeMultiplier = isMobile ? 0.0125 : 2; // 99.375% menor em mobile (0.0125 vs 2)
+    this.width = 48 * sizeMultiplier;
+    this.height = 48 * sizeMultiplier;
     this.velocity = 10;
 
     this.position = {
