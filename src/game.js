@@ -689,7 +689,7 @@ const showRewardResults = (gameResult, achievementResults, finalStats) => {
             achievementResult.achievement.description
           );
         }
-      }, index * 100); // Delay otimizado para 100ms
+      }, index * 100); // Delay otimizado para 100mss
     });
   }
 
