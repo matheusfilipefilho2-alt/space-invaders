@@ -19,6 +19,21 @@
 5. Click: **Run**
 6. Verify: Success message appears
 
+## Schema Requirements
+
+Before running the SQL function, verify your `player_items` table has these columns:
+- `player_id` (UUID, references players.id)
+- `item_id` (TEXT)
+- `item_type` (TEXT)
+- `acquired_at` (TIMESTAMP WITH TIME ZONE)
+
+Run in Supabase SQL Editor to verify:
+```sql
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'player_items';
+```
+
 ### Step 2: Test RPC Function
 
 Run these tests in the SQL Editor:

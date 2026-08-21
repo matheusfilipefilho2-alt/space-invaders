@@ -31,7 +31,7 @@ BEGIN
   RETURNING coins INTO new_balance;
 
   -- Adicionar item ao inventário
-  INSERT INTO player_items (user_id, item_id, item_type, acquired_at)
+  INSERT INTO player_items (player_id, item_id, item_type, acquired_at)
   VALUES (p_user_id, p_item_id, p_item_type, NOW());
 
   -- Retornar sucesso com novo saldo
