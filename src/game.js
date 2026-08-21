@@ -23,6 +23,9 @@ const achievementSystem = new AchievementSystem(rankingManager); // NOVO
 const shop = new Shop(rankingManager); // Sistema de loja e skins
 const loadingComponent = new LoadingComponent(); // Loading para recompensas
 
+// Variável para controlar o game loop e prevenir memory leaks
+let gameLoopId = null;
+
 const gameStats = {
   startTime: Date.now(),
   killCount: 0,
@@ -469,6 +472,12 @@ const drawActiveBuff = (ctx) => {
 
 // Função para iniciar o jogo
 const startGame = async () => {
+  // Cancelar loop anterior se existir (previne memory leak)
+  if (gameLoopId !== null) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
+
   // Resetar variáveis do jogo
   gameData.score = 0;
   gameData.level = 1;
@@ -538,6 +547,12 @@ const startGame = async () => {
 
 // Função para finalizar o jogo
 const endGame = async () => {
+  // Cancelar game loop (previne memory leak)
+  if (gameLoopId !== null) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
+
   // Verificar se o jogador ainda tem vidas
   if (player.getLives() > 1) {
     // Perder uma vida e continuar jogando
@@ -1192,7 +1207,7 @@ const gameLoop = () => {
     // Desenhar buff ativo
     drawActiveBuff(ctx);
 
-    requestAnimationFrame(gameLoop);
+    gameLoopId = requestAnimationFrame(gameLoop);
     return;
   }
 
@@ -1302,7 +1317,7 @@ const gameLoop = () => {
     grid.update(player.alive);
   }
 
-  requestAnimationFrame(gameLoop);
+  gameLoopId = requestAnimationFrame(gameLoop);
 };
 
 // Event listeners
