@@ -1,0 +1,15 @@
+- generic [ref=f2e2]:
+  - generic [ref=f2e3]:
+    - heading "🚀 REGISTRO" [level=1] [ref=f2e4]
+    - paragraph [ref=f2e5]: Crie sua conta para salvar pontuações
+    - generic [ref=f2e6]: 👤
+    - generic [ref=f2e12]:
+      - textbox "Nome de usuário" [active] [ref=f2e13]
+      - textbox "PIN (4 dígitos)" [ref=f2e14]
+      - textbox "Confirmar PIN" [ref=f2e15]
+    - generic [ref=f2e16]:
+      - button "✨ CRIAR CONTA" [ref=f2e17] [cursor=pointer]
+      - button "← VOLTAR" [ref=f2e18] [cursor=pointer]
+  - generic [ref=f2e19]:
+    - text: DEVELOPED BY MATHEUSIN v1.9
+    - generic [ref=f2e21]: ✦✧✦

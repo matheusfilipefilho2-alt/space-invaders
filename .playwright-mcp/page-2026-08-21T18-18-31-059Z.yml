@@ -1,0 +1,12 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "SPACE INVADERS" [level=1] [ref=e5]:
+      - generic [ref=e6]: SPACE
+      - generic [ref=e7]: INVADERS
+    - paragraph [ref=e8]: DEFEND EARTH FROM ALIEN INVASION
+    - generic [ref=e9]:
+      - button "🚀 START GAME" [ref=e11] [cursor=pointer]
+      - button "👤 LOGIN" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]:
+    - generic [ref=e16]: DEVELOPED BY MATHEUSIN v1.9
+    - generic [ref=e17]: ✦✧✦

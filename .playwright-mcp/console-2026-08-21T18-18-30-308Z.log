@@ -1,0 +1,14 @@
+[     294ms] [LOG] 🔧 Criando instância única do cliente Supabase @ http://localhost:8080/src/supabase.js:16
+[     296ms] [WARNING] Erro ao tocar música de menu: NotAllowedError: play() failed because the user didn't interact with the document first. https://goo.gl/xX8pDD @ http://localhost:8080/src/classes/SoundEffects.js:116
+[     297ms] [LOG] 🌟 Inicializando página inicial... @ http://localhost:8080/src/index.js:321
+[     297ms] [LOG] 👤 Nenhum usuário logado @ http://localhost:8080/src/index.js:42
+[     297ms] [LOG] ✅ Página inicial carregada com sucesso! @ http://localhost:8080/src/index.js:330
+[   30851ms] [LOG] 🔧 Criando instância única do cliente Supabase @ http://localhost:8080/src/supabase.js:16
+[   42926ms] [LOG] 🔧 Criando instância única do cliente Supabase @ http://localhost:8080/src/supabase.js:16
+[  175100ms] [LOG] 🔐 Hasheando PIN... @ http://localhost:8080/src/register.js:49
+[  175101ms] ReferenceError: bcrypt is not defined
+    at HTMLButtonElement.<anonymous> (http://localhost:8080/src/register.js:51:31)
+    at eval (eval at <anonymous> (eval at evaluate (:311:30)), <anonymous>:1:51)
+    at eval (eval at evaluate (:311:30), <anonymous>:4:50)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)

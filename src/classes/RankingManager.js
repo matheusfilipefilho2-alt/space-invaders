@@ -74,6 +74,13 @@ class RankingManager {
         if (isHash) {
             // Novo sistema: comparar com bcrypt
             console.log('🔐 Verificando PIN hasheado...');
+
+            // Verificar se bcrypt está disponível
+            if (typeof bcrypt === 'undefined' || !window.bcrypt) {
+                console.error('❌ bcrypt não está carregado!');
+                throw new Error('Sistema de segurança não carregado. Recarregue a página.');
+            }
+
             authenticated = bcrypt.compareSync(pin, storedPin);
         } else {
             // Sistema legado: comparação direta (texto plano)
@@ -83,18 +90,26 @@ class RankingManager {
             // Migrar para hash automaticamente se login for bem-sucedido
             if (authenticated) {
                 console.log('🔄 Migrando PIN para hash...');
-                const hashedPin = bcrypt.hashSync(pin, 10);
 
-                // Atualizar PIN para hash no banco
-                const { error: updateError } = await supabase
-                    .from("players")
-                    .update({ pin: hashedPin })
-                    .eq("id", user.id);
-
-                if (updateError) {
-                    console.error('❌ Erro ao migrar PIN:', updateError);
+                // Verificar se bcrypt está disponível
+                if (typeof bcrypt === 'undefined' || !window.bcrypt) {
+                    console.error('❌ bcrypt não disponível para migração');
+                    console.log('⚠️ Migração de PIN adiada - bcrypt não carregado');
+                    // Não bloqueia login, apenas adia migração
                 } else {
-                    console.log('✅ PIN migrado com sucesso');
+                    const hashedPin = bcrypt.hashSync(pin, 10);
+
+                    // Atualizar PIN para hash no banco
+                    const { error: updateError } = await supabase
+                        .from("players")
+                        .update({ pin: hashedPin })
+                        .eq("id", user.id);
+
+                    if (updateError) {
+                        console.error('❌ Erro ao migrar PIN:', updateError);
+                    } else {
+                        console.log('✅ PIN migrado com sucesso');
+                    }
                 }
             }
         }

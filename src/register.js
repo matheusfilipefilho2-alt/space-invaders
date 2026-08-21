@@ -48,6 +48,14 @@ if (buttonCreate && newUsernameInput && newPinInput && confirmPinInput) {
 
             // Hash do PIN antes de enviar (bcrypt salt 10)
             console.log('🔐 Hasheando PIN...');
+
+            // Verificar se bcrypt está disponível
+            if (typeof bcrypt === 'undefined' || !window.bcrypt) {
+                console.error('❌ bcrypt não está carregado!');
+                alert('Erro: Sistema de segurança não carregado. Recarregue a página.');
+                return;
+            }
+
             const hashedPin = bcrypt.hashSync(pin, 10);
             console.log('✅ PIN hasheado com sucesso');
 

@@ -1,0 +1,2 @@
+[      92ms] [LOG] 🔧 Criando instância única do cliente Supabase @ http://localhost:8080/src/supabase.js:16
+[      94ms] [WARNING] Erro ao tocar música de menu: NotAllowedError: play() failed because the user didn't interact with the document first. https://goo.gl/xX8pDD @ http://localhost:8080/src/classes/SoundEffects.js:116
