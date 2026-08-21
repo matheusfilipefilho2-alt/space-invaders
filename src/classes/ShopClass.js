@@ -330,6 +330,18 @@ class Shop {
      * @returns {Promise<Object>} - Resultado da compra
      */
     async buyItem(itemId, itemType, price) {
+        // Validar item existe
+        const item = this.getItemById(itemId);
+        if (!item) {
+            console.error('❌ Item não encontrado:', itemId);
+            alert('Item não encontrado');
+            return { success: false, error: 'Item não encontrado' };
+        }
+
+        // Usar dados reais do item
+        const actualPrice = item.price;
+        const actualType = item.category;
+
         const currentUser = this.rankingManager.getCurrentUser();
 
         if (!currentUser) {
@@ -357,8 +369,8 @@ class Shop {
                 .rpc('atomic_purchase', {
                     p_user_id: currentUser.id,
                     p_item_id: itemId,
-                    p_item_price: price,
-                    p_item_type: itemType
+                    p_item_type: actualType,  // MUDANÇA: usar tipo real
+                    p_price: actualPrice      // MUDANÇA: usar preço real
                 });
 
             if (error) {
@@ -373,20 +385,35 @@ class Shop {
                 return { success: false };
             }
 
-            console.log('✅ Compra bem-sucedida! Saldo restante:', data.remaining_coins);
+            if (data.success) {
+                // Atualizar moedas localmente
+                currentUser.coins = data.remaining_coins;
+                this.rankingManager.setCurrentUser(currentUser);
 
-            // Atualizar saldo local
-            currentUser.coins = data.remaining_coins;
+                // Auto-selecionar skin se for uma skin
+                if (item.category === 'skins') {
+                    this.setSelectedSkin(itemId, item.skinFile, item.name);
+                }
 
-            // Feedback visual
-            alert(data.message || 'Item comprado com sucesso!');
+                console.log('✅ Compra concluída:', {
+                    item: item.name,
+                    newBalance: data.remaining_coins
+                });
 
-            // Recarregar loja para atualizar UI
-            if (typeof this.loadShopItems === 'function') {
-                await this.loadShopItems();
+                // Feedback visual
+                alert(data.message || `${item.name} comprado com sucesso!`);
+
+                // Recarregar loja para atualizar UI
+                if (typeof this.loadShopItems === 'function') {
+                    await this.loadShopItems();
+                }
+
+                return {
+                    success: true,
+                    message: `${item.name} comprado com sucesso!`,
+                    remainingCoins: data.remaining_coins
+                };
             }
-
-            return { success: true, remaining_coins: data.remaining_coins };
 
         } catch (error) {
             console.error('❌ Erro inesperado na compra:', error);
@@ -402,151 +429,32 @@ class Shop {
     
     // Comprar item
     async purchaseItem(itemId) {
-        const item = this.getItemById(itemId);
-        console.log('Item a ser comprado:', item);
-
-        if (!item) {
-            return { success: false, error: 'Item não encontrado' };
-        }
-        
         const currentUser = this.rankingManager.getCurrentUser();
         if (!currentUser) {
-            return { success: false, error: 'Usuário não logado' };
+            alert('Você precisa estar logado para comprar!');
+            return { success: false, error: 'Usuário não autenticado' };
         }
-        
-        // Verificar se é um pacote de moedas (compra com dinheiro real)
+
+        // Obter item
+        const item = this.getItemById(itemId);
+        if (!item) {
+            alert('Item não encontrado!');
+            return { success: false, error: 'Item não encontrado' };
+        }
+
+        // Validar tipo de item
+        if (item.disabled || item.comingSoon) {
+            alert('Este item ainda não está disponível!');
+            return { success: false, error: 'Item indisponível' };
+        }
+
+        // Tratamento especial para coin packs (PIX)
         if (item.category === 'coin_packs' && item.priceType === 'real') {
             return await this.purchaseCoinPack(item, currentUser);
         }
-        
-        const userCoins = currentUser.coins || 0;
-        if (userCoins < item.price) {
-            return { success: false, error: 'Moedas insuficientes' };
-        }
 
-        // Validação server-side obrigatória (previne manipulação client-side)
-        const hasBalance = await this.validateBalance(currentUser.id, item.price);
-
-        if (!hasBalance) {
-            alert('Moedas insuficientes! (Validação servidor)');
-            return { success: false, error: 'Saldo insuficiente' };
-        }
-
-        console.log('✅ Validação server-side passou, prosseguindo com compra...');
-
-        // Primeiro, verificar se a tabela player_items existe
-        try {
-            const { data: testData, error: testError } = await supabase
-                .from('player_items')
-                .select('*')
-                .limit(1);
-                
-            if (testError) {
-                console.error('Erro ao acessar tabela player_items:', testError);
-                // Se a tabela não existe, vamos tentar criar o registro de compra de outra forma
-                if (testError.code === 'PGRST116' || testError.message.includes('does not exist')) {
-                    console.log('Tabela player_items não existe. Simulando compra...');
-                    
-                    // Apenas atualizar as moedas do usuário
-                    const newCoins = userCoins - item.price;
-                    const { error: updateError } = await supabase
-                        .from('players')
-                        .update({ coins: newCoins })
-                        .eq('id', currentUser.id);
-                        
-                    if (updateError) {
-                        console.error('Erro ao atualizar moedas:', updateError);
-                        return { success: false, error: 'Erro ao processar pagamento' };
-                    }
-                    
-                    // Salvar no localStorage como fallback
-                    const userItems = JSON.parse(localStorage.getItem(`userItems_${currentUser.id}`) || '[]');
-                    userItems.push({
-                        id: Date.now(),
-                        item_id: itemId,
-                        player_id: currentUser.id,
-                        uses_remaining: item.duration ? this.getUsesFromDuration(item.duration) : null,
-                        is_permanent: item.permanent || false,
-                        purchased_at: new Date().toISOString()
-                    });
-                    localStorage.setItem(`userItems_${currentUser.id}`, JSON.stringify(userItems));
-                    
-                    currentUser.coins = newCoins;
-                    return {
-                        success: true,
-                        item,
-                        remainingCoins: newCoins
-                    };
-                }
-                return { success: false, error: 'Erro ao acessar banco de dados' };
-            }
-            
-            console.log('Tabela player_items acessível:', testData);
-        } catch (error) {
-            console.error('Erro geral ao testar tabela:', error);
-            return { success: false, error: 'Erro de conexão com banco de dados' };
-        }
-        
-        try {
-            // Dados para inserir na tabela player_items
-            const itemData = {
-                player_id: currentUser.id,
-                item_id: itemId,
-                uses_remaining: item.duration ? this.getUsesFromDuration(item.duration) : null,
-                is_permanent: item.permanent || false,
-                purchased_at: new Date().toISOString()
-            };
-            
-            console.log('Dados do item a ser inserido:', itemData);
-            console.log('Usuário atual:', currentUser);
-            
-            // Atualizar moedas do usuário
-            const newCoins = userCoins - item.price;
-            
-            const { error: updateError } = await supabase
-                .from('players')
-                .update({ coins: newCoins })
-                .eq('id', currentUser.id);
-                
-            if (updateError) {
-                console.error('Erro ao atualizar moedas:', updateError);
-                throw updateError;
-            }
-            
-            // Salvar item usando InventorySync
-            const itemDataWithName = {
-                ...itemData,
-                item_name: item.name,
-                item_category: item.category
-            };
-            
-            const saveResult = await this.inventorySync.addItemToInventory(currentUser.id, itemDataWithName);
-            
-            if (!saveResult.success) {
-                console.error('Erro ao salvar item no inventário:', saveResult.error);
-                throw new Error(saveResult.error);
-            }
-            
-            console.log('Item salvo com sucesso no inventário');
-            
-            // Atualizar usuário local
-            currentUser.coins = newCoins;
-            
-            // Se for uma skin, salvar como skin selecionada (fonte única)
-            if (item.category === 'skins') {
-                this.setSelectedSkin(itemId, item.skinFile, item.name);
-            }
-            
-            return {
-                success: true,
-                item,
-                remainingCoins: newCoins
-            };
-            
-        } catch (error) {
-            console.error('Erro na compra:', error);
-            return { success: false, error: 'Erro ao processar compra' };
-        }
+        // Usar buyItem para compra atômica
+        return await this.buyItem(itemId, item.category, item.price);
     }
     
     // Obter itens do usuário (com sincronização)
