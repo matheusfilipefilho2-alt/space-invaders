@@ -6,13 +6,13 @@
 
 ## Sumário Executivo
 
-**Total de Bugs Encontrados:** 19 bugs (análise em progresso)
-- 🔴 Críticos: 3
-- 🟠 Altos: 5
-- 🟡 Médios: 7
+**Total de Bugs Encontrados:** 30 bugs (análise em progresso)
+- 🔴 Críticos: 6
+- 🟠 Altos: 10
+- 🟡 Médios: 10
 - 🟢 Baixos: 4
 
-**Sistemas Analisados:** 2/8
+**Sistemas Analisados:** 3/8
 
 **Sistemas Mais Problemáticos:** _[TBD]_
 
@@ -373,7 +373,203 @@ _[Será preenchido ao final da análise]_
 
 ## 3. Sistema de Loja e Pagamento PIX
 
-_[Análise pendente]_
+**Arquivos Analisados:**
+- `shop.html`
+- `src/shop.js`
+- `src/classes/ShopClass.js`
+- Commit f19d07c (fix do botão use para life_bonus)
+
+### ✅ Pontos Positivos
+
+- Sistema de loja funcional com categorização de itens
+- Interface visual bem estruturada com cards de produtos
+- Sistema de ofertas diárias implementado
+- Integração PIX implementada com QR code e código copia-e-cola
+- Fix recente implementado para ocultar botão "use" do item life_bonus (commit f19d07c)
+- Inventário do usuário com visualização de itens comprados
+- Preview de skins com imagens
+- Sistema de raridade de itens implementado
+- Fallback para localStorage quando tabela player_items não existe
+
+### 🐛 Bugs Encontrados
+
+#### 🔴 CRÍTICO - Transação de compra não é atômica
+
+- **Arquivo:** `src/classes/ShopClass.js:387-412`
+- **Descrição:** A compra é feita em duas operações separadas: primeiro atualiza as moedas (linha 390-393), depois adiciona o item ao inventário. Se a segunda operação falhar, o usuário perde as moedas mas não recebe o item.
+- **Impacto:** Perda de moedas do usuário sem receber o item comprado. Isso é extremamente grave pois envolve perda monetária.
+- **Reprodução:** Simular erro de rede após atualização de moedas mas antes de inserir item
+- **Sugestão:** Usar transação do Supabase com RPC ou implementar rollback manual. Exemplo: criar função SQL que executa ambas operações atomicamente.
+
+#### 🔴 CRÍTICO - Código PIX fake/simulado em produção
+
+- **Arquivo:** `src/shop.js:360, 396-404`
+- **Descrição:** O código PIX é hardcoded e não é gerado dinamicamente para cada transação. O "pagamento" é apenas simulado com setTimeout de 3 segundos, sem verificação real de pagamento.
+- **Impacto:** Sistema de pagamento completamente não funcional. Nenhum pagamento real é processado. Usuários podem "comprar" moedas sem pagar.
+- **Reprodução:** Tentar comprar pacote de moedas > "Pagamento" sempre funciona sem verificação
+- **Sugestão:** Integrar com gateway de pagamento real (Mercado Pago, PagSeguro, etc.) que gere códigos PIX únicos e verifique o pagamento via webhook.
+
+#### 🔴 CRÍTICO - Validação de preço apenas no frontend
+
+- **Arquivo:** `src/classes/ShopClass.js:316-319`
+- **Descrição:** A validação de moedas suficientes (`userCoins < item.price`) é feita apenas no JavaScript do cliente, que pode ser manipulado.
+- **Impacto:** Usuário pode modificar o código JavaScript via DevTools e comprar qualquer item sem ter moedas suficientes.
+- **Reprodução:** DevTools > Console > Modificar `currentUser.coins = 999999` > Comprar item caro
+- **Sugestão:** SEMPRE validar preços e saldo no servidor (Supabase Function ou RPC). Nunca confiar em validações client-side para transações monetárias.
+
+#### 🟠 ALTO - Ausência de validação de double-spending
+
+- **Arquivo:** `src/classes/ShopClass.js:298`
+- **Descrição:** Não há verificação se uma compra já está em andamento. Usuário pode clicar rapidamente múltiplas vezes no botão de compra.
+- **Impacto:** Múltiplas requisições simultâneas podem resultar em compras duplicadas ou estados inconsistentes no banco de dados.
+- **Reprodução:** Clicar rapidamente 5 vezes em "COMPRAR" antes da primeira requisição completar
+- **Sugestão:** Adicionar flag `isPurchasing` e desabilitar botão durante processamento: `if (this.isPurchasing) return;`
+
+#### 🟠 ALTO - Sincronização de moedas entre tabs vulnerável a race conditions
+
+- **Arquivo:** `src/classes/ShopClass.js:335-363`
+- **Descrição:** Moedas são atualizadas baseadas no valor local (`userCoins - item.price`). Se o usuário tiver a loja aberta em duas tabs, ambas podem tentar gastar do mesmo saldo.
+- **Impacto:** Usuário pode gastar mais moedas do que possui abrindo múltiplas tabs.
+- **Reprodução:** Abrir loja em 2 tabs > Comprar item caro em ambas simultaneamente
+- **Sugestão:** Usar operações atômicas no banco: `UPDATE players SET coins = coins - [price] WHERE id = [id] AND coins >= [price]`
+
+#### 🟠 ALTO - Dados sensíveis de PIX expostos no código
+
+- **Arquivo:** `src/shop.js:360`
+- **Descrição:** Código PIX real com informações do destinatário está hardcoded no JavaScript: "Matheus Felipe Marinho Do" aparece no código.
+- **Impacto:** Informações pessoais do desenvolvedor expostas publicamente. Além disso, todos os pagamentos iriam para a mesma conta sem rastreamento.
+- **Reprodução:** Inspecionar código fonte e ver dados pessoais
+- **Sugestão:** Remover dados sensíveis do frontend. Gerar códigos PIX dinamicamente no backend com informações adequadas.
+
+#### 🟡 MÉDIO - Fallback para localStorage sem sincronização com banco
+
+- **Arquivo:** `src/classes/ShopClass.js:346-363`
+- **Descrição:** Quando a tabela player_items não existe, itens são salvos apenas no localStorage sem garantia de sincronização posterior com o banco.
+- **Impacto:** Usuário pode perder itens comprados se limpar o localStorage ou trocar de dispositivo.
+- **Reprodução:** Desabilitar tabela player_items > Comprar item > Limpar localStorage > Itens perdidos
+- **Sugestão:** Implementar fila de sincronização que tenta reenviar compras ao banco quando ele voltar disponível.
+
+#### 🟡 MÉDIO - Função `getUsesFromDuration` não está definida
+
+- **Arquivo:** `src/classes/ShopClass.js:352, 379`
+- **Descrição:** Código chama `this.getUsesFromDuration(item.duration)` mas essa função não está implementada na classe Shop.
+- **Impacto:** Itens com duração (como "5 partidas") terão `uses_remaining = undefined`, quebrando a lógica de uso.
+- **Reprodução:** Comprar item com duration > Verificar uses_remaining no banco/localStorage
+- **Sugestão:** Implementar função: `getUsesFromDuration(duration) { return parseInt(duration.match(/\d+/)[0]) || null; }`
+
+#### 🟡 MÉDIO - Modal de confirmação não é fechado em caso de erro
+
+- **Arquivo:** `src/shop.js:220-277`
+- **Descrição:** Se `confirmPurchase()` lançar exceção antes de fechar o modal (linha 224), o modal permanece aberto e o usuário pode tentar novamente.
+- **Impacto:** Usuário pode clicar múltiplas vezes causando múltiplas tentativas de compra.
+- **Reprodução:** Forçar erro logo após abrir modal > Modal fica aberto
+- **Sugestão:** Usar try-finally para garantir que modal é fechado: `finally { purchaseModal.style.display = 'none'; }`
+
+#### 🟡 MÉDIO - Botão de compra não é desabilitado durante processamento
+
+- **Arquivo:** `src/shop.js:220`
+- **Descrição:** Durante o processamento da compra, o botão permanece habilitado permitindo cliques adicionais.
+- **Impacto:** Múltiplos cliques podem causar múltiplas compras simultâneas.
+- **Reprodução:** Clicar rapidamente em "COMPRAR" durante loading
+- **Sugestão:** Desabilitar todos os botões de compra no início de `confirmPurchase()` e reabilitar no finally
+
+#### 🟢 BAIXO - QR code é imagem estática ao invés de gerada dinamicamente
+
+- **Arquivo:** `src/shop.js:442-450`
+- **Descrição:** QR code PIX é carregado de arquivo estático `qrcode_pix.png` ao invés de ser gerado para cada transação.
+- **Impacto:** Todos os pagamentos apontam para o mesmo QR code genérico, impossibilitando rastreamento individual de transações.
+- **Reprodução:** Comprar qualquer pacote de moedas > QR code é sempre o mesmo
+- **Sugestão:** Usar biblioteca de geração de QR code (qrcode.js) para gerar código único por transação
+
+#### 🟢 BAIXO - Preço com ponto decimal pode causar erros de precisão
+
+- **Arquivo:** `src/classes/ShopClass.js:186-214`
+- **Descrição:** Preços em reais são armazenados como float (4.99, 9.99, 14.99) o que pode causar erros de precisão em cálculos monetários.
+- **Impacto:** Pequenos erros de arredondamento em cálculos (ex: 4.99 * 100 pode ser 498.99999)
+- **Reprodução:** Fazer múltiplas operações com preços e verificar arredondamento
+- **Sugestão:** Armazenar preços em centavos (inteiros): 499, 999, 1499
+
+### ⚠️ Qualidade de Código
+
+**Segurança Crítica:**
+- Sistema de pagamento PIX completamente simulado
+- Validação de transações apenas no frontend
+- Transações não atômicas
+- Ausência de rate limiting para compras
+
+**Dados Sensíveis Expostos:**
+- Informações pessoais no código PIX
+- Lógica de preços exposta no cliente
+
+**Fallbacks Problemáticos:**
+- localStorage usado como banco de dados principal em alguns casos
+- Sem estratégia de recuperação de dados
+
+**Funcionalidades Não Implementadas:**
+- Webhook para confirmação de pagamento PIX
+- Verificação server-side de transações
+- Histórico de transações
+- Sistema de reembolso
+
+**Código Positivo:**
+- Boa estruturação de categorias e raridades
+- UI bem organizada
+- Sistema de ofertas diárias criativo
+
+### 💡 Sugestões de Melhoria
+
+1. **URGENTE - Segurança de Pagamentos:**
+   - Remover sistema PIX fake e implementar gateway real
+   - Mover toda lógica de validação para servidor (Supabase Functions)
+   - Implementar transações atômicas
+   - Adicionar verificação de pagamento via webhook
+   - Nunca confiar em dados do cliente
+
+2. **Transações:**
+   - Criar função SQL que executa update de moedas e insert de item atomicamente
+   - Implementar rollback em caso de erro
+   - Adicionar logging de todas as transações
+   - Criar tabela de histórico de compras
+
+3. **Prevenção de Fraude:**
+   - Rate limiting para compras (máx 5 por minuto)
+   - Validação server-side obrigatória
+   - Detectar manipulação de preços
+   - Bloquear usuários suspeitos
+
+4. **UX:**
+   - Desabilitar botões durante processamento
+   - Melhorar feedback de erros
+   - Adicionar confirmação dupla para compras caras
+   - Mostrar histórico de compras
+
+5. **Arquitetura:**
+   - Criar backend dedicado para loja (não fazer tudo no frontend)
+   - Usar Supabase Edge Functions para lógica sensível
+   - Implementar sistema de webhooks para PIX
+   - Adicionar testes automatizados para fluxo de compra
+
+### 🧪 Testes Práticos Sugeridos
+
+- [ ] Comprar coin pack de 199 moedas (verificar se PIX funciona)
+- [ ] Comprar coin pack de 499 moedas
+- [ ] Comprar coin pack de 999 moedas
+- [ ] Verificar se moedas são creditadas corretamente
+- [ ] Verificar atualização de saldo após compra
+- [ ] Tentar double-click no botão de compra (verificar double-spending)
+- [ ] Verificar se botão "use" aparece para life_bonus (NÃO deve aparecer - fix recente)
+- [ ] Tentar comprar item sem moedas suficientes
+- [ ] Abrir loja em duas tabs e tentar comprar simultaneamente
+- [ ] Modificar preço no DevTools e tentar comprar (verificar validação)
+- [ ] Verificar se QR code PIX é gerado (atualmente é estático)
+- [ ] Testar cancelamento de "pagamento" PIX
+- [ ] Simular erro durante compra e verificar rollback
+- [ ] Verificar se itens aparecem no inventário após compra
+- [ ] Comprar skin e verificar se preview aparece
+- [ ] Tentar usar item do inventário
+- [ ] Verificar sincronização de inventário com Supabase
+- [ ] Limpar localStorage e verificar se itens persistem
+- [ ] Verificar ofertas diárias (mudam a cada dia?)
 
 ---
 
