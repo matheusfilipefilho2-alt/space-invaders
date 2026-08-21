@@ -9,7 +9,8 @@ class Shop {
         this.gameConfig = gameConfig;
         this.rewardSystem = rankingManager ? rankingManager.getRewardSystem() : new RewardSystem();
         this.inventorySync = new InventorySync();
-        
+        this.isPurchasing = false;  // Flag para prevenir double-submit
+
         // Configurações da loja
         this.config = this.gameConfig.shop;
         
@@ -319,6 +320,84 @@ class Shop {
     // Obter ofertas diárias
     getDailyOffers() {
         return this.dailyOffers;
+    }
+
+    /**
+     * Compra item usando transação atômica via RPC
+     * @param {string} itemId - ID do item a comprar
+     * @param {string} itemType - Tipo do item (skin, boost, etc)
+     * @param {number} price - Preço do item
+     * @returns {Promise<Object>} - Resultado da compra
+     */
+    async buyItem(itemId, itemType, price) {
+        const currentUser = this.rankingManager.getCurrentUser();
+
+        if (!currentUser) {
+            alert('Você precisa estar logado para comprar!');
+            return { success: false };
+        }
+
+        // Proteção contra double-submit
+        if (this.isPurchasing) {
+            console.log('⏳ Compra já em andamento...');
+            return { success: false };
+        }
+
+        this.isPurchasing = true;
+
+        // Desabilitar botão se existir
+        const button = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (button) button.disabled = true;
+
+        try {
+            console.log('🛒 Processando compra atômica via RPC...');
+
+            // Chamar RPC function atômica
+            const { data, error } = await supabase
+                .rpc('atomic_purchase', {
+                    p_user_id: currentUser.id,
+                    p_item_id: itemId,
+                    p_item_price: price,
+                    p_item_type: itemType
+                });
+
+            if (error) {
+                console.error('❌ Erro na compra:', error);
+                alert('Erro ao processar compra. Tente novamente.');
+                return { success: false };
+            }
+
+            // RPC retorna JSON com success/error/remaining_coins
+            if (!data.success) {
+                alert(data.error);
+                return { success: false };
+            }
+
+            console.log('✅ Compra bem-sucedida! Saldo restante:', data.remaining_coins);
+
+            // Atualizar saldo local
+            currentUser.coins = data.remaining_coins;
+
+            // Feedback visual
+            alert(data.message || 'Item comprado com sucesso!');
+
+            // Recarregar loja para atualizar UI
+            if (typeof this.loadShopItems === 'function') {
+                await this.loadShopItems();
+            }
+
+            return { success: true, remaining_coins: data.remaining_coins };
+
+        } catch (error) {
+            console.error('❌ Erro inesperado na compra:', error);
+            alert('Erro inesperado. Tente novamente.');
+            return { success: false };
+
+        } finally {
+            // SEMPRE liberar flag e botão
+            this.isPurchasing = false;
+            if (button) button.disabled = false;
+        }
     }
     
     // Comprar item
