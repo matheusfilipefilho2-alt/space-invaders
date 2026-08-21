@@ -288,7 +288,34 @@ class Shop {
         localStorage.setItem('dailyOffers', JSON.stringify(this.dailyOffers));
         localStorage.setItem('dailyOffersDate', today);
     }
-    
+
+    /**
+     * Valida se usuário tem saldo suficiente via RPC server-side
+     * @param {string} userId - UUID do usuário
+     * @param {number} requiredAmount - Quantidade de moedas necessárias
+     * @returns {Promise<boolean>} - true se tem saldo suficiente
+     */
+    async validateBalance(userId, requiredAmount) {
+        try {
+            const { data, error } = await supabase
+                .rpc('validate_user_balance', {
+                    p_user_id: userId,
+                    p_required_amount: requiredAmount
+                });
+
+            if (error) {
+                console.error('❌ Erro ao validar saldo server-side:', error);
+                return false;
+            }
+
+            console.log('✅ Validação server-side:', data ? 'Saldo OK' : 'Saldo insuficiente');
+            return data; // boolean
+        } catch (error) {
+            console.error('❌ Erro inesperado na validação:', error);
+            return false;
+        }
+    }
+
     // Obter ofertas diárias
     getDailyOffers() {
         return this.dailyOffers;
@@ -317,7 +344,17 @@ class Shop {
         if (userCoins < item.price) {
             return { success: false, error: 'Moedas insuficientes' };
         }
-        
+
+        // Validação server-side obrigatória (previne manipulação client-side)
+        const hasBalance = await this.validateBalance(currentUser.id, item.price);
+
+        if (!hasBalance) {
+            alert('Moedas insuficientes! (Validação servidor)');
+            return { success: false, error: 'Saldo insuficiente' };
+        }
+
+        console.log('✅ Validação server-side passou, prosseguindo com compra...');
+
         // Primeiro, verificar se a tabela player_items existe
         try {
             const { data: testData, error: testError } = await supabase
