@@ -12,12 +12,12 @@
 <body>
     <!-- Canvas para fundo de estrelas animado -->
     <canvas id="stars-background"></canvas>
-    
+
     <section class="start-screen">
         <div class="form-wrapper">
             <h1 class="game-title">🚀 REGISTRO</h1>
             <p class="game-subtitle">Crie sua conta para salvar pontuações</p>
-            
+
             <!-- Invasor animado decorativo -->
             <div class="animated-invader">
                 <div class="invader-container">
@@ -27,13 +27,13 @@
                 <div class="invader-beam"></div>
                 <div class="invader-shadow"></div>
             </div>
-            
+
             <!-- Formulário de registro -->
             <div class="form-container">
-                <input 
-                    type="text" 
-                    id="new-username" 
-                    placeholder="Nome de usuário" 
+                <input
+                    type="text"
+                    id="new-username"
+                    placeholder="Nome de usuário"
                     maxlength="20"
                     autocomplete="username"
                     class="game-input"
@@ -59,7 +59,7 @@
                     class="game-input"
                 />
             </div>
-            
+
             <!-- Botões de ação -->
             <div class="menu-buttons">
                 <button class="button-play button-create">
@@ -72,7 +72,7 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- Footer -->
         <div class="footer-container">
             <div class="footer-line"></div>
@@ -83,6 +83,8 @@
         </div>
     </section>
 
+    <!-- Bcrypt para hash de PIN -->
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
     <script type="module" src="src/register.js"></script>
     <script type="module">
         // Importar sistema global de música

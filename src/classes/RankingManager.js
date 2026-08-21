@@ -7,7 +7,7 @@ class RankingManager {
     this.rewardSystem = new RewardSystem();
   }
 
-  async register(username, pin) {
+  async register(username, hashedPin) {  // MUDANÇA: parâmetro agora é hashedPin
     try {
       const { data: existing } = await supabase
         .from("players")
@@ -24,7 +24,7 @@ class RankingManager {
         .insert([
           {
             username: username,
-            pin: pin,
+            pin: hashedPin,  // MUDANÇA: usa hashedPin
             high_score: 0,
             coins: 0, // Novo campo
             level_id: 1, // Novo campo
@@ -46,37 +46,75 @@ class RankingManager {
   }
 
   // Fazer login
-  async login(username, pin) {
+  async login(username, pin) {  // Recebe PIN plano (não hash)
     try {
-      const { data, error } = await supabase
-        .from("players")
-        .select("*")
-        .eq("username", username)
-        .eq("pin", pin);
+        // Buscar usuário
+        const { data, error } = await supabase
+            .from("players")
+            .select("*")
+            .eq("username", username);
 
-      if (error) {
-        console.error("Erro na consulta de login:", error);
-        throw new Error("Erro na autenticação");
-      }
+        if (error) {
+            console.error("Erro na consulta de login:", error);
+            throw new Error("Erro na autenticação");
+        }
 
-      if (!data || data.length === 0) {
-        throw new Error("Usuário ou PIN incorretos!");
-      }
+        if (!data || data.length === 0) {
+            throw new Error("Usuário ou PIN incorretos!");
+        }
 
-      const user = data[0];
+        const user = data[0];
+        const storedPin = user.pin;
 
-      // Garantir que campos novos existem (migração suave)
-      if (user.coins === undefined) user.coins = 0;
-      if (user.level_id === undefined) user.level_id = 1;
-      if (user.total_games === undefined) user.total_games = 0;
+        // Detectar se PIN é hash ou texto plano
+        const isHash = storedPin.startsWith('$2a$') || storedPin.startsWith('$2b$');
 
-      this.currentUser = user;
-      this.rewardSystem.setUser(this.currentUser);
+        let authenticated = false;
 
-      return { success: true, user: user };
+        if (isHash) {
+            // Novo sistema: comparar com bcrypt
+            console.log('🔐 Verificando PIN hasheado...');
+            authenticated = bcrypt.compareSync(pin, storedPin);
+        } else {
+            // Sistema legado: comparação direta (texto plano)
+            console.log('⚠️ PIN em texto plano detectado (legado)');
+            authenticated = (pin === storedPin);
+
+            // Migrar para hash automaticamente se login for bem-sucedido
+            if (authenticated) {
+                console.log('🔄 Migrando PIN para hash...');
+                const hashedPin = bcrypt.hashSync(pin, 10);
+
+                // Atualizar PIN para hash no banco
+                const { error: updateError } = await supabase
+                    .from("players")
+                    .update({ pin: hashedPin })
+                    .eq("id", user.id);
+
+                if (updateError) {
+                    console.error('❌ Erro ao migrar PIN:', updateError);
+                } else {
+                    console.log('✅ PIN migrado com sucesso');
+                }
+            }
+        }
+
+        if (!authenticated) {
+            throw new Error("Usuário ou PIN incorretos!");
+        }
+
+        // Garantir campos novos (migração suave)
+        if (user.coins === undefined) user.coins = 0;
+        if (user.level_id === undefined) user.level_id = 1;
+        if (user.total_games === undefined) user.total_games = 0;
+
+        this.currentUser = user;
+        this.rewardSystem.setUser(this.currentUser);
+
+        return { success: true, user: user };
     } catch (error) {
-      console.error("Erro no login:", error);
-      return { success: false, error: error.message };
+        console.error("Erro no login:", error);
+        return { success: false, error: error.message };
     }
   }
 

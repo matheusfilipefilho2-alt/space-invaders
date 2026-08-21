@@ -46,7 +46,12 @@ if (buttonCreate && newUsernameInput && newPinInput && confirmPinInput) {
                 return;
             }
 
-            const result = await rankingManager.register(username, pin);
+            // Hash do PIN antes de enviar (bcrypt salt 10)
+            console.log('🔐 Hasheando PIN...');
+            const hashedPin = bcrypt.hashSync(pin, 10);
+            console.log('✅ PIN hasheado com sucesso');
+
+            const result = await rankingManager.register(username, hashedPin);
 
             if (result.success) {
                 NavigationHelper.setCurrentUser(result.user);
