@@ -6,13 +6,13 @@
 
 ## Sumário Executivo
 
-**Total de Bugs Encontrados:** 30 bugs (análise em progresso)
+**Total de Bugs Encontrados:** 39 bugs (análise em progresso)
 - 🔴 Críticos: 6
-- 🟠 Altos: 10
-- 🟡 Médios: 10
-- 🟢 Baixos: 4
+- 🟠 Altos: 12
+- 🟡 Médios: 16
+- 🟢 Baixos: 5
 
-**Sistemas Analisados:** 3/8
+**Sistemas Analisados:** 7/8
 
 **Sistemas Mais Problemáticos:** _[TBD]_
 
@@ -575,25 +575,323 @@ _[Será preenchido ao final da análise]_
 
 ## 4. Sistema de Skins
 
-_[Análise pendente]_
+**Arquivos Analisados:**
+- `debug_skin.html`, `debug_skin_conflicts.html`, `fix_golden_ship.html`
+- `test_default_skin.html`, `test_game_skin.html`, `test_skin_button.html`, `test_skin_integration.html`
+- `migrate_skin_system.html`
+- `src/classes/Player.js` (sistema de skins linhas 44-144)
+- `src/classes/ShopClass.js` (catálogo de skins)
+- `src/shop.js` (funções useSkin linhas 588-599)
+
+### ✅ Pontos Positivos
+
+- Sistema de skins permanentes implementado
+- Preview de skins com imagens na loja e inventário
+- Skin padrão sempre disponível como fallback
+- Cache de imagens de skins para performance
+- Validação se item é realmente uma skin antes de aplicar
+- Fix para golden ship implementado
+
+### 🐛 Bugs Encontrados
+
+#### 🟠 ALTO - Múltiplos arquivos de debug/test em produção
+
+- **Arquivo:** Root do projeto
+- **Descrição:** 8 arquivos HTML de debug e teste estão no diretório raiz do projeto: `debug_skin.html`, `debug_skin_conflicts.html`, `fix_golden_ship.html`, `migrate_skin_system.html`, `test_default_skin.html`, `test_game_skin.html`, `test_skin_button.html`, `test_skin_integration.html`
+- **Impacto:** Estes arquivos expõem lógica interna, podem ser acessados por usuários, aumentam o tamanho do build, e revelam problemas históricos do sistema.
+- **Reprodução:** Navegar para `/debug_skin.html` no browser
+- **Sugestão:** Mover para pasta `/tests` ou `/dev-tools` fora do build de produção, ou remover completamente
+
+#### 🟠 ALTO - Sistema de migração ainda presente após migração
+
+- **Arquivo:** `migrate_skin_system.html`
+- **Descrição:** Arquivo de migração temporária ainda está presente, sugerindo que era para ser removido após a migração de dados ser concluída.
+- **Impacto:** Confusão sobre qual sistema usar, possível execução acidental de migração duplicando dados.
+- **Reprodução:** Arquivo existe no root
+- **Sugestão:** Remover após confirmar que migração foi bem-sucedida para todos os usuários
+
+#### 🟡 MÉDIO - Skin selecionada salva com chave diferente por usuário
+
+- **Arquivo:** `src/classes/Player.js:73`
+- **Descrição:** Cada usuário tem sua skin em `selectedSkin_${currentUser.id}`, mas não há limpeza ao fazer logout ou trocar de usuário.
+- **Impacto:** Trocar de conta pode carregar skin do usuário anterior se o ID for similar ou houver conflito.
+- **Reprodução:** Login com usuário A > Selecionar skin > Logout > Login com usuário B > Ver skin de A
+- **Sugestão:** Limpar `selectedSkin_*` no logout em navigation.js
+
+#### 🟡 MÉDIO - Validação JSON pode deixar dados corrompidos
+
+- **Arquivo:** `src/classes/Player.js:79-87`
+- **Descrição:** Se JSON de skin está corrompido, ele é removido silenciosamente. Usuário perde a skin selecionada sem aviso.
+- **Impacto:** Perda silenciosa de preferência do usuário.
+- **Reprodução:** Corromper manualmente `selectedSkin_X` no localStorage
+- **Sugestão:** Avisar o usuário e tentar recuperar do Supabase antes de remover
+
+#### 🟡 MÉDIO - Skin não aplicada se imagem não carregar
+
+- **Arquivo:** `src/classes/Player.js:106-134`
+- **Descrição:** Método `loadSkin()` carrega imagem mas não tem callback de erro. Se imagem falhar ao carregar, skin não funciona.
+- **Impacto:** Skin quebrada silenciosamente, usuário vê nave padrão sem entender por quê.
+- **Reprodução:** Deletar arquivo de imagem de uma skin > Tentar aplicar > Nada acontece
+- **Sugestão:** Adicionar `skinImage.onerror` para retornar false e avisar usuário
+
+#### 🟢 BAIXO - Console.log excessivo em produção
+
+- **Arquivo:** Múltiplos arquivos de skin
+- **Descrição:** Muitos console.log para debug de skins ainda ativos (ex: `src/classes/Player.js:91`, `src/shop.js:589`)
+- **Impacto:** Poluição do console do usuário, pequeno impacto em performance
+- **Reprodução:** Abrir DevTools e ver logs de debug ao aplicar skin
+- **Sugestão:** Remover ou usar logger condicional baseado em ambiente (NODE_ENV)
+
+### ⚠️ Qualidade de Código
+
+**Arquivos de Debug:**
+- 8 arquivos HTML de teste no root (deveriam estar em pasta separada)
+- Sistema de migração temporário ainda presente
+- Nomes revelam problemas históricos ("conflicts", "fix_golden_ship")
+
+**Persistência:**
+- Dados duplicados entre localStorage e Supabase
+- Não há fonte única de verdade clara
+- Limpeza inadequada ao trocar usuário
+
+**Tratamento de Erro:**
+- Erros silenciosos (JSON corrompido, imagem não carrega)
+- Falta de feedback ao usuário
+
+### 💡 Sugestões de Melhoria
+
+1. **Organização:**
+   - Mover todos arquivos debug/test para `/dev-tools` ou `/tests`
+   - Remover sistema de migração após conclusão
+   - Documentar problemas históricos encontrados (conflicts, golden ship)
+
+2. **Dados:**
+   - Definir Supabase como fonte única de verdade
+   - localStorage apenas como cache local
+   - Sincronizar ao fazer login
+
+3. **UX:**
+   - Mostrar preview antes de aplicar skin
+   - Avisar se skin não carregar
+   - Adicionar botão "Restaurar skin padrão"
+
+4. **Robustez:**
+   - Validar integridade de imagens antes de aplicar
+   - Implementar retry ao carregar imagens
+   - Adicionar fallback visual se skin falhar
+
+### 🧪 Testes Práticos Sugeridos
+
+- [ ] Selecionar uma skin da loja
+- [ ] Verificar se skin padrão é aplicada em novo usuário
+- [ ] Verificar skin no jogo (visualmente)
+- [ ] Testar persistência após logout/login
+- [ ] Login com usuário A > Selecionar skin > Logout > Login com usuário B (verificar conflito)
+- [ ] Testar golden ship (mencionado em fixes)
+- [ ] Verificar preview de skins na loja
+- [ ] Deletar arquivo de imagem e tentar aplicar skin (verificar erro handling)
+- [ ] Corromper dados de skin no localStorage
+- [ ] Acessar arquivos debug no browser (/debug_skin.html)
+- [ ] Verificar sincronização entre devices (se disponível)
 
 ---
 
 ## 5. Sistema de Ranking
 
-_[Análise pendente]_
+**Arquivos Analisados:**
+- `ranking.html`
+- `src/ranking.js`
+- `src/classes/RankingManager.js` (método getRanking linhas 238-264)
+
+### ✅ Pontos Positivos
+
+- Sistema de ranking funcional com top 15 jogadores
+- Ordenação por high_score descendente
+- Enriquecimento de dados com informações de nível
+- Fallback para localStorage implementado
+
+### 🐛 Bugs Encontrados
+
+#### 🟡 MÉDIO - Dependência excessiva de localStorage como fallback
+
+- **Arquivo:** `src/classes/RankingManager.js:68-72`
+- **Descrição:** Campos novos (coins, level_id, total_games) usam localStorage como fallback se não existirem no banco.
+- **Impacto:** Dados podem ficar dessincronizados entre localStorage e Supabase. Estado da aplicação se torna imprevisível.
+- **Reprodução:** Criar usuário antigo sem campos novos > Dados vêm de localStorage > Banco permanece desatualizado
+- **Sugestão:** Fazer migração de dados no banco ao invés de depender de fallback client-side
+
+#### 🟡 MÉDIO - Ranking limitado a 15 sem paginação
+
+- **Arquivo:** `src/classes/RankingManager.js:245`
+- **Descrição:** Query tem `.limit(15)` hardcoded sem opção de carregar mais ou paginar.
+- **Impacto:** Usuários abaixo do top 15 nunca veem sua posição no ranking.
+- **Reprodução:** Ter mais de 15 jogadores > Usuário 16+ não aparece
+- **Sugestão:** Implementar paginação ou "Carregar mais" + mostrar posição do usuário atual sempre
+
+#### 🟢 BAIXO - Nenhum indicador visual para usuário atual
+
+- **Arquivo:** `ranking.html`, `src/ranking.js`
+- **Descrição:** Não há destaque visual para identificar a posição do usuário logado no ranking.
+- **Impacto:** Usuário tem dificuldade em encontrar sua posição na lista.
+- **Reprodução:** Ver ranking > Procurar próprio nome
+- **Sugestão:** Adicionar classe CSS especial ou badge "VOCÊ" na linha do usuário atual
+
+### ⚠️ Qualidade de Código
+
+- Fallback de localStorage usado como solução permanente ao invés de temporária
+- Magic number (15) hardcoded
+- Falta de paginação para escalabilidade
+
+### 💡 Sugestões de Melhoria
+
+1. Implementar migração de dados no banco
+2. Adicionar paginação ou infinite scroll
+3. Sempre mostrar posição do usuário atual (mesmo fora do top 15)
+4. Adicionar filtros (amigos, por nível, por período)
+
+### 🧪 Testes Práticos Sugeridos
+
+- [ ] Visualizar ranking com poucos jogadores
+- [ ] Visualizar ranking com 20+ jogadores (verificar limite)
+- [ ] Verificar ordenação (maior score no topo)
+- [ ] Procurar próprio nome no ranking
+- [ ] Verificar loading state
+- [ ] Testar com dados faltantes (ativar fallback localStorage)
 
 ---
 
 ## 6. Sistema de Recompensas
 
-_[Análise pendente]_
+**Arquivos Analisados:**
+- `index.html` (reward-toast, level-badge, coins-display linhas 18+)
+- `debug_golden_ship.html`, `debug_life_bonus.html`
+- `src/classes/RewardSystem.js`
+- `src/classes/RewardUI.js`
+- `src/game.js` (processGameRewards linhas 593-668)
+- Commit 2e189fd (loading component e otimização)
+
+### ✅ Pontos Positivos
+
+- Sistema de recompensas integrado com cálculo de moedas e XP
+- Loading component adicionado recentemente (commit 2e189fd)
+- Processamento otimizado de recompensas em paralelo
+- Sistema de níveis implementado
+- Notificações visuais (toasts) para recompensas
+- Conquistas (achievements) integradas
+
+### 🐛 Bugs Encontrados
+
+#### 🟠 ALTO - CSS inline no HTML para componentes de recompensa
+
+- **Arquivo:** `index.html` (linhas estimadas 18-100)
+- **Descrição:** Estilos de reward-toast, level-badge e coins-display estão inline no HTML ao invés de arquivo CSS separado.
+- **Impacto:** Dificulta manutenção, impossibilita reutilização, aumenta tamanho da página, impede caching de CSS.
+- **Reprodução:** Inspecionar index.html e ver blocos `<style>` inline
+- **Sugestão:** Extrair para `reward-system.css` ou incluir em `style.css`
+
+#### 🟡 MÉDIO - Lógica de recompensa espalhada em múltiplos arquivos
+
+- **Arquivo:** `src/game.js`, `src/classes/RewardSystem.js`, `src/classes/RewardUI.js`, `src/classes/RankingManager.js`
+- **Descrição:** Cálculo, exibição e persistência de recompensas estão distribuídos sem clara separação de responsabilidades.
+- **Impacto:** Dificulta manutenção, aumenta risco de bugs, lógica duplicada.
+- **Reprodução:** Tentar modificar cálculo de recompensa > Precisa editar 4 arquivos
+- **Sugestão:** Centralizar em RewardSystem, usar eventos para UI
+
+#### 🟢 BAIXO - Debug files para golden ship e life bonus ainda presentes
+
+- **Arquivo:** `debug_golden_ship.html`, `debug_life_bonus.html`
+- **Descrição:** Arquivos de debug ainda no root do projeto.
+- **Impacto:** Igual aos arquivos de debug de skins - expõem lógica interna.
+- **Reprodução:** Acessar `/debug_golden_ship.html`
+- **Sugestão:** Remover ou mover para pasta de dev tools
+
+### ⚠️ Qualidade de Código
+
+- CSS inline (má prática)
+- Lógica espalhada (baixa coesão)
+- Arquivos de debug em produção
+- Acoplamento alto entre sistemas
+
+### 💡 Sugestões de Melhoria
+
+1. Extrair CSS para arquivo separado
+2. Criar arquitetura event-driven para recompensas
+3. Documentar fórmulas de cálculo
+4. Adicionar testes unitários para cálculos
+
+### 🧪 Testes Práticos Sugeridos
+
+- [ ] Ganhar recompensa e verificar toast
+- [ ] Subir de nível e verificar badge
+- [ ] Verificar cálculo de moedas por pontuação
+- [ ] Testar golden ship (debug file)
+- [ ] Testar life bonus (debug file)
+- [ ] Verificar loading component durante processamento
+- [ ] Testar múltiplas recompensas simultâneas
+- [ ] Verificar persistência após restart
 
 ---
 
 ## 7. Sistema de Player Info/UI
 
-_[Análise pendente]_
+**Arquivos Analisados:**
+- `src/components/` (se existir)
+- `game.html` (player-info comentado linhas 43-84)
+- `src/game.js` (updatePlayerInfoCard linhas 215-255)
+- Commit 19c11e6 (player info card)
+
+### ✅ Pontos Positivos
+
+- Player info card implementado com stats (commit 19c11e6)
+- Design responsivo mencionado no commit
+- Estatísticas em tempo real (precisão, combo, kills, tempo)
+
+### 🐛 Bugs Encontrados
+
+#### 🟡 MÉDIO - Player info card comentado no HTML
+
+- **Arquivo:** `game.html:43-84`
+- **Descrição:** Grande bloco de HTML para player-info está comentado, mas o JavaScript ainda tenta atualizar esses elementos (updatePlayerInfoCard).
+- **Impacto:** JavaScript faz queries DOM desnecessárias que sempre retornam null, gastando processamento. Confusão sobre se feature está ativa ou não.
+- **Reprodução:** Ver game.html linhas 43-84 comentadas + game.js linha 216 que tenta usar `playerNameElement`
+- **Sugestão:** Se não está em uso, remover completamente HTML E JavaScript. Se vai ser usado, descomentar.
+
+#### 🟡 MÉDIO - Verificação null incompleta no updatePlayerInfoCard
+
+- **Arquivo:** `src/game.js:216`
+- **Descrição:** Função verifica apenas `if (!playerNameElement)` e retorna, mas continua usando outros elementos (playerStatusElement, accuracyElement, etc) sem verificação.
+- **Impacto:** Se apenas um elemento faltar, JavaScript pode tentar acessar `.textContent` de null causando erro.
+- **Reprodução:** HTML parcialmente comentado > Erro em console
+- **Sugestão:** Verificar todos elementos ou remover função se não está em uso
+
+#### 🟢 BAIXO - Função calculateAccuracy pode retornar NaN
+
+- **Arquivo:** `src/game.js:200-203`
+- **Descrição:** Se `gameStats.totalShots === 0` retorna 100, mas se por algum motivo perfectShots > totalShots, pode retornar > 100 ou NaN.
+- **Impacto:** UI mostra "NaN%" ou ">100%"
+- **Reprodução:** Manipular gameStats manualmente
+- **Sugestão:** Adicionar `Math.min(100, Math.max(0, ...))` para garantir 0-100
+
+### ⚠️ Qualidade de Código
+
+- Código comentado no HTML mas JavaScript ativo
+- Falta de validação consistente de elementos DOM
+- Inconsistência sobre se feature está ativa
+
+### 💡 Sugestões de Melhoria
+
+1. Decidir se player info card será usado e remover código morto
+2. Se for usado, descomentar HTML e testar completamente
+3. Adicionar validações robustas de DOM
+4. Criar componentes reutilizáveis para stats
+
+### 🧪 Testes Práticos Sugeridos
+
+- [ ] Verificar se player info aparece no jogo (atualmente comentado)
+- [ ] Se descomentar, verificar todas as stats
+- [ ] Testar atualização em tempo real
+- [ ] Verificar responsividade em mobile
+- [ ] Verificar performance de atualização constante
 
 ---
 
