@@ -38,11 +38,13 @@
                     autocomplete="username"
                     class="game-input"
                 />
-                <input 
-                    type="password" 
-                    id="pin" 
-                    placeholder="PIN (4 dígitos)" 
+                <input
+                    type="tel"
+                    id="pin"
+                    placeholder="PIN (4 dígitos)"
                     maxlength="4"
+                    pattern="[0-9]{4}"
+                    inputmode="numeric"
                     autocomplete="current-password"
                     class="game-input"
                 />

@@ -22,6 +22,12 @@ if (buttonCreate && newUsernameInput && newPinInput && confirmPinInput) {
             return;
         }
 
+        // NOVO: Validação numérica
+        if (!/^\d{4}$/.test(pin)) {
+            alert("PIN deve conter apenas 4 dígitos numéricos (0-9)!");
+            return;
+        }
+
         if (pin !== confirmPin) {
             alert("PINs não conferem!");
             return;

@@ -21,6 +21,12 @@ if (buttonLogin && usernameInput && pinInput) {
             return;
         }
 
+        // NOVO: Validação numérica
+        if (!/^\d{4}$/.test(pin)) {
+            alert("PIN deve conter apenas 4 dígitos numéricos (0-9)!");
+            return;
+        }
+
         const result = await rankingManager.login(username, pin);
         console.log(result.user);
 

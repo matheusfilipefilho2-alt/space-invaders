@@ -38,19 +38,23 @@
                     autocomplete="username"
                     class="game-input"
                 />
-                <input 
-                    type="password" 
-                    id="new-pin" 
-                    placeholder="PIN (4 dígitos)" 
+                <input
+                    type="tel"
+                    id="new-pin"
+                    placeholder="PIN (4 dígitos)"
                     maxlength="4"
+                    pattern="[0-9]{4}"
+                    inputmode="numeric"
                     autocomplete="new-password"
                     class="game-input"
                 />
-                <input 
-                    type="password" 
-                    id="confirm-pin" 
-                    placeholder="Confirmar PIN" 
+                <input
+                    type="tel"
+                    id="confirm-pin"
+                    placeholder="Confirmar PIN"
                     maxlength="4"
+                    pattern="[0-9]{4}"
+                    inputmode="numeric"
                     autocomplete="new-password"
                     class="game-input"
                 />
