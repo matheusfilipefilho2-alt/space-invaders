@@ -6,13 +6,13 @@
 
 ## Sumário Executivo
 
-**Total de Bugs Encontrados:** 8 bugs (análise em progresso)
-- 🔴 Críticos: 2
-- 🟠 Altos: 2
-- 🟡 Médios: 3
-- 🟢 Baixos: 2
+**Total de Bugs Encontrados:** 19 bugs (análise em progresso)
+- 🔴 Críticos: 3
+- 🟠 Altos: 5
+- 🟡 Médios: 7
+- 🟢 Baixos: 4
 
-**Sistemas Analisados:** 1/8
+**Sistemas Analisados:** 2/8
 
 **Sistemas Mais Problemáticos:** _[TBD]_
 
@@ -186,7 +186,188 @@ _[Será preenchido ao final da análise]_
 
 ## 2. Sistema de Jogo
 
-_[Análise pendente]_
+**Arquivos Analisados:**
+- `game.html`
+- `src/game.js` (1300+ linhas)
+- `src/classes/Player.js`, `Grid.js`, `Invader.js`, `Projectile.js`
+- `src/globalMenuMusic.js`
+- `src/classes/SoundEffects.js`
+
+### ✅ Pontos Positivos
+
+- Sistema de jogo funcional com game loop implementado via requestAnimationFrame
+- Sistema de vidas múltiplas implementado (perda gradual ao invés de game over imediato)
+- Sistema de recompensas bem integrado com loading component
+- Detecção de colisão implementada
+- Sistema de partículas para efeitos visuais
+- AntiCheat implementado para prevenir trapaças
+- Sistema de conquistas (achievements) integrado
+- Sistema de skins aplicado ao jogador
+- Processamento otimizado de recompensas em paralelo
+- Sistema de bônus com power-ups
+- Múltiplos sistemas de áudio (menu e level music)
+
+### 🐛 Bugs Encontrados
+
+#### 🔴 CRÍTICO - Potencial memory leak no game loop
+
+- **Arquivo:** `src/game.js:1195, 1305`
+- **Descrição:** O game loop usa `requestAnimationFrame(gameLoop)` recursivamente sem armazenar o ID do frame. Quando o jogo termina ou é reiniciado, não há como cancelar o loop anterior, podendo criar múltiplos loops simultâneos.
+- **Impacto:** A cada reinício do jogo, um novo loop é iniciado sem parar o anterior, causando acúmulo de loops e eventual crash do navegador ou performance degradada.
+- **Reprodução:** Jogar > Game Over > Play Again > Repetir 5-10 vezes > Observar lentidão crescente
+- **Sugestão:** Armazenar o ID: `game = requestAnimationFrame(gameLoop)` e adicionar `cancelAnimationFrame(game)` no endGame e antes de startGame
+
+#### 🟠 ALTO - Event listeners duplicados ao recarregar página
+
+- **Arquivo:** `src/globalMenuMusic.js:23-25, 28-30`
+- **Descrição:** Event listeners de 'click' e 'focus' são adicionados sem verificar se já existem, e o listener de click não é removido após o `{ once: true }` funcionar.
+- **Impacto:** Ao navegar entre páginas, múltiplos listeners se acumulam, causando múltiplas execuções da mesma função.
+- **Reprodução:** Navegar entre index.html, login.html, register.html múltiplas vezes
+- **Sugestão:** Usar AbortController para gerenciar listeners ou verificar `this.isInitialized` antes de adicionar
+
+#### 🟠 ALTO - Variável `spawnProjectilesInterval` não é limpa adequadamente
+
+- **Arquivo:** `src/game.js:522-531`
+- **Descrição:** O interval é limpo com `clearInterval` apenas no startGame, mas não no endGame. Se o jogo for pausado ou encerrado antes de um novo início, o interval continua ativo.
+- **Impacto:** Invasores continuam atirando mesmo após game over, causando erros ao tentar acessar objetos inexistentes.
+- **Reprodução:** Pausar jogo > Aguardar > Observar console errors
+- **Sugestão:** Adicionar `clearInterval(spawnProjectilesInterval)` também em togglePause quando isPaused === true
+
+#### 🟠 ALTO - Race condition no processamento de recompensas
+
+- **Arquivo:** `src/game.js:593-668`
+- **Descrição:** A função `processGameRewards()` é assíncrona mas não há garantia de que múltiplas chamadas não ocorram simultaneamente. Se o usuário clicar rapidamente em "Play Again", múltiplas requisições ao Supabase podem ocorrer.
+- **Impacto:** Pontuações e moedas podem ser creditadas múltiplas vezes, ou causar erros de concorrência no banco de dados.
+- **Reprodução:** Game Over > Clicar rapidamente em "Play Again" antes das recompensas terminarem
+- **Sugestão:** Adicionar flag `let processingRewards = false;` e retornar early se já estiver processando
+
+#### 🟡 MÉDIO - Sistema de vidas inicializado com 1 ao invés de 3
+
+- **Arquivo:** `src/classes/Player.js:38`
+- **Descrição:** Player inicia com `this.lives = 1` mas o comentário diz "Vidas iniciais" e maxLives é 3.
+- **Impacto:** Jogador morre no primeiro hit ao invés de ter 3 vidas como esperado pela UI que mostra "LIVES: 3".
+- **Reprodução:** Iniciar jogo > Ser atingido uma vez > Game over imediato
+- **Sugestão:** Mudar para `this.lives = 3` na linha 38
+
+#### 🟡 MÉDIO - Falta de cleanup de event listeners em game.html
+
+- **Arquivo:** `src/game.js:158-169`
+- **Descrição:** Event listeners para buttonRestart e buttonViewRanking são adicionados mas nunca removidos.
+- **Impacto:** Se o jogo for reiniciado múltiplas vezes sem refresh completo da página, listeners duplicados se acumulam.
+- **Reprodução:** Jogar > Game Over > Play Again (sem refresh) > Repetir
+- **Sugestão:** Usar `{ once: true }` nos addEventListener ou remover listeners no startGame
+
+#### 🟡 MÉDIO - Canvas resize não atualiza dimensões do jogo
+
+- **Arquivo:** `src/game.js:176-177`
+- **Descrição:** Canvas é dimensionado apenas na inicialização (`canvas.width = innerWidth`). Se a janela for redimensionada durante o jogo, elementos ficam fora de posição.
+- **Impacto:** Em mobile, rotação de tela causa elementos fora da tela visível.
+- **Reprodução:** Iniciar jogo > Redimensionar janela do navegador > Elementos desalinhados
+- **Sugestão:** Adicionar listener `window.addEventListener('resize', handleResize)` que recalcula posições
+
+#### 🟡 MÉDIO - High score atualizado localmente mas não sincronizado imediatamente
+
+- **Arquivo:** `src/game.js:412-422`
+- **Descrição:** `updateHighScore()` salva no localStorage e atualiza currentUser local, mas não chama Supabase. A sincronização só ocorre no endGame via processGameRewards.
+- **Impacto:** Se o usuário fechar o navegador antes do game over, o high score local não é salvo no servidor.
+- **Reprodução:** Fazer high score > Fechar tab antes de morrer > Reabrir > Score não atualizado no ranking
+- **Sugestão:** Considerar debounced sync com Supabase durante o jogo ou garantir sync no beforeunload
+
+#### 🟢 BAIXO - Comentário HTML de seção player-info ainda presente
+
+- **Arquivo:** `game.html:43-84`
+- **Descrição:** Grande bloco de HTML comentado para player-info card que não está sendo usado.
+- **Impacto:** Confusão para desenvolvedores e aumento desnecessário do tamanho do arquivo.
+- **Reprodução:** Abrir game.html e ver linhas 43-84 comentadas
+- **Sugestão:** Remover completamente ou mover para arquivo de backup se for ser usado no futuro
+
+#### 🟢 BAIXO - Duas importações de path de ícone conflitantes
+
+- **Arquivo:** `game.html:8, 11`
+- **Descrição:** Linha 8 define favicon.ico e linha 11 tenta redefinir com caminho errado (usando backslash e tipo "/gif" inválido).
+- **Impacto:** Segundo favicon não carrega, gerando erro 404 no console.
+- **Reprodução:** Abrir DevTools > Network > Ver erro 404 para src\assets\images\invasor-2333.gif
+- **Sugestão:** Remover linha 11 ou corrigir caminho e tipo: `<link rel="icon" href="src/assets/images/invasor-2333.gif" type="image/gif">`
+
+#### 🟢 BAIXO - Variável `gameStats.levelEnd` nunca é atualizada
+
+- **Arquivo:** `src/game.js:38`
+- **Descrição:** `levelEnd` é inicializado em 1 mas nunca atualizado quando o nível muda.
+- **Impacto:** Estatísticas de fim de jogo não refletem o nível final alcançado.
+- **Reprodução:** Chegar ao level 3 > Game over > Ver que levelEnd ainda é 1 nas estatísticas
+- **Sugestão:** Adicionar `gameStats.levelEnd = gameData.level;` na função que incrementa o nível
+
+### ⚠️ Qualidade de Código
+
+**Tamanho do Arquivo:**
+- `src/game.js` tem 1300+ linhas, tornando-o difícil de manter
+- Muitas responsabilidades misturadas: game loop, UI, recompensas, colisões, etc.
+
+**Variáveis Globais:**
+- Múltiplas variáveis globais no escopo do módulo (frames, game, isPaused, etc.)
+- Dificulta testes e aumenta acoplamento
+
+**Magic Numbers:**
+- Valores hardcoded espalhados pelo código (15000 para spawn interval, 10000 para buff duration)
+- Deveriam estar em constantes configuráveis
+
+**Duplicação:**
+- Código de verificação de colisão repetido para diferentes tipos de projéteis
+- Lógica de spawn de partículas duplicada
+
+**Falta de Testes:**
+- Nenhum arquivo de teste encontrado para lógica crítica do jogo
+- Detecção de colisão e cálculo de pontuação não são testados
+
+### 💡 Sugestões de Melhoria
+
+1. **Refatoração Prioritária:**
+   - Dividir game.js em módulos menores (GameEngine, CollisionDetector, UIManager, RewardProcessor)
+   - Extrair constantes mágicas para arquivo de configuração
+   - Implementar cleanup adequado de recursos (intervals, listeners, requestAnimationFrame)
+
+2. **Performance:**
+   - Implementar object pooling para projéteis e partículas
+   - Usar OffscreenCanvas para renderização de background se disponível
+   - Adicionar FPS counter para monitorar performance
+
+3. **UX:**
+   - Adicionar pause manual (tecla P ou ESC)
+   - Mostrar indicador visual de vidas restantes
+   - Adicionar tutorial para novos jogadores
+   - Melhorar feedback visual ao tomar dano
+
+4. **Robustez:**
+   - Adicionar try-catch em funções críticas do game loop
+   - Implementar sistema de recovery para erros não fatais
+   - Adicionar logs estruturados para debug
+
+5. **Testes:**
+   - Criar testes unitários para lógica de colisão
+   - Criar testes de integração para fluxo completo de jogo
+   - Adicionar testes de performance
+
+### 🧪 Testes Práticos Sugeridos
+
+- [ ] Jogar uma partida completa do início ao fim
+- [ ] Testar detecção de colisão (balas do jogador com invasores)
+- [ ] Testar detecção de colisão (balas dos invasores com jogador)
+- [ ] Testar colisão com obstáculos
+- [ ] Verificar cálculo de pontuação (cada tipo de invasor dá pontos corretos)
+- [ ] Testar sistema de vidas (perder vida gradualmente)
+- [ ] Testar pausa e resume
+- [ ] Verificar persistência de high score após game over
+- [ ] Testar responsividade do canvas em diferentes tamanhos de tela
+- [ ] Verificar carregamento de todos os assets (sprites, sons)
+- [ ] Testar performance (FPS) durante gameplay intenso (muitos projéteis)
+- [ ] Jogar > Game Over > Play Again > Repetir 10 vezes (verificar memory leak)
+- [ ] Redimensionar janela durante o jogo
+- [ ] Testar em mobile (touch controls e orientação)
+- [ ] Coletar bônus e verificar efeitos
+- [ ] Verificar se skins são aplicadas corretamente
+- [ ] Testar golden ship e rainbow trail
+- [ ] Verificar sincronização de recompensas com servidor
+- [ ] Testar com conexão lenta (verificar loading component)
 
 ---
 
