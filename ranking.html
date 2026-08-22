@@ -66,13 +66,19 @@
                     <span class="button-icon">🚀</span>
                     JOGAR AGORA
                 </button>
-                
+
                 <!-- NOVO: Botão da Loja -->
                 <button class="button-view-ranking button-shop-ranking" onclick="NavigationHelper.navigateToShop()">
                     <span class="button-icon">🛍️</span>
                     LOJA
                 </button>
-                
+
+                <!-- NOVO: Botão Token Bridge -->
+                <button class="button-view-ranking button-token-bridge" onclick="window.location.href='token-bridge.html'">
+                    <span class="button-icon">🌉</span>
+                    TOKEN BRIDGE
+                </button>
+
                 <button class="button-view-ranking button-logout">
                     <span class="button-icon">🚪</span>
                     SAIR
@@ -255,6 +261,18 @@
         .button-shop-ranking:hover {
             background: linear-gradient(135deg, #FFA500, #FFD700);
             box-shadow: 0 0 30px #FFD700;
+        }
+
+        .button-token-bridge {
+            position: relative;
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            color: #000 !important;
+            border-color: #4ECDC4;
+        }
+
+        .button-token-bridge:hover {
+            background: linear-gradient(135deg, #44A08D, #4ECDC4);
+            box-shadow: 0 0 30px #4ECDC4;
         }
 
         .coin-indicator {
