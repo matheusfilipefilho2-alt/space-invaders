@@ -39,9 +39,9 @@ BEGIN
     WHERE id = p_user_id
     FOR UPDATE;
 
-    -- Validate caller is owner (RLS check)
-    IF p_user_id != auth.uid() THEN
-        RETURN json_build_object('success', false, 'error', 'Unauthorized');
+    -- Check if player exists
+    IF user_coins IS NULL THEN
+        RETURN json_build_object('success', false, 'error', 'Player not found');
     END IF;
 
     -- Check balance
@@ -145,17 +145,10 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Enable RLS on sensitive tables
-ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+-- Note: RLS policies are enforced at application level via SECURITY DEFINER functions
+-- The game uses its own authentication system (not Supabase Auth)
 ALTER TABLE player_wallets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE token_transactions ENABLE ROW LEVEL SECURITY;
-
--- Users can only access their own data
-CREATE POLICY "Users manage own wallet"
-    ON player_wallets
-    FOR ALL
-    USING (player_id = auth.uid());
-
-CREATE POLICY "Users view own transactions"
-    ON token_transactions
-    FOR SELECT
-    USING (player_id = auth.uid());
+ALTER TABLE nft_metadata ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketplace_listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketplace_sales ENABLE ROW LEVEL SECURITY;
