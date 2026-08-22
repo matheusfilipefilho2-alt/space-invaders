@@ -124,6 +124,87 @@ class AbacatePayManager {
             throw error;
         }
     }
+
+    /**
+     * Create PIX payment for coin pack
+     * @param {string} coinPackId - Coin pack ID (e.g., 'coin_pack_499')
+     * @param {object} player - Player object
+     * @returns {Promise<object>} Payment data with QR code
+     */
+    async createPixPayment(coinPackId, player) {
+        console.log('💳 Creating PIX payment:', { coinPackId, playerId: player.id });
+
+        // Map coin pack to amount and coins
+        const coinPackConfig = {
+            'coin_pack_199': { price: 4.99, coins: 199 },
+            'coin_pack_499': { price: 9.99, coins: 499 },
+            'coin_pack_999': { price: 14.99, coins: 999 }
+        };
+
+        const config = coinPackConfig[coinPackId];
+        if (!config) {
+            throw new Error(`Invalid coin pack: ${coinPackId}`);
+        }
+
+        // Validate price
+        if (config.price < 0.50 || config.price > 1000) {
+            throw new Error('Invalid price range');
+        }
+
+        // Get/create customer
+        const { customerId } = await this.getOrCreateCustomer(player);
+
+        // Create transparent checkout (PIX)
+        try {
+            const response = await this._callAbacatePay('/transparents/create', {
+                method: 'POST',
+                body: JSON.stringify({
+                    data: {
+                        amount: this._toCentavos(config.price),
+                        expiresIn: 1800,  // 30 minutes
+                        description: `${config.coins} moedas - Space Invaders`,
+                        customer: {
+                            id: customerId
+                        },
+                        metadata: {
+                            playerId: player.id,
+                            playerUsername: player.username,
+                            coinPackId: coinPackId,
+                            coinAmount: config.coins,
+                            gameTimestamp: new Date().toISOString()
+                        }
+                    }
+                })
+            });
+
+            if (!response.success || !response.data) {
+                throw new Error('Failed to create PIX payment');
+            }
+
+            const payment = response.data;
+
+            console.log('✅ PIX payment created:', {
+                checkoutId: payment.id,
+                amount: config.price,
+                coins: config.coins,
+                expiresAt: payment.expiresAt
+            });
+
+            return {
+                success: true,
+                checkoutId: payment.id,
+                brCode: payment.brCode,  // Copy-paste code
+                brCodeBase64: payment.brCodeBase64,  // PNG image base64
+                expiresAt: payment.expiresAt,
+                amount: config.price,
+                coinAmount: config.coins
+            };
+
+        } catch (error) {
+            console.error('❌ Failed to create PIX payment:', error);
+            throw error;
+        }
+    }
 }
 
 export default new AbacatePayManager();
