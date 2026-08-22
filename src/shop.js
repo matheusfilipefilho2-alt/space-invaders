@@ -13,6 +13,11 @@ let currentCategory = 'all';
 let currentPurchaseItem = null;
 let userItems = [];
 
+// Global variables
+let currentPixPayment = null;
+let expirationTimerInterval = null;
+let pollingInterval = null;
+
 // Elementos DOM
 const userCoinsElement = document.getElementById('user-coins');
 const categoriesContainer = document.getElementById('categories');
@@ -283,7 +288,7 @@ window.confirmPurchase = async function() {
 function showResultModal(title, message, showOk = true) {
     document.getElementById('result-title').textContent = title;
     document.getElementById('result-message').innerHTML = message;
-    
+
     if (showOk) {
         resultModal.style.display = 'flex';
     }
@@ -293,6 +298,180 @@ function showResultModal(title, message, showOk = true) {
 window.closeResultModal = function() {
     resultModal.style.display = 'none';
 };
+
+// Show processing modal
+function showProcessingModal(message) {
+    document.getElementById('result-title').textContent = 'Processando...';
+    document.getElementById('result-message').innerHTML = message;
+    resultModal.style.display = 'flex';
+}
+
+// Close processing modal
+function closeProcessingModal() {
+    resultModal.style.display = 'none';
+}
+
+// Copy PIX code to clipboard
+window.copyPixCode = function() {
+    const pixCodeInput = document.getElementById('pix-code');
+    if (pixCodeInput) {
+        pixCodeInput.select();
+        document.execCommand('copy');
+        showResultModal('✅ Copiado!', 'Código PIX copiado para a área de transferência!', true);
+    }
+};
+
+/**
+ * Open PIX modal and create real payment
+ */
+window.openPixModal = async function(item) {
+    const currentUser = NavigationHelper.getCurrentUser();
+    if (!currentUser) {
+        showResultModal('❌ Erro', 'Você precisa estar logado.', true);
+        return;
+    }
+
+    // Show processing modal
+    showProcessingModal('Gerando PIX...');
+
+    try {
+        // Create real PIX payment
+        const payment = await abacatePayManager.createPixPayment(
+            item.id,
+            currentUser
+        );
+
+        closeProcessingModal();
+
+        // Store payment data
+        currentPixPayment = payment;
+
+        // Display modal with QR code
+        displayPixModal(payment, item);
+
+        // Start polling for payment status
+        startPaymentPolling(payment.checkoutId, item);
+
+    } catch (error) {
+        closeProcessingModal();
+
+        console.error('❌ Failed to create PIX:', error);
+
+        // Show user-friendly error
+        let message = 'Não foi possível gerar o PIX. Tente novamente.';
+
+        if (error.message.includes('email')) {
+            message = error.message;  // Show email validation errors
+        } else if (error.message.includes('Network') || error.message.includes('timeout')) {
+            message = 'Sem conexão. Verifique sua internet e tente novamente.';
+        }
+
+        showResultModal('❌ Erro ao Gerar PIX', message, true);
+    }
+};
+
+/**
+ * Display PIX modal with QR code and info
+ */
+function displayPixModal(payment, item) {
+    let pixModal = document.getElementById('pix-modal');
+
+    // Update modal content
+    const itemIcon = pixModal.querySelector('.pix-item-icon');
+    const itemName = pixModal.querySelector('.pix-item-details h4');
+    const itemDesc = pixModal.querySelector('.pix-item-details p');
+    const pixPrice = pixModal.querySelector('.pix-price');
+    const pixCoins = pixModal.querySelector('.pix-coins');
+    const qrCodeImg = pixModal.querySelector('#qr-code-container img');
+    const pixCodeInput = pixModal.querySelector('#pix-code');
+
+    if (itemIcon) itemIcon.textContent = item.icon;
+    if (itemName) itemName.textContent = item.name;
+    if (itemDesc) itemDesc.textContent = item.description;
+    if (pixPrice) pixPrice.textContent = `R$ ${payment.amount.toFixed(2)}`;
+    if (pixCoins) pixCoins.textContent = `💰 ${payment.coinAmount} moedas`;
+
+    // Set QR code image (base64 PNG)
+    if (qrCodeImg) {
+        qrCodeImg.src = `data:image/png;base64,${payment.brCodeBase64}`;
+        qrCodeImg.alt = 'QR Code PIX';
+    }
+
+    // Set copy-paste code
+    if (pixCodeInput) {
+        pixCodeInput.value = payment.brCode;
+    }
+
+    // Start expiration timer
+    startExpirationTimer(payment.expiresAt);
+
+    // Show modal
+    pixModal.style.display = 'flex';
+}
+
+/**
+ * Start countdown timer for PIX expiration
+ */
+function startExpirationTimer(expiresAt) {
+    // Clear previous timer
+    if (expirationTimerInterval) {
+        clearInterval(expirationTimerInterval);
+    }
+
+    const timerElement = document.querySelector('.pix-expiration-timer');
+    if (!timerElement) {
+        console.warn('Timer element not found');
+        return;
+    }
+
+    expirationTimerInterval = setInterval(() => {
+        const now = new Date();
+        const expires = new Date(expiresAt);
+        const remaining = Math.max(0, expires - now);
+
+        if (remaining === 0) {
+            clearInterval(expirationTimerInterval);
+            timerElement.textContent = '⏱️ Expirado';
+            timerElement.style.color = '#ff6b6b';
+            return;
+        }
+
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        timerElement.textContent = `⏱️ Expira em ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.style.color = '#4ECDC4';
+    }, 1000);
+}
+
+/**
+ * Close PIX modal
+ */
+window.closePixModal = function() {
+    const pixModal = document.getElementById('pix-modal');
+    if (pixModal) {
+        pixModal.style.display = 'none';
+    }
+
+    // Clear timers
+    if (expirationTimerInterval) {
+        clearInterval(expirationTimerInterval);
+    }
+
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+
+    currentPixPayment = null;
+};
+
+/**
+ * Start polling for payment status (stub - Task 11 will implement)
+ */
+function startPaymentPolling(checkoutId, item) {
+    console.log('🔄 Payment polling will be implemented in Task 11');
+    console.log('Checkout ID:', checkoutId);
+    console.log('Item:', item);
+}
 
 
 // Carregar inventário do usuário
