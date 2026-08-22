@@ -4,15 +4,18 @@
  * Docs: https://docs.abacatepay.com
  */
 
+// AbacatePay API Key - Get from https://dashboard.abacatepay.com/
+const ABACATE_PAY_API_KEY = "abc_dev_36LGWbADGu61FZa5L2bURW3w";
+
 class AbacatePayManager {
     constructor() {
-        this.apiKey = import.meta.env.VITE_ABACATE_PAY;
+        this.apiKey = ABACATE_PAY_API_KEY;
         this.baseUrl = 'https://api.abacatepay.com/v2';
         this.productCache = new Map(); // externalId -> productId
         this.customerCache = new Map(); // playerId -> customerId
 
         if (!this.apiKey) {
-            throw new Error('VITE_ABACATE_PAY not found in .env');
+            throw new Error('ABACATE_PAY_API_KEY not configured');
         }
 
         console.log('💳 AbacatePayManager initialized', {
