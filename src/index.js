@@ -1,6 +1,7 @@
 import { NavigationHelper } from "./navigation.js";
 import RankingManager from "./classes/RankingManager.js";
 import globalMenuMusic from "./globalMenuMusic.js";
+import { walletUI } from "./components/WalletUI.js";
 
 // Elementos da interface
 const startScreen = document.querySelector(".start-screen");

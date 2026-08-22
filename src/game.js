@@ -14,6 +14,7 @@ import { supabase } from "./supabase.js";
 import AchievementSystem from "./classes/AchievementSystem.js"; // NOVO
 import Shop from "./classes/ShopClass.js"; // Sistema de skins
 import LoadingComponent from "./classes/LoadingComponent.js"; // Loading para recompensas
+import { walletUI } from "./components/WalletUI.js"; // Wallet UI
 
 // Inicializar efeitos sonoros
 const soundEffects = new SoundEffects();

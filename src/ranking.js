@@ -2,6 +2,7 @@ import { NavigationHelper } from "./navigation.js";
 import RankingManager from "./classes/RankingManager.js";
 import AchievementSystem from "./classes/AchievementSystem.js";
 import { supabase } from "./supabase.js";
+import { walletUI } from "./components/WalletUI.js"; // Wallet UI
 
 // Inicializar managers
 const rankingManager = new RankingManager();
