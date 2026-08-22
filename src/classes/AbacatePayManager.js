@@ -149,29 +149,23 @@ class AbacatePayManager {
 
         for (const pack of coinPacks) {
             try {
-                // Check if product exists
-                const products = await this._callAbacatePay('/products/list', {
-                    method: 'GET'
-                });
-
-                const existing = products.data?.find(p => p.externalId === pack.externalId);
-
-                if (existing) {
-                    this.productCache.set(pack.externalId, existing.id);
-                    console.log(`✅ Product ${pack.externalId} already exists:`, existing.id);
-                } else {
-                    // Create product
-                    const productId = await this._createProduct(
-                        pack.externalId,
-                        pack.name,
-                        pack.price,
-                        pack.description
-                    );
-                    this.productCache.set(pack.externalId, productId);
-                    console.log(`✅ Created product ${pack.externalId}:`, productId);
-                }
+                // Try to create product (AbacatePay will return error if exists)
+                const productId = await this._createProduct(
+                    pack.externalId,
+                    pack.name,
+                    pack.price,
+                    pack.description
+                );
+                this.productCache.set(pack.externalId, productId);
+                console.log(`✅ Created product ${pack.externalId}:`, productId);
             } catch (error) {
-                console.error(`❌ Failed to initialize product ${pack.externalId}:`, error);
+                // If product already exists, that's fine - just log it
+                if (error.message?.includes('already exists')) {
+                    console.log(`✅ Product ${pack.externalId} already exists (skipping)`);
+                    // We don't have the ID but that's OK - it will be fetched when needed
+                } else {
+                    console.error(`❌ Failed to initialize product ${pack.externalId}:`, error);
+                }
                 // Continue with other products
             }
         }
