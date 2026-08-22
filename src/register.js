@@ -1,5 +1,6 @@
 import RankingManager from "./classes/RankingManager.js";
 import { NavigationHelper } from "./navigation.js";
+import { walletUI } from "./components/WalletUI.js";
 
 const rankingManager = new RankingManager();
 

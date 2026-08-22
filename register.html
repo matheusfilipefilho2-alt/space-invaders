@@ -5,11 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="src/styles/wallet-ui.css" />
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <title>Registro - Space Invaders</title>
 </head>
 <body>
+    <!-- Wallet Connection -->
+    <div class="header-wallet">
+        <button id="wallet-connect-btn" class="wallet-btn">
+            <span>🔗</span> Conectar Wallet
+        </button>
+
+        <div id="wallet-display" style="display: none;">
+            <span class="wallet-icon">👛</span>
+            <span id="wallet-address">...</span>
+            <button id="wallet-disconnect-btn">❌</button>
+        </div>
+    </div>
+
     <!-- Canvas para fundo de estrelas animado -->
     <canvas id="stars-background"></canvas>
 
