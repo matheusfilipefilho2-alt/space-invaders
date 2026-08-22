@@ -1,14 +1,12 @@
-import {
-    Transaction,
-    PublicKey
-} from '@solana/web3.js';
-import {
+// Access Solana libraries from CDN globals
+const { Transaction, PublicKey } = window.solanaWeb3 || {};
+const {
     createMintToInstruction,
     createBurnInstruction,
     getAssociatedTokenAddress,
     createAssociatedTokenAccountInstruction,
     getAccount
-} from '@solana/spl-token';
+} = window.splToken || {};
 import walletManager from './SolanaWalletManager.js';
 import SOLANA_CONFIG from '../config/solana-config.js';
 import { supabase } from '../supabase.js';

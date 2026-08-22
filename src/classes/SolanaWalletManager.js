@@ -1,4 +1,5 @@
-import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+// Access Solana Web3.js from CDN global
+const { Connection, PublicKey, clusterApiUrl } = window.solanaWeb3 || {};
 import { supabase } from '../supabase.js';
 import SOLANA_CONFIG from '../config/solana-config.js';
 import { NavigationHelper } from '../navigation.js';
