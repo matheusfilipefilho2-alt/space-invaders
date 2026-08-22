@@ -16,9 +16,9 @@ CREATE INDEX idx_player_wallets_address ON player_wallets(wallet_address);
 -- token_transactions: Logs coin↔token conversions
 CREATE TABLE token_transactions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID REFERENCES players(id),
+    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
     type TEXT NOT NULL CHECK (type IN ('WITHDRAW', 'DEPOSIT')),
-    amount INTEGER NOT NULL CHECK (amount > 0),
+    amount BIGINT NOT NULL CHECK (amount > 0),
     tx_signature TEXT UNIQUE NOT NULL,
     status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'CONFIRMED', 'FAILED')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -33,7 +33,7 @@ CREATE INDEX idx_token_tx_status ON token_transactions(status);
 CREATE TABLE nft_metadata (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     mint_address TEXT UNIQUE NOT NULL,
-    player_id UUID REFERENCES players(id),
+    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
     item_id TEXT NOT NULL,
     name TEXT,
     image_url TEXT,
@@ -57,7 +57,12 @@ CREATE TABLE marketplace_listings (
     status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'SOLD', 'CANCELLED')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     sold_at TIMESTAMP WITH TIME ZONE,
-    buyer_wallet TEXT
+    buyer_wallet TEXT,
+
+    CHECK (
+        (status != 'SOLD' AND buyer_wallet IS NULL) OR
+        (status = 'SOLD' AND buyer_wallet IS NOT NULL)
+    )
 );
 
 CREATE INDEX idx_listings_status ON marketplace_listings(status);
@@ -86,7 +91,7 @@ CREATE INDEX idx_sales_buyer ON marketplace_sales(buyer);
 -- rate_limits: Track action frequency for abuse prevention
 CREATE TABLE rate_limits (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID REFERENCES players(id),
+    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
     action TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
