@@ -1,7 +1,7 @@
 -- player_wallets: Maps player_id to Solana wallet address
 CREATE TABLE player_wallets (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+    player_id BIGINT REFERENCES players(id) ON DELETE CASCADE,
     wallet_address TEXT UNIQUE NOT NULL,
     connected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_used_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -16,7 +16,7 @@ CREATE INDEX idx_player_wallets_address ON player_wallets(wallet_address);
 -- token_transactions: Logs coin↔token conversions
 CREATE TABLE token_transactions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+    player_id BIGINT REFERENCES players(id) ON DELETE CASCADE,
     type TEXT NOT NULL CHECK (type IN ('WITHDRAW', 'DEPOSIT')),
     amount BIGINT NOT NULL CHECK (amount > 0),
     tx_signature TEXT UNIQUE NOT NULL,
@@ -33,7 +33,7 @@ CREATE INDEX idx_token_tx_status ON token_transactions(status);
 CREATE TABLE nft_metadata (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     mint_address TEXT UNIQUE NOT NULL,
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+    player_id BIGINT REFERENCES players(id) ON DELETE CASCADE,
     item_id TEXT NOT NULL,
     name TEXT,
     image_url TEXT,
@@ -91,7 +91,7 @@ CREATE INDEX idx_sales_buyer ON marketplace_sales(buyer);
 -- rate_limits: Track action frequency for abuse prevention
 CREATE TABLE rate_limits (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+    player_id BIGINT REFERENCES players(id) ON DELETE CASCADE,
     action TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

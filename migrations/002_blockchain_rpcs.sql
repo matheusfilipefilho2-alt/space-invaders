@@ -1,6 +1,6 @@
 -- Rate limiting function
 CREATE OR REPLACE FUNCTION check_rate_limit(
-    p_player_id UUID,
+    p_player_id BIGINT,
     p_action TEXT,
     p_max_count INTEGER,
     p_window_seconds INTEGER
@@ -27,7 +27,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Withdraw coins (in-game → blockchain preparation)
 CREATE OR REPLACE FUNCTION withdraw_coins(
-    p_user_id UUID,
+    p_user_id BIGINT,
     p_amount BIGINT
 ) RETURNS JSON AS $$
 DECLARE
@@ -69,7 +69,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Deposit coins (blockchain → in-game)
 CREATE OR REPLACE FUNCTION deposit_coins(
-    p_user_id UUID,
+    p_user_id BIGINT,
     p_amount BIGINT,
     p_tx_signature TEXT
 ) RETURNS JSON AS $$
@@ -105,7 +105,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Restore item from burned NFT
 CREATE OR REPLACE FUNCTION restore_item_from_nft(
-    p_player_id UUID,
+    p_player_id BIGINT,
     p_item_id TEXT,
     p_nft_mint TEXT
 ) RETURNS JSON AS $$
