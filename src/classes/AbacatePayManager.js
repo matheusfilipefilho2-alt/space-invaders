@@ -72,6 +72,93 @@ class AbacatePayManager {
     }
 
     /**
+     * Initialize AbacatePay products
+     * Creates coin pack products if they don't exist
+     * @returns {Promise<void>}
+     */
+    async initialize() {
+        console.log('🔄 Initializing AbacatePay products...');
+
+        const coinPacks = [
+            {
+                externalId: 'coin_pack_199',
+                name: '199 Moedas - Space Invaders',
+                description: 'Pacote de 199 moedas',
+                price: 4.99
+            },
+            {
+                externalId: 'coin_pack_499',
+                name: '499 Moedas - Space Invaders',
+                description: 'Pacote de 499 moedas',
+                price: 9.99
+            },
+            {
+                externalId: 'coin_pack_999',
+                name: '999 Moedas - Space Invaders',
+                description: 'Pacote de 999 moedas',
+                price: 14.99
+            }
+        ];
+
+        for (const pack of coinPacks) {
+            try {
+                // Check if product exists
+                const products = await this._callAbacatePay('/products/list', {
+                    method: 'GET'
+                });
+
+                const existing = products.data?.find(p => p.externalId === pack.externalId);
+
+                if (existing) {
+                    this.productCache.set(pack.externalId, existing.id);
+                    console.log(`✅ Product ${pack.externalId} already exists:`, existing.id);
+                } else {
+                    // Create product
+                    const productId = await this._createProduct(
+                        pack.externalId,
+                        pack.name,
+                        pack.price,
+                        pack.description
+                    );
+                    this.productCache.set(pack.externalId, productId);
+                    console.log(`✅ Created product ${pack.externalId}:`, productId);
+                }
+            } catch (error) {
+                console.error(`❌ Failed to initialize product ${pack.externalId}:`, error);
+                // Continue with other products
+            }
+        }
+
+        console.log('✅ Product initialization complete');
+    }
+
+    /**
+     * Create a product in AbacatePay
+     * @param {string} externalId - External product ID
+     * @param {string} name - Product name
+     * @param {number} price - Price in BRL
+     * @param {string} description - Product description
+     * @returns {Promise<string>} Product ID
+     */
+    async _createProduct(externalId, name, price, description) {
+        const response = await this._callAbacatePay('/products/create', {
+            method: 'POST',
+            body: JSON.stringify({
+                externalId,
+                name,
+                price: this._toCentavos(price),
+                description
+            })
+        });
+
+        if (!response.success || !response.data?.id) {
+            throw new Error('Failed to create product');
+        }
+
+        return response.data.id;
+    }
+
+    /**
      * Get or create customer in AbacatePay
      * @param {object} player - Player object with id, username, email
      * @returns {Promise<{customerId: string}>}

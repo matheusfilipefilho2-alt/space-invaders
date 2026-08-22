@@ -802,9 +802,6 @@ async function init() {
     loadItems();
     loadInventory();
     updateUserCoins();
-
-    // Initialize wallet UI
-    walletUI.initialize();
 }
 
 // Event listeners para fechar modais clicando fora
