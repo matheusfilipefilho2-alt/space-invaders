@@ -1,0 +1,22 @@
+{
+  "number": 1,
+  "symbol": "SPACESKIN",
+  "sellerFeeBasisPoints": 500,
+  "isMutable": true,
+  "isSequential": false,
+  "creators": [
+    {
+      "address": "[YOUR_CREATOR_WALLET]",
+      "share": 100
+    }
+  ],
+  "uploadMethod": "bundlr",
+  "awsS3Bucket": null,
+  "nftStorageAuthToken": null,
+  "shdwStorageAccount": null,
+  "pinataJwt": null,
+  "pinataGateway": null,
+  "awsConfig": null,
+  "shdwStorageConfig": null,
+  "hiddenSettings": null
+}
