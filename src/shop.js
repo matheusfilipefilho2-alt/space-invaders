@@ -1,7 +1,8 @@
 import RankingManager from "./classes/RankingManager.js";
 import Shop from "./classes/ShopClass.js";
 import { NavigationHelper } from "./navigation.js";
-import { walletUI } from "./components/WalletUI.js"; // Wallet UI
+import { walletUI } from "./components/WalletUI.js";
+import abacatePayManager from "./classes/AbacatePayManager.js";
 
 // Inicializar managers
 const rankingManager = new RankingManager();
@@ -503,28 +504,27 @@ window.useSkin = async function(itemId) {
     }
 };
 
-// Inicializar loja
-async function initializeShop() {
-    console.log('🏪 Inicializando loja...');
-    
-    // Verificar usuário
-    const userValid = await checkUser();
-    if (!userValid) return;
+// Inicializar aplicação
+async function init() {
+    const userLoggedIn = await checkUser();
+    if (!userLoggedIn) return;
 
+    // Initialize AbacatePay (create products if needed)
     try {
-        // Carregar dados
-        updateUserCoins();
-        loadCategories();
-        loadDailyOffers();
-        loadItems();
-        await loadInventory();
-        
-        console.log('✅ Loja carregada com sucesso!');
-        
+        await abacatePayManager.initialize();
     } catch (error) {
-        console.error('❌ Erro ao carregar loja:', error);
-        itemsGrid.innerHTML = '<div class="loading">Erro ao carregar itens da loja</div>';
+        console.error('❌ Failed to initialize AbacatePay:', error);
+        // Continue anyway - show error modal if user tries to buy
     }
+
+    loadCategories();
+    loadDailyOffers();
+    loadItems();
+    loadInventory();
+    updateUserCoins();
+
+    // Initialize wallet UI
+    walletUI.initialize();
 }
 
 // Event listeners para fechar modais clicando fora
@@ -538,4 +538,4 @@ window.addEventListener('click', (e) => {
 });
 
 // Inicializar quando o DOM carregar
-document.addEventListener('DOMContentLoaded', initializeShop);
+document.addEventListener('DOMContentLoaded', init);
