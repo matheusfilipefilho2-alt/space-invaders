@@ -465,14 +465,115 @@ window.closePixModal = function() {
 };
 
 /**
- * Start polling for payment status (stub - Task 11 will implement)
+ * Start polling for payment status (every 5 seconds)
  */
 function startPaymentPolling(checkoutId, item) {
-    console.log('🔄 Payment polling will be implemented in Task 11');
-    console.log('Checkout ID:', checkoutId);
-    console.log('Item:', item);
+    console.log('🔄 Starting payment polling for:', checkoutId);
+
+    // Clear previous polling
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+
+    // Poll every 5 seconds
+    pollingInterval = setInterval(async () => {
+        try {
+            const status = await abacatePayManager.checkPaymentStatus(checkoutId);
+
+            console.log('📊 Payment status:', status);
+
+            if (status === 'paid') {
+                // Payment confirmed!
+                clearInterval(pollingInterval);
+                closePixModal();
+
+                // Reload player coins from database
+                await reloadPlayerCoins();
+
+                // Show success modal
+                showResultModal(
+                    '✅ Pagamento Aprovado!',
+                    `<div style="text-align: center;">
+                        <div style="font-size: 48px; margin: 20px 0;">🎉</div>
+                        <div style="color: #4ECDC4; font-size: 20px; font-weight: bold; margin: 10px 0;">
+                            +${item.coinAmount} moedas creditadas!
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 10px;">
+                            As moedas já estão disponíveis em sua conta.
+                        </div>
+                    </div>`,
+                    false
+                );
+
+                // Reload offers and items
+                loadDailyOffers();
+                loadItems();
+            }
+
+            if (status === 'expired') {
+                // PIX expired
+                clearInterval(pollingInterval);
+                closePixModal();
+
+                showResultModal(
+                    '⏱️ PIX Expirado',
+                    `<div style="text-align: center;">
+                        <div style="color: #ff6b6b; margin: 10px 0;">
+                            O QR Code expirou após 30 minutos.
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 10px;">
+                            Deseja gerar um novo PIX?
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="modal-btn confirm" onclick="closeResultModal(); openPixModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                            🔄 Gerar Novo PIX
+                        </button>
+                    </div>`,
+                    false
+                );
+            }
+
+        } catch (error) {
+            console.error('❌ Polling error:', error);
+            // Continue polling (don't stop on transient errors)
+        }
+    }, 5000);  // Poll every 5 seconds
 }
 
+/**
+ * Reload player coins from database
+ */
+async function reloadPlayerCoins() {
+    try {
+        const currentUser = NavigationHelper.getCurrentUser();
+        if (!currentUser) return;
+
+        // Fetch updated coins from Supabase
+        const { supabase } = await import('./supabase.js');
+        const { data, error } = await supabase
+            .from('players')
+            .select('coins')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (error) {
+            console.error('❌ Failed to reload coins:', error);
+            return;
+        }
+
+        // Update local user object
+        currentUser.coins = data.coins;
+
+        // Update UI
+        updateUserCoins();
+
+        console.log('✅ Coins reloaded:', data.coins);
+
+    } catch (error) {
+        console.error('❌ Error reloading coins:', error);
+    }
+}
 
 // Carregar inventário do usuário
 async function loadInventory() {
