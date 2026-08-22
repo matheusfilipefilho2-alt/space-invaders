@@ -1,0 +1,303 @@
+import {
+    Transaction,
+    PublicKey,
+    SystemProgram
+} from '@solana/web3.js';
+import {
+    createMintToInstruction,
+    createBurnInstruction,
+    getAssociatedTokenAddress,
+    createAssociatedTokenAccountInstruction,
+    getAccount
+} from '@solana/spl-token';
+import walletManager from './SolanaWalletManager.js';
+import SOLANA_CONFIG from '../config/solana-config.js';
+import { supabase } from '../supabase.js';
+import { NavigationHelper } from '../navigation.js';
+
+class TokenManager {
+    constructor() {
+        this.connection = walletManager.getConnection();
+    }
+
+    // Validate withdrawal amount
+    validateAmount(amount) {
+        if (typeof amount !== 'number' || isNaN(amount)) {
+            throw new Error('Amount must be a number');
+        }
+
+        if (amount <= 0 || !Number.isInteger(amount)) {
+            throw new Error('Amount must be a positive integer');
+        }
+
+        if (amount < SOLANA_CONFIG.minAmount) {
+            throw new Error(`Minimum amount is ${SOLANA_CONFIG.minAmount}`);
+        }
+
+        if (amount > SOLANA_CONFIG.maxAmount) {
+            throw new Error(`Maximum amount is ${SOLANA_CONFIG.maxAmount}`);
+        }
+
+        return true;
+    }
+
+    // Withdraw coins from game → SPACE tokens on blockchain
+    async withdrawCoins(amount) {
+        try {
+            console.log('💰 Iniciando saque de', amount, 'moedas...');
+
+            // Validate
+            this.validateAmount(amount);
+
+            // Check wallet connected
+            const playerWallet = walletManager.getPublicKey();
+            if (!playerWallet) {
+                throw new Error('Wallet not connected');
+            }
+
+            const currentUser = NavigationHelper.getCurrentUser();
+            if (!currentUser) {
+                throw new Error('User not logged in');
+            }
+
+            // Check rate limit
+            const { data: canProceed } = await supabase.rpc('check_rate_limit', {
+                p_player_id: currentUser.id,
+                p_action: 'WITHDRAW',
+                p_max_count: SOLANA_CONFIG.rateLimits.WITHDRAW.max,
+                p_window_seconds: SOLANA_CONFIG.rateLimits.WITHDRAW.windowSeconds
+            });
+
+            if (!canProceed) {
+                throw new Error('Rate limit exceeded. Wait 1 hour.');
+            }
+
+            // Deduct coins from Supabase (atomic)
+            console.log('📊 Deduzindo moedas do Supabase...');
+            const { data: withdrawResult, error: withdrawError } = await supabase
+                .rpc('withdraw_coins', {
+                    p_user_id: currentUser.id,
+                    p_amount: amount
+                });
+
+            if (withdrawError || !withdrawResult.success) {
+                throw new Error(withdrawResult?.error || withdrawError.message);
+            }
+
+            console.log('✅ Moedas deduzidas. Novo saldo:', withdrawResult.new_balance);
+
+            // Mint tokens on Solana
+            console.log('⛓️ Mintando SPACE tokens...');
+            const signature = await this.mintTokens(playerWallet, amount);
+
+            console.log('✅ Tokens mintados! TX:', signature);
+
+            // Log transaction
+            await supabase
+                .from('token_transactions')
+                .insert({
+                    player_id: currentUser.id,
+                    type: 'WITHDRAW',
+                    amount: amount,
+                    tx_signature: signature,
+                    status: 'CONFIRMED',
+                    confirmed_at: new Date().toISOString()
+                });
+
+            // Update local user balance
+            currentUser.coins = withdrawResult.new_balance;
+            NavigationHelper.setCurrentUser(currentUser);
+
+            return {
+                success: true,
+                signature: signature,
+                newBalance: withdrawResult.new_balance
+            };
+
+        } catch (err) {
+            console.error('❌ Erro no saque:', err);
+            throw err;
+        }
+    }
+
+    // Mint SPACE tokens to player wallet
+    async mintTokens(playerWallet, amount) {
+        const tokenMint = new PublicKey(SOLANA_CONFIG.spaceTokenMint);
+        const mintAuthority = new PublicKey(SOLANA_CONFIG.creatorWallet);
+
+        // Get or create player's token account
+        const playerTokenAccount = await getAssociatedTokenAddress(
+            tokenMint,
+            playerWallet
+        );
+
+        // Check if account exists
+        let accountExists = true;
+        try {
+            await getAccount(this.connection, playerTokenAccount);
+        } catch {
+            accountExists = false;
+        }
+
+        const tx = new Transaction();
+
+        // Create account if needed
+        if (!accountExists) {
+            tx.add(
+                createAssociatedTokenAccountInstruction(
+                    playerWallet,           // Payer
+                    playerTokenAccount,     // Account to create
+                    playerWallet,           // Owner
+                    tokenMint              // Mint
+                )
+            );
+        }
+
+        // Mint tokens
+        tx.add(
+            createMintToInstruction(
+                tokenMint,
+                playerTokenAccount,
+                mintAuthority,
+                amount * 10**9  // Convert to lamports (9 decimals)
+            )
+        );
+
+        // Sign and send (player pays gas fee)
+        tx.feePayer = playerWallet;
+        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+        // Request signature from wallet
+        const signedTx = await window.solana.signTransaction(tx);
+        const signature = await this.connection.sendRawTransaction(signedTx.serialize());
+
+        // Confirm
+        await this.connection.confirmTransaction(signature, SOLANA_CONFIG.commitment);
+
+        return signature;
+    }
+
+    // Deposit SPACE tokens from blockchain → coins in game
+    async depositCoins(amount) {
+        try {
+            console.log('💰 Iniciando depósito de', amount, 'tokens...');
+
+            // Validate
+            this.validateAmount(amount);
+
+            const playerWallet = walletManager.getPublicKey();
+            if (!playerWallet) {
+                throw new Error('Wallet not connected');
+            }
+
+            const currentUser = NavigationHelper.getCurrentUser();
+            if (!currentUser) {
+                throw new Error('User not logged in');
+            }
+
+            // Check rate limit
+            const { data: canProceed } = await supabase.rpc('check_rate_limit', {
+                p_player_id: currentUser.id,
+                p_action: 'DEPOSIT',
+                p_max_count: SOLANA_CONFIG.rateLimits.DEPOSIT.max,
+                p_window_seconds: SOLANA_CONFIG.rateLimits.DEPOSIT.windowSeconds
+            });
+
+            if (!canProceed) {
+                throw new Error('Rate limit exceeded. Wait 1 hour.');
+            }
+
+            // Burn tokens on Solana
+            console.log('🔥 Queimando SPACE tokens...');
+            const signature = await this.burnTokens(playerWallet, amount);
+
+            console.log('✅ Tokens queimados! TX:', signature);
+
+            // Add coins to Supabase
+            console.log('📊 Adicionando moedas ao Supabase...');
+            const { data: depositResult, error: depositError } = await supabase
+                .rpc('deposit_coins', {
+                    p_user_id: currentUser.id,
+                    p_amount: amount,
+                    p_tx_signature: signature
+                });
+
+            if (depositError || !depositResult.success) {
+                throw new Error(depositResult?.error || depositError.message);
+            }
+
+            console.log('✅ Moedas adicionadas!');
+
+            // Update local user balance
+            const { data: updatedUser } = await supabase
+                .from('players')
+                .select('coins')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (updatedUser) {
+                currentUser.coins = updatedUser.coins;
+                NavigationHelper.setCurrentUser(currentUser);
+            }
+
+            return {
+                success: true,
+                signature: signature,
+                newBalance: updatedUser?.coins
+            };
+
+        } catch (err) {
+            console.error('❌ Erro no depósito:', err);
+            throw err;
+        }
+    }
+
+    // Burn SPACE tokens from player wallet
+    async burnTokens(playerWallet, amount) {
+        const tokenMint = new PublicKey(SOLANA_CONFIG.spaceTokenMint);
+
+        const playerTokenAccount = await getAssociatedTokenAddress(
+            tokenMint,
+            playerWallet
+        );
+
+        const tx = new Transaction().add(
+            createBurnInstruction(
+                playerTokenAccount,
+                tokenMint,
+                playerWallet,
+                amount * 10**9
+            )
+        );
+
+        tx.feePayer = playerWallet;
+        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+        const signedTx = await window.solana.signTransaction(tx);
+        const signature = await this.connection.sendRawTransaction(signedTx.serialize());
+
+        await this.connection.confirmTransaction(signature, SOLANA_CONFIG.commitment);
+
+        return signature;
+    }
+
+    // Get player's SPACE token balance
+    async getTokenBalance(playerWallet) {
+        try {
+            const tokenMint = new PublicKey(SOLANA_CONFIG.spaceTokenMint);
+            const playerTokenAccount = await getAssociatedTokenAddress(
+                tokenMint,
+                playerWallet || walletManager.getPublicKey()
+            );
+
+            const accountInfo = await getAccount(this.connection, playerTokenAccount);
+            return Number(accountInfo.amount) / 10**9;
+
+        } catch (err) {
+            // Account doesn't exist yet
+            return 0;
+        }
+    }
+}
+
+export default new TokenManager();
