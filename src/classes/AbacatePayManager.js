@@ -67,6 +67,63 @@ class AbacatePayManager {
     _wait(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    /**
+     * Get or create customer in AbacatePay
+     * @param {object} player - Player object with id, username, email
+     * @returns {Promise<{customerId: string}>}
+     */
+    async getOrCreateCustomer(player) {
+        // Validate player data
+        if (!player || !player.id) {
+            throw new Error('Invalid player object');
+        }
+
+        if (!player.email || player.email === '') {
+            throw new Error('Player email is required. Please update your profile.');
+        }
+
+        if (!this._isValidEmail(player.email)) {
+            throw new Error('Invalid email format. Please update your profile.');
+        }
+
+        // Check cache
+        if (this.customerCache.has(player.id)) {
+            const customerId = this.customerCache.get(player.id);
+            console.log('📦 Customer from cache:', customerId);
+            return { customerId };
+        }
+
+        try {
+            // Create or get customer (AbacatePay returns existing if email matches)
+            const response = await this._callAbacatePay('/customers/create', {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: player.email,
+                    name: player.username || 'Space Invaders Player',
+                    metadata: {
+                        playerId: player.id,
+                        username: player.username,
+                        gameTimestamp: new Date().toISOString()
+                    }
+                })
+            });
+
+            if (!response.success || !response.data?.id) {
+                throw new Error('Failed to create customer');
+            }
+
+            const customerId = response.data.id;
+            this.customerCache.set(player.id, customerId);
+
+            console.log('✅ Customer created/retrieved:', customerId);
+            return { customerId };
+
+        } catch (error) {
+            console.error('❌ Failed to get/create customer:', error);
+            throw error;
+        }
+    }
 }
 
 export default new AbacatePayManager();
