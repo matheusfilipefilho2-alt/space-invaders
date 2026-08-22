@@ -194,6 +194,7 @@ class AbacatePayManager {
                 externalId,
                 name,
                 price: this._toCentavos(price),
+                currency: 'BRL',
                 description
             })
         });
