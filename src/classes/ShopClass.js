@@ -531,77 +531,9 @@ class Shop {
     
     // Comprar pacote de moedas com dinheiro real
     async purchaseCoinPack(item, currentUser) {
-        try {
-            // Simular confirmação de pagamento (em produção, integrar com gateway de pagamento)
-            const paymentConfirmed = await this.simulatePayment(item.price, 'BRL');
-            
-            if (!paymentConfirmed) {
-                return { success: false, error: 'Pagamento não autorizado' };
-            }
-            
-            // Adicionar moedas ao usuário
-            const currentCoins = currentUser.coins || 0;
-            const newCoins = currentCoins + item.coinAmount;
-            
-            // Atualizar no banco de dados
-            const { error: updateError } = await supabase
-                .from('players')
-                .update({ coins: newCoins })
-                .eq('id', currentUser.id);
-                
-            if (updateError) {
-                console.error('Erro ao atualizar moedas:', updateError);
-                return { success: false, error: 'Erro ao processar pagamento' };
-            }
-            
-            // Atualizar usuário local
-            currentUser.coins = newCoins;
-            
-            // Registrar a compra no histórico
-            const purchaseRecord = {
-                id: Date.now(),
-                player_id: currentUser.id,
-                item_id: item.id,
-                item_name: item.name,
-                price_paid: item.price,
-                currency: 'BRL',
-                coins_received: item.coinAmount,
-                purchased_at: new Date().toISOString()
-            };
-            
-            // Salvar histórico no localStorage
-            const purchaseHistory = JSON.parse(localStorage.getItem(`coinPurchases_${currentUser.id}`) || '[]');
-            purchaseHistory.push(purchaseRecord);
-            localStorage.setItem(`coinPurchases_${currentUser.id}`, JSON.stringify(purchaseHistory));
-            
-            console.log(`💰 Pacote de moedas comprado: +${item.coinAmount} moedas por R$ ${item.price}`);
-            
-            return {
-                success: true,
-                item,
-                coinsAdded: item.coinAmount,
-                totalCoins: newCoins,
-                paymentAmount: item.price,
-                currency: 'BRL'
-            };
-            
-        } catch (error) {
-            console.error('Erro na compra do pacote de moedas:', error);
-            return { success: false, error: 'Erro ao processar compra' };
-        }
-    }
-    
-    // Simular pagamento (em produção, integrar com gateway real)
-    async simulatePayment(amount, currency) {
-        // Simular delay de processamento
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Simular confirmação (95% de sucesso)
-        const success = Math.random() > 0.05;
-        
-        console.log(`💳 Simulando pagamento: ${currency} ${amount} - ${success ? 'APROVADO' : 'REJEITADO'}`);
-        
-        return success;
+        // Payment now handled by AbacatePayManager + webhook
+        // This method is deprecated - use AbacatePayManager.createPixPayment() instead
+        throw new Error('purchaseCoinPack is deprecated. Use AbacatePayManager.createPixPayment()');
     }
     
     // === SISTEMA DE SKINS ===
