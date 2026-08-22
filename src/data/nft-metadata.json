@@ -1,0 +1,164 @@
+{
+  "ship_golden": {
+    "itemId": "ship_golden",
+    "name": "Space Invaders - Golden Ship",
+    "description": "Epic golden ship skin with luxurious shine. Dominate the battlefield in style!",
+    "type": "skin",
+    "rarity": "Epic",
+    "image": "https://example.com/images/ship_golden.png",
+    "metadataUri": "https://arweave.net/golden-ship-metadata",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Epic"
+      },
+      {
+        "trait_type": "Type",
+        "value": "Ship Skin"
+      },
+      {
+        "trait_type": "Game",
+        "value": "Space Invaders"
+      },
+      {
+        "trait_type": "Color",
+        "value": "Gold"
+      }
+    ]
+  },
+  "ship_neon": {
+    "itemId": "ship_neon",
+    "name": "Space Invaders - Neon Ship",
+    "description": "Rare neon-lit ship skin with vibrant colors. Light up the galaxy!",
+    "type": "skin",
+    "rarity": "Rare",
+    "image": "https://example.com/images/ship_neon.png",
+    "metadataUri": "https://arweave.net/neon-ship-metadata",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Rare"
+      },
+      {
+        "trait_type": "Type",
+        "value": "Ship Skin"
+      },
+      {
+        "trait_type": "Game",
+        "value": "Space Invaders"
+      },
+      {
+        "trait_type": "Color",
+        "value": "Neon"
+      }
+    ]
+  },
+  "ship_retro": {
+    "itemId": "ship_retro",
+    "name": "Space Invaders - Retro Ship",
+    "description": "Classic 8-bit ship skin. Feel the nostalgia of arcade gaming!",
+    "type": "skin",
+    "rarity": "Common",
+    "image": "https://example.com/images/ship_retro.png",
+    "metadataUri": "https://arweave.net/retro-ship-metadata",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Common"
+      },
+      {
+        "trait_type": "Type",
+        "value": "Ship Skin"
+      },
+      {
+        "trait_type": "Game",
+        "value": "Space Invaders"
+      },
+      {
+        "trait_type": "Style",
+        "value": "Retro"
+      }
+    ]
+  },
+  "theme_neon": {
+    "itemId": "theme_neon",
+    "name": "Space Invaders - Neon Theme",
+    "description": "Transform your entire game UI with vibrant neon aesthetics.",
+    "type": "theme",
+    "rarity": "Rare",
+    "image": "https://example.com/images/theme_neon.png",
+    "metadataUri": "https://arweave.net/neon-theme-metadata",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Rare"
+      },
+      {
+        "trait_type": "Type",
+        "value": "UI Theme"
+      },
+      {
+        "trait_type": "Game",
+        "value": "Space Invaders"
+      },
+      {
+        "trait_type": "Style",
+        "value": "Neon"
+      }
+    ]
+  },
+  "theme_retro": {
+    "itemId": "theme_retro",
+    "name": "Space Invaders - Retro Theme",
+    "description": "Classic 8-bit theme for true arcade enthusiasts. Pixels and nostalgia!",
+    "type": "theme",
+    "rarity": "Common",
+    "image": "https://example.com/images/theme_retro.png",
+    "metadataUri": "https://arweave.net/retro-theme-metadata",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Common"
+      },
+      {
+        "trait_type": "Type",
+        "value": "UI Theme"
+      },
+      {
+        "trait_type": "Game",
+        "value": "Space Invaders"
+      },
+      {
+        "trait_type": "Style",
+        "value": "Retro"
+      }
+    ]
+  },
+  "ship_crystal": {
+    "itemId": "ship_crystal",
+    "name": "Space Invaders - Crystal Ship",
+    "description": "Legendary crystal ship skin with prismatic reflections. Ultra rare!",
+    "type": "skin",
+    "rarity": "Legendary",
+    "image": "https://example.com/images/ship_crystal.png",
+    "metadataUri": "https://arweave.net/crystal-ship-metadata",
+    "attributes": [
+      {
+        "trait_type": "Rarity",
+        "value": "Legendary"
+      },
+      {
+        "trait_type": "Type",
+        "value": "Ship Skin"
+      },
+      {
+        "trait_type": "Game",
+        "value": "Space Invaders"
+      },
+      {
+        "trait_type": "Material",
+        "value": "Crystal"
+      }
+    ]
+  }
+}
