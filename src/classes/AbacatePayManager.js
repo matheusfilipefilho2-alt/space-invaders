@@ -40,7 +40,54 @@ class AbacatePayManager {
      * @returns {Promise<object>} API response
      */
     async _callAbacatePay(endpoint, options = {}, retries = 3) {
-        // Implementation in next step
+        const url = `${this.baseUrl}${endpoint}`;
+
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Authorization': `Bearer ${this.apiKey}`,
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    signal: AbortSignal.timeout(10000)  // 10s timeout
+                });
+
+                const data = await response.json();
+
+                // Success
+                if (response.ok) {
+                    return data;
+                }
+
+                // Retry on server errors or rate limit
+                if (response.status >= 500 || response.status === 429) {
+                    if (attempt < retries) {
+                        const delay = 2000 * attempt;  // Exponential backoff
+                        console.warn(`⚠️ API error ${response.status}, retrying in ${delay}ms (attempt ${attempt}/${retries})`);
+                        await this._wait(delay);
+                        continue;
+                    }
+                }
+
+                // Non-retryable error
+                throw new Error(`AbacatePay API error: ${response.status} - ${data.error || data.message || 'Unknown error'}`);
+
+            } catch (error) {
+                // Network error - retry
+                if (attempt < retries && (error.name === 'AbortError' || error.name === 'TypeError')) {
+                    const delay = 2000 * attempt;
+                    console.warn(`⚠️ Network error, retrying in ${delay}ms (attempt ${attempt}/${retries})`, error);
+                    await this._wait(delay);
+                    continue;
+                }
+
+                throw error;
+            }
+        }
+
+        throw new Error('AbacatePay API: Max retries exceeded');
     }
 
     /**
