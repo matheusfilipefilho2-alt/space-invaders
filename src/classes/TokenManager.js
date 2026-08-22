@@ -1,7 +1,6 @@
 import {
     Transaction,
-    PublicKey,
-    SystemProgram
+    PublicKey
 } from '@solana/web3.js';
 import {
     createMintToInstruction,
@@ -61,12 +60,16 @@ class TokenManager {
             }
 
             // Check rate limit
-            const { data: canProceed } = await supabase.rpc('check_rate_limit', {
+            const { data: canProceed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
                 p_player_id: currentUser.id,
                 p_action: 'WITHDRAW',
                 p_max_count: SOLANA_CONFIG.rateLimits.WITHDRAW.max,
                 p_window_seconds: SOLANA_CONFIG.rateLimits.WITHDRAW.windowSeconds
             });
+
+            if (rateLimitError) {
+                throw new Error('Rate limit check failed: ' + rateLimitError.message);
+            }
 
             if (!canProceed) {
                 throw new Error('Rate limit exceeded. Wait 1 hour.');
@@ -88,9 +91,28 @@ class TokenManager {
 
             // Mint tokens on Solana
             console.log('⛓️ Mintando SPACE tokens...');
-            const signature = await this.mintTokens(playerWallet, amount);
+            let signature;
+            try {
+                signature = await this.mintTokens(playerWallet, amount);
+                console.log('✅ Tokens mintados! TX:', signature);
+            } catch (mintError) {
+                console.error('❌ Erro ao mintar tokens, revertendo transação...', mintError);
 
-            console.log('✅ Tokens mintados! TX:', signature);
+                // ROLLBACK: Restore coins to database
+                try {
+                    await supabase.rpc('deposit_coins', {
+                        p_user_id: currentUser.id,
+                        p_amount: amount,
+                        p_tx_signature: 'ROLLBACK_' + Date.now()
+                    });
+                    console.log('✅ Rollback completo: moedas restauradas');
+                } catch (rollbackError) {
+                    console.error('❌ CRITICAL: Rollback falhou!', rollbackError);
+                    throw new Error('Mint failed and rollback failed. Contact support. Original error: ' + mintError.message);
+                }
+
+                throw new Error('Mint failed: ' + mintError.message);
+            }
 
             // Log transaction
             await supabase
@@ -154,6 +176,10 @@ class TokenManager {
         }
 
         // Mint tokens
+        // NOTE: This transaction requires BOTH player signature (for gas fees) AND mint authority signature.
+        // Currently, only the player signs via window.solana.signTransaction().
+        // This will FAIL on-chain until a backend service with mint authority is implemented to co-sign.
+        // TODO: Implement backend mint authority service for production use.
         tx.add(
             createMintToInstruction(
                 tokenMint,
@@ -168,6 +194,8 @@ class TokenManager {
         tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
 
         // Request signature from wallet
+        // LIMITATION: Only player signs here. Mint authority signature is missing.
+        // This transaction will fail unless mint authority is also signing.
         const signedTx = await window.solana.signTransaction(tx);
         const signature = await this.connection.sendRawTransaction(signedTx.serialize());
 
@@ -196,12 +224,16 @@ class TokenManager {
             }
 
             // Check rate limit
-            const { data: canProceed } = await supabase.rpc('check_rate_limit', {
+            const { data: canProceed, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
                 p_player_id: currentUser.id,
                 p_action: 'DEPOSIT',
                 p_max_count: SOLANA_CONFIG.rateLimits.DEPOSIT.max,
                 p_window_seconds: SOLANA_CONFIG.rateLimits.DEPOSIT.windowSeconds
             });
+
+            if (rateLimitError) {
+                throw new Error('Rate limit check failed: ' + rateLimitError.message);
+            }
 
             if (!canProceed) {
                 throw new Error('Rate limit exceeded. Wait 1 hour.');
