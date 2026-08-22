@@ -205,6 +205,68 @@ class AbacatePayManager {
             throw error;
         }
     }
+
+    /**
+     * Check payment status
+     * @param {string} checkoutId - Checkout ID
+     * @returns {Promise<string>} Status: "pending" | "paid" | "expired"
+     */
+    async checkPaymentStatus(checkoutId) {
+        try {
+            const response = await this._callAbacatePay(`/transparents/check?id=${checkoutId}`, {
+                method: 'GET'
+            });
+
+            if (!response.success || !response.data) {
+                throw new Error('Failed to check payment status');
+            }
+
+            const status = response.data.status;
+
+            // Normalize status
+            if (status === 'pending') return 'pending';
+            if (status === 'paid' || status === 'completed') return 'paid';
+            if (status === 'expired') return 'expired';
+
+            return 'pending';  // Default
+
+        } catch (error) {
+            console.error('❌ Failed to check payment status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Simulate payment (DevMode only)
+     * @param {string} checkoutId - Checkout ID to mark as paid
+     * @returns {Promise<void>}
+     */
+    async simulatePayment(checkoutId) {
+        if (!this.isDevMode()) {
+            throw new Error('simulatePayment is only available in DevMode');
+        }
+
+        try {
+            console.log('🧪 Simulating payment for:', checkoutId);
+
+            const response = await this._callAbacatePay('/transparents/simulate-payment', {
+                method: 'POST',
+                body: JSON.stringify({
+                    id: checkoutId
+                })
+            });
+
+            if (!response.success) {
+                throw new Error('Failed to simulate payment');
+            }
+
+            console.log('✅ Payment simulated successfully');
+
+        } catch (error) {
+            console.error('❌ Failed to simulate payment:', error);
+            throw error;
+        }
+    }
 }
 
 export default new AbacatePayManager();
