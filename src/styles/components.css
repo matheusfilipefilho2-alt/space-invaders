@@ -611,3 +611,106 @@
         margin-left: 0;
     }
 }
+
+/* ========== SKELETON COMPONENT ========== */
+
+.ui-skeleton-container {
+    width: 100%;
+}
+
+.ui-skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--bg-card) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        var(--bg-card) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 4px;
+    display: block;
+}
+
+.ui-skeleton--text {
+    height: 20px;
+    border-radius: 4px;
+}
+
+.ui-skeleton--circle {
+    border-radius: 50%;
+    aspect-ratio: 1;
+}
+
+.ui-skeleton--rectangle {
+    border-radius: 6px;
+}
+
+.ui-skeleton-text-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Skeleton Grid */
+.skeleton-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.skeleton-grid-item {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Skeleton List */
+.skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skeleton-list > div {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+}
+
+/* Skeleton Card */
+.skeleton-card {
+    background: var(--bg-card);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Skeleton Header */
+.skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+}
+
+/* Skeleton Table */
+.skeleton-table {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-table-row {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+}
+
+/* Fade out animation for skeleton replacement */
+.skeleton {
+    position: relative;
+}
+
+.skeleton.fade-out {
+    animation: fadeOut var(--transition-normal) ease-out forwards;
+}
