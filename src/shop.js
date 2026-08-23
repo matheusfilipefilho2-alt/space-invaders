@@ -602,10 +602,13 @@ async function reloadPlayerCoins() {
         // Update local user object
         currentUser.coins = data.coins;
 
+        // Save updated user to localStorage
+        NavigationHelper.setCurrentUser(currentUser);
+
         // Update UI
         updateUserCoins();
 
-        console.log('✅ Coins reloaded:', data.coins);
+        console.log('✅ Coins reloaded and saved:', data.coins);
 
     } catch (error) {
         console.error('❌ Error reloading coins:', error);
