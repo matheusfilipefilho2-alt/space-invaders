@@ -152,9 +152,19 @@ class PvPLobby {
     }
 
     try {
-      // TODO: Get user ID from username
-      // For now, using placeholder
-      await this.matchmaker.challengeFriend(username, betAmount);
+      // Get user ID from username
+      const { data: player, error } = await this.matchmaker.supabase
+        .from('players')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+      if (error || !player) {
+        alert(`Jogador "${username}" não encontrado`);
+        return;
+      }
+
+      await this.matchmaker.challengeFriend(player.id, betAmount);
       alert('Desafio enviado!');
     } catch (error) {
       console.error('Failed to send challenge:', error);

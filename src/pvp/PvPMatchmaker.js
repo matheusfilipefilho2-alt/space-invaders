@@ -208,7 +208,15 @@ class PvPMatchmaker {
    * Subscribe to challenge notifications
    */
   subscribeToChallenges() {
-    if (this.challengeSubscription || !this.currentUser) return;
+    if (this.challengeSubscription || !this.currentUser) {
+      console.log('[PvPMatchmaker] Cannot subscribe to challenges:', {
+        hasSubscription: !!this.challengeSubscription,
+        hasUser: !!this.currentUser
+      });
+      return;
+    }
+
+    console.log(`[PvPMatchmaker] Subscribing to challenges for player ${this.currentUser.id}`);
 
     this.challengeSubscription = this.supabase
       .channel('pvp_challenges')
@@ -218,6 +226,7 @@ class PvPMatchmaker {
         table: 'pvp_challenges',
         filter: `challenged_id=eq.${this.currentUser.id}`
       }, (payload) => {
+        console.log('[PvPMatchmaker] Challenge notification received:', payload);
         this.handleChallengeReceived(payload.new);
       })
       .subscribe();
