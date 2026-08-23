@@ -59,10 +59,13 @@ CREATE TABLE pvp_queue (
 
   joined_at TIMESTAMPTZ DEFAULT NOW(),
   matched_at TIMESTAMPTZ,
-  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '5 minutes',
-
-  CONSTRAINT unique_active_player UNIQUE (player_id) WHERE status = 'searching'
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '5 minutes'
 );
+
+-- Índice único parcial: apenas um jogador em busca por vez
+CREATE UNIQUE INDEX unique_active_player
+  ON pvp_queue(player_id)
+  WHERE status = 'searching';
 
 CREATE INDEX idx_pvp_queue_matchmaking
   ON pvp_queue(bet_amount, elo_rating, joined_at)
