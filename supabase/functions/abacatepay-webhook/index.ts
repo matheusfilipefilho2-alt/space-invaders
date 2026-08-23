@@ -26,20 +26,37 @@ serve(async (req) => {
   }
 
   try {
-    // Get signature
-    const signature = req.headers.get('x-abacatepay-signature');
-    if (!signature) {
-      console.error('❌ Missing signature header');
-      return new Response('Unauthorized', { status: 401 });
-    }
+    // Log all headers for debugging
+    const headers: Record<string, string> = {};
+    req.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    console.log('📬 Received headers:', headers);
 
     // Read body as text (for HMAC verification)
     const body = await req.text();
+    console.log('📦 Body length:', body.length);
 
-    // Verify HMAC signature
-    if (!verifySignature(body, signature, WEBHOOK_SECRET)) {
-      console.error('❌ Invalid signature');
+    // Get signature
+    const signature = req.headers.get('x-abacatepay-signature');
+
+    // In dev mode, allow requests without signature for testing
+    const isDevMode = WEBHOOK_SECRET.includes('_dev_') || WEBHOOK_SECRET.includes('webhook_secret');
+
+    if (!signature && !isDevMode) {
+      console.error('❌ Missing signature header (production mode)');
       return new Response('Unauthorized', { status: 401 });
+    }
+
+    if (signature) {
+      // Verify HMAC signature
+      if (!verifySignature(body, signature, WEBHOOK_SECRET)) {
+        console.error('❌ Invalid signature');
+        return new Response('Unauthorized', { status: 401 });
+      }
+      console.log('✅ Signature verified');
+    } else {
+      console.warn('⚠️ Processing webhook without signature (dev mode)');
     }
 
     // Parse JSON
