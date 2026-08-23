@@ -6,6 +6,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="src/styles/wallet-ui.css" />
+    <link rel="stylesheet" href="src/styles/design-system.css">
+    <link rel="stylesheet" href="src/styles/animations.css">
+    <link rel="stylesheet" href="src/styles/components.css">
+    <link rel="stylesheet" href="src/styles/pages/shop.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <title>Loja - Space Invaders</title>
@@ -36,32 +40,44 @@
             </div>
         </div>
 
-        <!-- Categorias -->
-        <div class="shop-categories" id="categories">
-            <!-- Categorias serão carregadas aqui -->
-        </div>
+        <!-- Shop Tabs Container (New Component Integration) -->
+        <div id="shop-tabs-container"></div>
 
-        <!-- Ofertas Diárias -->
-        <div class="daily-offers">
-            <h2 class="section-title">⏰ OFERTAS DIÁRIAS</h2>
-            <div class="items-grid" id="daily-offers-grid">
-                <!-- Ofertas diárias serão carregadas aqui -->
+        <!-- Shop Filters Container (New Component Integration) -->
+        <div id="shop-filters-container"></div>
+
+        <!-- Shop Content Container (New Component Integration) -->
+        <div id="shop-content-container"></div>
+
+        <!-- Legacy sections (hidden by default, fallback) -->
+        <div class="shop-legacy-content" style="display: none;">
+            <!-- Categorias -->
+            <div class="shop-categories" id="categories">
+                <!-- Categorias serão carregadas aqui -->
             </div>
-        </div>
 
-        <!-- Todos os Itens -->
-        <div class="all-items">
-            <h2 class="section-title" id="current-section-title">🛍️ TODOS OS ITENS</h2>
-            <div class="items-grid" id="items-grid">
-                <div class="loading">Carregando itens...</div>
+            <!-- Ofertas Diárias -->
+            <div class="daily-offers">
+                <h2 class="section-title">⏰ OFERTAS DIÁRIAS</h2>
+                <div class="items-grid" id="daily-offers-grid">
+                    <!-- Ofertas diárias serão carregadas aqui -->
+                </div>
             </div>
-        </div>
 
-        <!-- Inventário do Usuario -->
-        <div class="inventory-section">
-            <h2 class="section-title">🎒 MEU INVENTÁRIO</h2>
-            <div class="inventory-grid" id="inventory-grid">
-                <div class="loading">Carregando inventário...</div>
+            <!-- Todos os Itens -->
+            <div class="all-items">
+                <h2 class="section-title" id="current-section-title">🛍️ TODOS OS ITENS</h2>
+                <div class="items-grid" id="items-grid">
+                    <div class="loading">Carregando itens...</div>
+                </div>
+            </div>
+
+            <!-- Inventário do Usuario -->
+            <div class="inventory-section">
+                <h2 class="section-title">🎒 MEU INVENTÁRIO</h2>
+                <div class="inventory-grid" id="inventory-grid">
+                    <div class="loading">Carregando inventário...</div>
+                </div>
             </div>
         </div>
 

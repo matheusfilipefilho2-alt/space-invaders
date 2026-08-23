@@ -3,6 +3,10 @@ import Shop from "./classes/ShopClass.js";
 import { NavigationHelper } from "./navigation.js";
 import { walletUI } from "./components/WalletUI.js";
 import abacatePayManager from "./classes/AbacatePayManager.js";
+import ShopTabs from './components/shop/ShopTabs.js';
+import ItemGrid from './components/shop/ItemGrid.js';
+import ItemFilters from './components/shop/ItemFilters.js';
+import toast from './utils/toast.js';
 
 // Inicializar managers
 const rankingManager = new RankingManager();
@@ -17,6 +21,11 @@ let userItems = [];
 let currentPixPayment = null;
 let expirationTimerInterval = null;
 let pollingInterval = null;
+
+// Component instances
+let shopTabs = null;
+let itemFilters = null;
+let itemGrid = null;
 
 // Elementos DOM
 const userCoinsElement = document.getElementById('user-coins');
@@ -242,13 +251,19 @@ window.confirmPurchase = async function() {
             const updatedUser = rankingManager.getCurrentUser();
             NavigationHelper.setCurrentUser(updatedUser);
             updateUserCoins();
-            
+
             // Recarregar inventário
             await loadInventory();
-            
-            // Recarregar itens para atualizar status
-            loadItems();
-            loadDailyOffers();
+
+            // Recarregar componentes se estiverem inicializados
+            if (shopTabs) {
+                // Refresh all tabs
+                await initShopComponents();
+            } else {
+                // Legacy system
+                loadItems();
+                loadDailyOffers();
+            }
             
             // Mensagem específica para pacotes de moedas
             if (result.item.category === 'coin_packs') {
@@ -580,20 +595,28 @@ async function loadInventory() {
     try {
         userItems = await shop.getUserItems();
         console.log('📦 Itens do usuário carregados:', userItems);
-        
-        if (userItems.length === 0) {
-            inventoryGrid.innerHTML = `
-                <div class="loading" style="grid-column: 1/-1;">
-                    🎒 Seu inventário está vazio<br>
-                    <div style="font-size: 8px; margin-top: 10px; color: #888;">
-                        Compre itens para começar sua coleção!
-                    </div>
-                </div>
-            `;
-            return;
+
+        // Update ShopTabs component if initialized
+        if (shopTabs) {
+            shopTabs.setUserItems(userItems);
+            console.log('✅ ShopTabs inventory updated');
         }
 
-        inventoryGrid.innerHTML = userItems.map(userItem => {
+        // Legacy inventory display (fallback) - only if inventoryGrid exists
+        if (inventoryGrid) {
+            if (userItems.length === 0) {
+                inventoryGrid.innerHTML = `
+                    <div class="loading" style="grid-column: 1/-1;">
+                        🎒 Seu inventário está vazio<br>
+                        <div style="font-size: 8px; margin-top: 10px; color: #888;">
+                            Compre itens para começar sua coleção!
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            inventoryGrid.innerHTML = userItems.map(userItem => {
             const shopItem = shop.getItemById(userItem.item_id);
             console.log(`🔍 Processando item ${userItem.item_id}:`, { userItem, shopItem });
             if (!shopItem) {
@@ -654,11 +677,14 @@ async function loadInventory() {
                     </div>
                 </div>
             `;
-        }).join('');
-        
+            }).join('');
+        }
+
     } catch (error) {
         console.error('Erro ao carregar inventário:', error);
-        inventoryGrid.innerHTML = '<div class="loading">Erro ao carregar inventário</div>';
+        if (inventoryGrid) {
+            inventoryGrid.innerHTML = '<div class="loading">Erro ao carregar inventário</div>';
+        }
     }
 }
 
@@ -784,6 +810,127 @@ window.useSkin = async function(itemId) {
     }
 };
 
+/**
+ * Initialize new tab-based shop system
+ */
+async function initShopComponents() {
+    try {
+        console.log('🚀 Initializing new shop component system...');
+
+        // Load user items first
+        userItems = await shop.getUserItems();
+        console.log('📦 User items loaded:', userItems);
+
+        // Initialize ShopTabs component
+        shopTabs = new ShopTabs({
+            shop: shop,
+            rankingManager: rankingManager,
+            userItems: userItems,
+            currentCategory: currentCategory,
+            onItemClick: (itemId) => {
+                console.log('🛒 Item clicked:', itemId);
+                openPurchaseModal(itemId);
+            },
+            onTabChange: (tabId) => {
+                console.log('📑 Tab changed to:', tabId);
+                // Hide/show filters based on tab
+                const filtersContainer = document.getElementById('shop-filters-container');
+                if (filtersContainer) {
+                    // Only show filters on Store tab
+                    filtersContainer.style.display = tabId === 'store' ? 'block' : 'none';
+                }
+            }
+        });
+
+        // Render tabs
+        const tabsContainer = document.getElementById('shop-tabs-container');
+        if (tabsContainer) {
+            const tabsElement = shopTabs.render();
+            tabsContainer.appendChild(tabsElement);
+            console.log('✅ ShopTabs rendered');
+        }
+
+        // Initialize ItemFilters component (only for Store tab)
+        itemFilters = new ItemFilters({
+            rarities: shop.rarities,
+            onFiltersChange: (filterState) => {
+                console.log('🔍 Filters changed:', filterState);
+                applyFiltersToStore(filterState);
+            }
+        });
+
+        // Render filters
+        const filtersContainer = document.getElementById('shop-filters-container');
+        if (filtersContainer) {
+            const filtersElement = itemFilters.render();
+            filtersContainer.appendChild(filtersElement);
+            // Initially hide filters (will show when Store tab is active)
+            filtersContainer.style.display = 'none';
+            console.log('✅ ItemFilters rendered');
+        }
+
+        // Make shopTabs globally accessible for item click handlers
+        window.shopTabs = shopTabs;
+
+        console.log('✅ Shop component system initialized successfully!');
+    } catch (error) {
+        console.error('❌ Error initializing shop components:', error);
+        // Fall back to legacy system
+        document.querySelector('.shop-legacy-content').style.display = 'block';
+        toast('Erro ao carregar nova interface. Usando sistema legado.', 'error');
+    }
+}
+
+/**
+ * Apply filters to store tab content
+ */
+function applyFiltersToStore(filterState) {
+    if (!shopTabs || !itemFilters) return;
+
+    // Get all items or filtered by category
+    let items;
+    if (currentCategory === 'all') {
+        items = shop.getAllItems();
+    } else {
+        items = shop.getItemsByCategory(currentCategory);
+    }
+
+    // Apply filters
+    const filteredItems = itemFilters.filterItems(items);
+    console.log(`🔍 Filtered items: ${filteredItems.length} of ${items.length}`);
+
+    // Update store tab content
+    shopTabs.tabDefinitions[1].content = generateStoreContentWithItems(filteredItems);
+
+    // Refresh the store tab if it's active
+    if (shopTabs.uiTabs && shopTabs.uiTabs.activeIndex === 1) {
+        const pane = shopTabs.uiTabs.contentPanes[1];
+        if (pane) {
+            pane.innerHTML = '';
+            pane.appendChild(shopTabs.tabDefinitions[1].content);
+        }
+    }
+}
+
+/**
+ * Generate store content with filtered items
+ */
+function generateStoreContentWithItems(items) {
+    if (items.length === 0) {
+        return '<div class="loading">Nenhum item encontrado com os filtros aplicados</div>';
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'shop-grid';
+
+    items.forEach((item) => {
+        const card = shopTabs._createItemCard(item, false);
+        grid.appendChild(card);
+    });
+
+    return grid;
+}
+
 // Inicializar aplicação
 async function init() {
     const userLoggedIn = await checkUser();
@@ -797,11 +944,17 @@ async function init() {
         // Continue anyway - show error modal if user tries to buy
     }
 
-    loadCategories();
-    loadDailyOffers();
-    loadItems();
-    loadInventory();
+    // Initialize new component system
+    await initShopComponents();
+
+    // Update user coins display
     updateUserCoins();
+
+    // Legacy system as fallback (commented out by default)
+    // loadCategories();
+    // loadDailyOffers();
+    // loadItems();
+    // loadInventory();
 }
 
 // Event listeners para fechar modais clicando fora
