@@ -18,6 +18,28 @@
     <!-- Canvas para fundo de estrelas animado -->
     <canvas id="stars-background"></canvas>
 
+    <!-- Fixed Navigation Bar -->
+    <nav class="game-navbar">
+        <div class="navbar-container">
+            <button class="navbar-btn navbar-btn-play" onclick="goToGame()">
+                <span class="navbar-icon">🚀</span>
+                <span class="navbar-text">JOGAR</span>
+            </button>
+            <button class="navbar-btn navbar-btn-shop" onclick="goToShop()">
+                <span class="navbar-icon">🛍️</span>
+                <span class="navbar-text">LOJA</span>
+            </button>
+            <button class="navbar-btn navbar-btn-ranking" onclick="goToRanking()">
+                <span class="navbar-icon">🏆</span>
+                <span class="navbar-text">RANKING</span>
+            </button>
+            <button class="navbar-btn navbar-btn-home" onclick="goHome()">
+                <span class="navbar-icon">🏠</span>
+                <span class="navbar-text">INÍCIO</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Wallet UI Container -->
     <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
       <button id="wallet-connect-btn" class="wallet-btn">
@@ -222,25 +244,7 @@
             </div>
         </div>
 
-        <!-- Botões de Navegação -->
-        <div class="menu-buttons" style="margin-top: 40px;">
-            <button class="button-play" onclick="goToGame()">
-                <span class="button-icon">🚀</span>
-                JOGAR AGORA
-            </button>
-            <button class="button-view-ranking" onclick="goToShop()">
-                <span class="button-icon">🛍️</span>
-                LOJA
-            </button>
-            <button class="button-view-ranking" onclick="goToRanking()">
-                <span class="button-icon">🏆</span>
-                RANKING
-            </button>
-            <button class="button-restart" onclick="goHome()">
-                <span class="button-icon">🏠</span>
-                INÍCIO
-            </button>
-        </div>
+        <!-- Navigation moved to fixed navbar at top -->
     </div>
 
     <!-- bcrypt for password hashing -->

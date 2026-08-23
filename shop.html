@@ -19,6 +19,28 @@
     <!-- Canvas para fundo de estrelas animado -->
     <canvas id="stars-background"></canvas>
 
+    <!-- Fixed Navigation Bar -->
+    <nav class="game-navbar">
+        <div class="navbar-container">
+            <button class="navbar-btn navbar-btn-play" onclick="goToGame()">
+                <span class="navbar-icon">🚀</span>
+                <span class="navbar-text">JOGAR</span>
+            </button>
+            <button class="navbar-btn navbar-btn-profile" onclick="goToProfile()">
+                <span class="navbar-icon">👨‍🚀</span>
+                <span class="navbar-text">PERFIL</span>
+            </button>
+            <button class="navbar-btn navbar-btn-ranking" onclick="goToRanking()">
+                <span class="navbar-icon">🏆</span>
+                <span class="navbar-text">RANKING</span>
+            </button>
+            <button class="navbar-btn navbar-btn-home" onclick="goHome()">
+                <span class="navbar-icon">🏠</span>
+                <span class="navbar-text">INÍCIO</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Wallet UI Container -->
     <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
       <button id="wallet-connect-btn" class="wallet-btn">
@@ -81,25 +103,8 @@
             </div>
         </div>
 
-        <!-- Botões de Navegação -->
-        <div class="menu-buttons" style="margin-top: 40px;">
-            <button class="button-play" onclick="goToGame()">
-                <span class="button-icon">🚀</span>
-                JOGAR AGORA
-            </button>
-            <button class="button-view-ranking" onclick="goToProfile()">
-                <span class="button-icon">👨‍🚀</span>
-                PERFIL
-            </button>
-            <button class="button-view-ranking" onclick="goToRanking()">
-                <span class="button-icon">🏆</span>
-                RANKING
-            </button>
-            <button class="button-restart" onclick="goHome()">
-                <span class="button-icon">🏠</span>
-                INÍCIO
-            </button>
-        </div>
+        <!-- Navigation moved to fixed navbar at top -->
+        <!-- Kept here for reference, hidden by CSS -->
     </div>
 
     <!-- Modal de Confirmação -->
@@ -163,13 +168,6 @@
                 <!-- Expiration Timer -->
                 <div class="pix-expiration-timer">⏱️ Expira em 29:15</div>
 
-                <!-- Instructions -->
-                <div class="pix-instructions">
-                    <p class="pix-instruction-step"><strong>1.</strong> Abra o app do seu banco</p>
-                    <p class="pix-instruction-step"><strong>2.</strong> Escaneie o QR Code ou copie o código</p>
-                    <p class="pix-instruction-step"><strong>3.</strong> Confirme o pagamento</p>
-                    <p class="pix-instruction-note">O pagamento será detectado automaticamente!</p>
-                </div>
             </div>
 
             <div class="modal-buttons">

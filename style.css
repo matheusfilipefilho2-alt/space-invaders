@@ -17,6 +17,7 @@ body {
   color: #fff;
   overflow-y: auto;
   user-select: none;
+  padding-top: 70px; /* Space for fixed navbar */
 }
 
 /* Canvas de fundo */
@@ -28,6 +29,154 @@ body {
   height: 100vh;
   z-index: -1;
   background: linear-gradient(135deg, #050519 0%, #0a0a2e 50%, #16213e 100%);
+}
+
+/* Fixed Navigation Bar */
+.game-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: rgba(5, 5, 25, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid rgba(78, 205, 196, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.navbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(78, 205, 196, 0.1);
+  border: 2px solid rgba(78, 205, 196, 0.3);
+  border-radius: 8px;
+  color: #4ECDC4;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.navbar-btn:hover {
+  background: rgba(78, 205, 196, 0.2);
+  border-color: #4ECDC4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(78, 205, 196, 0.3);
+}
+
+.navbar-btn:active {
+  transform: translateY(0);
+}
+
+.navbar-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.navbar-text {
+  font-size: 10px;
+}
+
+/* Navbar button colors */
+.navbar-btn-play {
+  border-color: rgba(0, 255, 127, 0.3);
+  color: #00ff7f;
+}
+
+.navbar-btn-play:hover {
+  background: rgba(0, 255, 127, 0.2);
+  border-color: #00ff7f;
+  box-shadow: 0 4px 8px rgba(0, 255, 127, 0.3);
+}
+
+.navbar-btn-profile {
+  border-color: rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+}
+
+.navbar-btn-profile:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #FFD700;
+  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+}
+
+.navbar-btn-ranking {
+  border-color: rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+}
+
+.navbar-btn-ranking:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #FFD700;
+  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+}
+
+.navbar-btn-shop {
+  border-color: rgba(138, 43, 226, 0.3);
+  color: #8A2BE2;
+}
+
+.navbar-btn-shop:hover {
+  background: rgba(138, 43, 226, 0.2);
+  border-color: #8A2BE2;
+  box-shadow: 0 4px 8px rgba(138, 43, 226, 0.3);
+}
+
+.navbar-btn-home {
+  border-color: rgba(255, 99, 71, 0.3);
+  color: #FF6347;
+}
+
+.navbar-btn-home:hover {
+  background: rgba(255, 99, 71, 0.2);
+  border-color: #FF6347;
+  box-shadow: 0 4px 8px rgba(255, 99, 71, 0.3);
+}
+
+/* Responsive navbar */
+@media (max-width: 768px) {
+  .navbar-container {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .navbar-btn {
+    padding: 8px 12px;
+    font-size: 8px;
+    gap: 6px;
+  }
+
+  .navbar-icon {
+    font-size: 14px;
+  }
+
+  .navbar-text {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-btn {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .navbar-text {
+    display: none; /* Hide text on very small screens, show only icons */
+  }
 }
 
 /* Canvas principal do jogo */
