@@ -617,15 +617,7 @@
         flex-direction: column;
     }
 
-    .menu-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .menu-buttons button {
-        width: 100%;
-    }
+    /* Menu buttons use global styles from style.css */
 }
 
 @media (max-width: 480px) {
