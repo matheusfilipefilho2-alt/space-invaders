@@ -1,22 +1,18 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * PvP Signaling Server - WebRTC Offer/Answer/ICE Exchange
  *
- * Stores and relays WebRTC signaling data between peers.
+ * Stores and relays WebRTC signaling data between peers using Supabase database.
  * Each room (match) stores:
  * - offer: SDP offer from offerer
  * - answer: SDP answer from answerer
- * - candidates: Array of ICE candidates from both peers
+ * - ice_candidates: Array of ICE candidates from both peers
  */
 
-// In-memory storage (resets on function redeploy - fine for short-lived signaling)
-const rooms = new Map<string, {
-  offer?: any;
-  answer?: any;
-  candidates: any[];
-  createdAt: number;
-}>();
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // CORS headers
 const corsHeaders = {
@@ -24,17 +20,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Cleanup old rooms (>10 minutes)
-setInterval(() => {
-  const now = Date.now();
-  for (const [roomId, room] of rooms.entries()) {
-    if (now - room.createdAt > 10 * 60 * 1000) {
-      rooms.delete(roomId);
-      console.log(`Cleaned up room: ${roomId}`);
-    }
-  }
-}, 60 * 1000); // Run every minute
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -49,6 +34,8 @@ serve(async (req) => {
     });
   }
 
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
   try {
     const { action, roomId, data } = await req.json();
 
@@ -59,55 +46,123 @@ serve(async (req) => {
       });
     }
 
-    // Ensure room exists
-    if (!rooms.has(roomId)) {
-      rooms.set(roomId, {
-        candidates: [],
-        createdAt: Date.now()
-      });
-    }
-
-    const room = rooms.get(roomId)!;
+    console.log(`[Signaling] Action: ${action}, Room: ${roomId}`);
 
     switch (action) {
-      case 'offer':
-        room.offer = data;
+      case 'offer': {
+        // Upsert room with offer
+        const { error } = await supabase
+          .from('pvp_signaling')
+          .upsert({
+            room_id: roomId,
+            offer: data,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+
         console.log(`Offer stored for room ${roomId}`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
 
-      case 'answer':
-        room.answer = data;
+      case 'answer': {
+        // Update room with answer
+        const { error } = await supabase
+          .from('pvp_signaling')
+          .update({
+            answer: data,
+            updated_at: new Date().toISOString()
+          })
+          .eq('room_id', roomId);
+
+        if (error) throw error;
+
         console.log(`Answer stored for room ${roomId}`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
 
-      case 'ice_candidate':
-        room.candidates.push(data);
-        console.log(`ICE candidate added for room ${roomId} (total: ${room.candidates.length})`);
+      case 'ice_candidate': {
+        // Get current room
+        const { data: room, error: fetchError } = await supabase
+          .from('pvp_signaling')
+          .select('ice_candidates')
+          .eq('room_id', roomId)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+        // Add new candidate
+        const candidates = room?.ice_candidates || [];
+        candidates.push(data);
+
+        // Update room
+        const { error: updateError } = await supabase
+          .from('pvp_signaling')
+          .upsert({
+            room_id: roomId,
+            ice_candidates: candidates,
+            updated_at: new Date().toISOString()
+          });
+
+        if (updateError) throw updateError;
+
+        console.log(`ICE candidate added for room ${roomId} (total: ${candidates.length})`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
 
-      case 'get_offer':
-        return new Response(JSON.stringify({ offer: room.offer || null }), {
+      case 'get_offer': {
+        const { data: room } = await supabase
+          .from('pvp_signaling')
+          .select('offer')
+          .eq('room_id', roomId)
+          .single();
+
+        console.log(`Get offer for room ${roomId}: ${room?.offer ? 'found' : 'not found'}`);
+        return new Response(JSON.stringify({ offer: room?.offer || null }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
 
-      case 'get_answer':
-        return new Response(JSON.stringify({ answer: room.answer || null }), {
+      case 'get_answer': {
+        const { data: room } = await supabase
+          .from('pvp_signaling')
+          .select('answer')
+          .eq('room_id', roomId)
+          .single();
+
+        console.log(`Get answer for room ${roomId}: ${room?.answer ? 'found' : 'not found'}`);
+        return new Response(JSON.stringify({ answer: room?.answer || null }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
 
-      case 'get_ice_candidates':
-        // Return and clear candidates (so they're not sent multiple times)
-        const candidates = [...room.candidates];
-        room.candidates = [];
+      case 'get_ice_candidates': {
+        const { data: room } = await supabase
+          .from('pvp_signaling')
+          .select('ice_candidates')
+          .eq('room_id', roomId)
+          .single();
+
+        const candidates = room?.ice_candidates || [];
+
+        // Clear candidates after retrieving
+        if (candidates.length > 0) {
+          await supabase
+            .from('pvp_signaling')
+            .update({ ice_candidates: [] })
+            .eq('room_id', roomId);
+        }
+
         return new Response(JSON.stringify({ candidates }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
 
       default:
         return new Response(JSON.stringify({ error: 'Unknown action' }), {
