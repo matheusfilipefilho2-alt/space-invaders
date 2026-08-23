@@ -166,6 +166,8 @@ class WebRTCConnection {
    * Send data to signaling server
    */
   async sendToSignalingServer(action, data) {
+    console.log(`[WebRTC] Sending to signaling server: ${action}`, { roomId: this.matchId });
+
     const response = await fetch(SIGNALING_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -177,24 +179,32 @@ class WebRTCConnection {
     });
 
     if (!response.ok) {
+      console.error(`[WebRTC] Signaling server error: ${response.status}`);
       throw new Error(`Signaling server error: ${response.status}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log(`[WebRTC] Signaling server response for ${action}:`, result);
+    return result;
   }
 
   /**
    * Wait for offer from signaling server
    */
   async waitForOffer() {
+    console.log('[WebRTC] Waiting for offer from offerer...');
     let attempts = 0;
     while (attempts < 30) { // 30 seconds max
       const response = await this.sendToSignalingServer('get_offer', null);
       if (response.offer) {
+        console.log('[WebRTC] Offer received!');
         return response.offer;
       }
       await this.sleep(1000);
       attempts++;
+      if (attempts % 5 === 0) {
+        console.log(`[WebRTC] Still waiting for offer... (${attempts}/30)`);
+      }
     }
     throw new Error('Timeout waiting for offer');
   }
@@ -203,18 +213,23 @@ class WebRTCConnection {
    * Wait for answer from signaling server
    */
   async waitForAnswer() {
+    console.log('[WebRTC] Waiting for answer from answerer...');
     let attempts = 0;
     while (attempts < 30) {
       const response = await this.sendToSignalingServer('get_answer', null);
       if (response.answer) {
-        await this.peerConnection.setRemoteDescription(new RTCSessionDescription(response.answer));
-        return;
+        console.log('[WebRTC] Answer received!');
+        return response.answer;
       }
       await this.sleep(1000);
       attempts++;
+      if (attempts % 5 === 0) {
+        console.log(`[WebRTC] Still waiting for answer... (${attempts}/30)`);
+      }
     }
     throw new Error('Timeout waiting for answer');
   }
+
 
   /**
    * Poll for ICE candidates from other peer
