@@ -297,17 +297,15 @@ class AbacatePayManager {
             const response = await this._callAbacatePay('/transparents/create', {
                 method: 'POST',
                 body: JSON.stringify({
+                    method: 'PIX',
                     data: {
                         amount: this._toCentavos(config.price),
                         description: `${config.coins} moedas - Space Invaders`,
-                        expiresIn: 1800,  // 30 minutes
-                        customer: {
-                            name: player.username || 'Space Invaders Player',
-                            email: player.email
-                        },
+                        expiresIn: 1800,  // 30 minutes in seconds
                         metadata: {
                             playerId: player.id,
                             playerUsername: player.username,
+                            playerEmail: player.email,
                             coinPackId: coinPackId,
                             coinAmount: config.coins,
                             gameTimestamp: new Date().toISOString()
