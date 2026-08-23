@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="src/styles/wallet-ui.css" />
+    <link rel="stylesheet" href="src/styles/design-system.css">
+    <link rel="stylesheet" href="src/styles/animations.css">
+    <link rel="stylesheet" href="src/styles/components.css">
+    <link rel="stylesheet" href="src/styles/pages/profile.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>Perfil - Space Invaders</title>
+</head>
+<body class="profile-page">
+    <!-- Canvas para fundo de estrelas animado -->
+    <canvas id="stars-background"></canvas>
+
+    <!-- Wallet UI Container -->
+    <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+      <button id="wallet-connect-btn" class="wallet-btn">
+        <span>🔗</span> CONECTAR WALLET
+      </button>
+      <div id="wallet-display" style="display: none;">
+        <span class="wallet-icon">👛</span>
+        <span id="wallet-address">...</span>
+        <button id="wallet-disconnect-btn">❌</button>
+      </div>
+    </div>
+
+    <div class="profile-container">
+        <!-- Header do Perfil -->
+        <div class="profile-header">
+            <h1 class="profile-title">👨‍🚀 MEU PERFIL</h1>
+        </div>
+
+        <!-- Seção Avatar e Informações do Usuário -->
+        <div class="profile-user-section">
+            <div class="profile-avatar-container">
+                <div class="profile-avatar">👨‍🚀</div>
+                <div class="profile-avatar-badge">
+                    <span class="online-indicator">🟢</span>
+                </div>
+            </div>
+
+            <div class="profile-user-info">
+                <h2 id="profile-username" class="profile-username">Carregando...</h2>
+                <p id="profile-email" class="profile-email">email@exemplo.com</p>
+                <div class="profile-user-meta">
+                    <span id="profile-level" class="profile-meta-item">
+                        <span class="meta-icon">⭐</span>
+                        <span class="meta-label">Nível:</span>
+                        <span class="meta-value">1</span>
+                    </span>
+                    <span id="profile-xp" class="profile-meta-item">
+                        <span class="meta-icon">⚡</span>
+                        <span class="meta-label">XP:</span>
+                        <span class="meta-value">0</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Container -->
+        <div id="profile-tabs-container" class="ui-tabs">
+            <div class="ui-tabs__header">
+                <button class="ui-tabs__button ui-tabs__button--active" data-tab="stats">
+                    📊 ESTATÍSTICAS
+                </button>
+                <button class="ui-tabs__button" data-tab="achievements">
+                    🏆 CONQUISTAS
+                </button>
+                <button class="ui-tabs__button" data-tab="inventory">
+                    🎒 INVENTÁRIO
+                </button>
+                <button class="ui-tabs__button" data-tab="settings">
+                    ⚙️ CONFIGURAÇÕES
+                </button>
+                <div class="ui-tabs__underline"></div>
+            </div>
+
+            <div class="ui-tabs__content">
+                <!-- Tab: Estatísticas -->
+                <div class="ui-tabs__pane ui-tabs__pane--active" data-pane="stats">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">🎮</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Partidas Jogadas</div>
+                                <div class="stat-value" id="stat-games-played">0</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">🏅</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Vitórias</div>
+                                <div class="stat-value" id="stat-wins">0</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">⚔️</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Taxa de Vitória</div>
+                                <div class="stat-value" id="stat-win-rate">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">💯</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Melhor Score</div>
+                                <div class="stat-value" id="stat-best-score">0</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">👾</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Inimigos Destruídos</div>
+                                <div class="stat-value" id="stat-enemies-killed">0</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">⏱️</div>
+                            <div class="stat-content">
+                                <div class="stat-label">Tempo Jogado</div>
+                                <div class="stat-value" id="stat-playtime">0h</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-section">
+                        <h3 class="progress-title">Progresso para Próximo Nível</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-xp" style="width: 25%;"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="progress-current">250</span>
+                            <span>/</span>
+                            <span id="progress-max">1000</span>
+                            <span>XP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Conquistas -->
+                <div class="ui-tabs__pane" data-pane="achievements">
+                    <div class="achievements-container">
+                        <div class="achievements-grid" id="achievements-grid">
+                            <div class="loading">Carregando conquistas...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Inventário -->
+                <div class="ui-tabs__pane" data-pane="inventory">
+                    <div class="inventory-container">
+                        <div class="inventory-grid" id="inventory-grid">
+                            <div class="loading">Carregando inventário...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Configurações -->
+                <div class="ui-tabs__pane" data-pane="settings">
+                    <div class="settings-container">
+                        <div class="settings-section">
+                            <h3 class="settings-title">Preferências de Áudio</h3>
+                            <div class="setting-item">
+                                <label class="setting-label">Música</label>
+                                <input type="range" class="setting-slider" id="music-volume" min="0" max="100" value="70">
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">Efeitos Sonoros</label>
+                                <input type="range" class="setting-slider" id="sfx-volume" min="0" max="100" value="70">
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-title">Preferências de Jogo</h3>
+                            <div class="setting-item">
+                                <label class="setting-label">Dificuldade</label>
+                                <select class="setting-select" id="difficulty-select">
+                                    <option value="easy">Fácil</option>
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="hard">Difícil</option>
+                                </select>
+                            </div>
+                            <div class="setting-item checkbox">
+                                <input type="checkbox" id="fullscreen-toggle" class="setting-checkbox">
+                                <label class="setting-label" for="fullscreen-toggle">Modo Tela Cheia</label>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-title">Privacidade</h3>
+                            <div class="setting-item checkbox">
+                                <input type="checkbox" id="public-profile-toggle" class="setting-checkbox" checked>
+                                <label class="setting-label" for="public-profile-toggle">Perfil Público</label>
+                            </div>
+                            <div class="setting-item checkbox">
+                                <input type="checkbox" id="show-score-toggle" class="setting-checkbox" checked>
+                                <label class="setting-label" for="show-score-toggle">Mostrar Score no Ranking</label>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="ui-button ui-button--primary" id="save-settings-btn">
+                                💾 SALVAR CONFIGURAÇÕES
+                            </button>
+                            <button class="ui-button ui-button--secondary" id="reset-settings-btn">
+                                🔄 RESTAURAR PADRÕES
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Navegação -->
+        <div class="menu-buttons" style="margin-top: 40px;">
+            <button class="button-play" onclick="goToGame()">
+                <span class="button-icon">🚀</span>
+                JOGAR AGORA
+            </button>
+            <button class="button-view-ranking" onclick="goToShop()">
+                <span class="button-icon">🛍️</span>
+                LOJA
+            </button>
+            <button class="button-view-ranking" onclick="goToRanking()">
+                <span class="button-icon">🏆</span>
+                RANKING
+            </button>
+            <button class="button-restart" onclick="goHome()">
+                <span class="button-icon">🏠</span>
+                INÍCIO
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="src/profile.js"></script>
+    <script type="module">
+        // Importar sistema global de música
+        import globalMenuMusic from './src/globalMenuMusic.js';
+    </script>
+
+    <!-- Funções de navegação -->
+    <script>
+        function goToGame() {
+            window.location.href = 'game.html';
+        }
+
+        function goToShop() {
+            window.location.href = 'shop.html';
+        }
+
+        function goToRanking() {
+            window.location.href = 'ranking.html';
+        }
+
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+    </script>
+
+    <!-- Script para animação de fundo -->
+    <script type="module">
+        import Star from './src/classes/Star.js';
+
+        class StarFieldBackground {
+            constructor() {
+                this.canvas = document.getElementById('stars-background');
+                this.ctx = this.canvas.getContext('2d');
+                this.stars = [];
+                this.numberOfStars = 120;
+
+                this.resize();
+                this.init();
+                this.animate();
+
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.stars = [];
+                this.init();
+            }
+
+            init() {
+                for (let i = 0; i < this.numberOfStars; i++) {
+                    const star = new Star(this.canvas.width, this.canvas.height);
+                    this.stars.push(star);
+                }
+            }
+
+            animate() {
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = '#050519';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.stars.forEach(star => {
+                    star.update();
+                    star.draw(this.ctx);
+                });
+
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new StarFieldBackground();
+        });
+    </script>
+
+    <!-- Solana Web3.js -->
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <!-- Metaplex Token Metadata -->
+    <script src="https://unpkg.com/@metaplex-foundation/mpl-token-metadata@2/dist/index.umd.js"></script>
+
+    <!-- SPL Token -->
+    <script src="https://unpkg.com/@solana/spl-token@latest/lib/index.iife.js"></script>
+
+</body>
+</html>

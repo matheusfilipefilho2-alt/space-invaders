@@ -87,6 +87,10 @@
                 <span class="button-icon">🚀</span>
                 JOGAR AGORA
             </button>
+            <button class="button-view-ranking" onclick="goToProfile()">
+                <span class="button-icon">👨‍🚀</span>
+                PERFIL
+            </button>
             <button class="button-view-ranking" onclick="goToRanking()">
                 <span class="button-icon">🏆</span>
                 RANKING
@@ -183,11 +187,15 @@
         function goToGame() {
             window.location.href = 'game.html';
         }
-        
+
+        function goToProfile() {
+            window.location.href = 'profile.html';
+        }
+
         function goToRanking() {
             window.location.href = 'ranking.html';
         }
-        
+
         function goHome() {
             window.location.href = 'index.html';
         }
