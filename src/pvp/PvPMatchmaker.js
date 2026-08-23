@@ -15,10 +15,10 @@ class PvPMatchmaker {
       throw new Error('Supabase not loaded. Include Supabase script in HTML.');
     }
 
-    const SUPABASE_URL = 'https://apbbhuhtdqfwfmlzxnwv.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwYmJodWh0ZHFmd2ZtbHp4bnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTcyNjUsImV4cCI6MjA3MTI5MzI2NX0.D330nS8F9ZIMqnZHzvFIST-wv4ccCyyumV6s4zSmAGs';
+    this.supabaseUrl = 'https://apbbhuhtdqfwfmlzxnwv.supabase.co';
+    this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwYmJodWh0ZHFmd2ZtbHp4bnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTcyNjUsImV4cCI6MjA3MTI5MzI2NX0.D330nS8F9ZIMqnZHzvFIST-wv4ccCyyumV6s4zSmAGs';
 
-    this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    this.supabase = window.supabase.createClient(this.supabaseUrl, this.supabaseKey);
 
     this.currentUser = null;
     this.queueSubscription = null;
@@ -174,9 +174,12 @@ class PvPMatchmaker {
       throw new Error('User not set');
     }
 
-    const response = await fetch(`${window.location.origin}/functions/v1/pvp-challenge-friend`, {
+    const response = await fetch(`${this.supabaseUrl}/functions/v1/pvp-challenge-friend`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.supabaseKey}`
+      },
       body: JSON.stringify({
         challengerId: this.currentUser.id,
         challengedId: friendId,
@@ -185,8 +188,15 @@ class PvPMatchmaker {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Challenge failed');
+      const text = await response.text();
+      let errorMsg = 'Challenge failed';
+      try {
+        const error = JSON.parse(text);
+        errorMsg = error.error || errorMsg;
+      } catch (e) {
+        errorMsg = text || errorMsg;
+      }
+      throw new Error(errorMsg);
     }
 
     const result = await response.json();
@@ -258,9 +268,12 @@ class PvPMatchmaker {
       throw new Error('User not set');
     }
 
-    const response = await fetch(`${window.location.origin}/functions/v1/pvp-challenge-respond`, {
+    const response = await fetch(`${this.supabaseUrl}/functions/v1/pvp-challenge-respond`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.supabaseKey}`
+      },
       body: JSON.stringify({
         challengeId,
         playerId: this.currentUser.id,
@@ -269,8 +282,15 @@ class PvPMatchmaker {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Response failed');
+      const text = await response.text();
+      let errorMsg = 'Response failed';
+      try {
+        const error = JSON.parse(text);
+        errorMsg = error.error || errorMsg;
+      } catch (e) {
+        errorMsg = text || errorMsg;
+      }
+      throw new Error(errorMsg);
     }
 
     const result = await response.json();
