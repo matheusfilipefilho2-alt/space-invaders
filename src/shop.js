@@ -958,13 +958,13 @@ async function init() {
     const userLoggedIn = await checkUser();
     if (!userLoggedIn) return;
 
-    // Initialize AbacatePay (create products if needed)
-    try {
-        await abacatePayManager.initialize();
-    } catch (error) {
-        console.error('❌ Failed to initialize AbacatePay:', error);
-        // Continue anyway - show error modal if user tries to buy
-    }
+    // Products already created in AbacatePay - no need to initialize every time
+    // (Uncomment only if you need to create new products)
+    // try {
+    //     await abacatePayManager.initialize();
+    // } catch (error) {
+    //     console.error('❌ Failed to initialize AbacatePay:', error);
+    // }
 
     // Initialize new component system
     await initShopComponents();
