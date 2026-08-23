@@ -41,7 +41,8 @@ const TOKEN_CONFIG = {
     name: 'Space Invaders Token',
     symbol: 'SPACE',
     decimals: 9,
-    initialSupply: 1000000000, // 1 billion tokens
+    initialSupply: 100000, // 100k tokens (reduced for low SOL deployment)
+    mintInitialSupply: false, // Set to true to mint tokens (requires more SOL)
     description: 'In-game currency for Space Invaders'
 };
 
@@ -239,8 +240,17 @@ async function deploy() {
         // 4. Create token
         const mint = await createToken(connection, payer);
 
-        // 5. Mint initial supply
-        const tokenAccount = await mintInitialSupply(connection, payer, mint);
+        // 5. Mint initial supply (optional - saves SOL if false)
+        let tokenAccount = null;
+        let mintedAmount = 0;
+
+        if (TOKEN_CONFIG.mintInitialSupply) {
+            tokenAccount = await mintInitialSupply(connection, payer, mint);
+            mintedAmount = TOKEN_CONFIG.initialSupply;
+        } else {
+            console.log('⏭️  Skipping initial mint (saves SOL)');
+            console.log('   You can mint tokens later when needed\n');
+        }
 
         // 6. Get deployment info
         const deploymentInfo = {
@@ -251,11 +261,11 @@ async function deploy() {
                 symbol: TOKEN_CONFIG.symbol,
                 decimals: TOKEN_CONFIG.decimals,
                 mintAddress: mint.toBase58(),
-                initialSupply: TOKEN_CONFIG.initialSupply
+                initialSupply: mintedAmount
             },
             deployer: {
                 publicKey: payer.publicKey.toBase58(),
-                tokenAccount: tokenAccount.toBase58(),
+                tokenAccount: tokenAccount ? tokenAccount.toBase58() : 'Not created yet',
                 balance: balance
             },
             explorer: NETWORK === 'devnet'
@@ -277,10 +287,15 @@ async function deploy() {
         console.log(`  Symbol: ${TOKEN_CONFIG.symbol}`);
         console.log(`  Mint Address: ${mint.toBase58()}`);
         console.log(`  Decimals: ${TOKEN_CONFIG.decimals}`);
-        console.log(`  Initial Supply: ${TOKEN_CONFIG.initialSupply.toLocaleString()} ${TOKEN_CONFIG.symbol}`);
+        console.log(`  Minted Supply: ${mintedAmount.toLocaleString()} ${TOKEN_CONFIG.symbol}`);
+        if (!TOKEN_CONFIG.mintInitialSupply) {
+            console.log(`  💡 Tip: Set mintInitialSupply=true to mint tokens`);
+        }
         console.log(`\nDeployer:`);
         console.log(`  Public Key: ${payer.publicKey.toBase58()}`);
-        console.log(`  Token Account: ${tokenAccount.toBase58()}`);
+        if (tokenAccount) {
+            console.log(`  Token Account: ${tokenAccount.toBase58()}`);
+        }
         console.log(`\nExplorer:`);
         console.log(`  ${deploymentInfo.explorer}`);
         console.log('\n✅ Configuration file updated!');
