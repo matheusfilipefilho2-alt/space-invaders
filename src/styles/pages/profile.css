@@ -730,3 +730,265 @@
         padding: 8px 0;
     }
 }
+
+/* ===============================================
+   PROFILE SETTINGS COMPONENT STYLES
+   =============================================== */
+
+.profile-settings-container {
+    margin-bottom: 30px;
+}
+
+.profile-settings-container .settings-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(78, 205, 196, 0.2);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.profile-settings-container .settings-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--color-gold);
+    margin: 0 0 20px 0;
+    font-family: var(--font-primary);
+}
+
+.profile-settings-container .settings-description {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.profile-settings-container .setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-settings-container .setting-item:last-child {
+    border-bottom: none;
+}
+
+.profile-settings-container .setting-info {
+    flex: 1;
+}
+
+.profile-settings-container .setting-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.profile-settings-container .setting-description {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+}
+
+/* Checkbox settings */
+.profile-settings-container .setting-item.checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.profile-settings-container .setting-checkbox {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--color-cyan);
+    flex-shrink: 0;
+}
+
+.profile-settings-container .setting-checkbox-label {
+    flex: 1;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Modal Form Styles */
+.modal-form {
+    padding: 20px 0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.form-value {
+    font-size: 14px;
+    color: var(--color-cyan);
+    padding: 12px;
+    background: rgba(78, 205, 196, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(78, 205, 196, 0.3);
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: var(--font-secondary);
+}
+
+.form-input:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--color-cyan);
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}
+
+.form-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.form-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 6px;
+}
+
+.form-error {
+    font-size: 12px;
+    color: var(--color-red);
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: rgba(255, 80, 80, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 80, 80, 0.3);
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    margin: 16px 0;
+}
+
+.password-strength-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.password-strength-fill {
+    height: 100%;
+    transition: all 0.3s ease;
+    border-radius: 3px;
+}
+
+.password-strength--weak {
+    width: 33%;
+    background: var(--color-red);
+}
+
+.password-strength--medium {
+    width: 66%;
+    background: var(--color-gold);
+}
+
+.password-strength--strong {
+    width: 100%;
+    background: var(--color-green);
+}
+
+.password-strength-text {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.password-strength-text.password-strength--weak {
+    color: var(--color-red);
+}
+
+.password-strength-text.password-strength--medium {
+    color: var(--color-gold);
+}
+
+.password-strength-text.password-strength--strong {
+    color: var(--color-green);
+}
+
+/* Password Requirements */
+.password-requirements {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.requirements-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 10px;
+}
+
+.requirements-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.requirements-list li {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 4px 0;
+    position: relative;
+    padding-left: 24px;
+}
+
+.requirements-list li::before {
+    content: '○';
+    position: absolute;
+    left: 0;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.requirements-list li.requirement-met {
+    color: var(--color-green);
+}
+
+.requirements-list li.requirement-met::before {
+    content: '✓';
+    color: var(--color-green);
+    font-weight: bold;
+}
+
+/* Responsive styles for ProfileSettings */
+@media (max-width: 768px) {
+    .profile-settings-container .settings-section {
+        padding: 16px;
+    }
+
+    .profile-settings-container .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .modal-form {
+        padding: 10px 0;
+    }
+}

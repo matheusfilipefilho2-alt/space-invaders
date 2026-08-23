@@ -2,6 +2,7 @@ import { NavigationHelper } from "./navigation.js";
 import { supabase } from "./supabase.js";
 import { walletUI } from "./components/WalletUI.js"; // Wallet UI
 import ProfileStats from "./components/profile/ProfileStats.js";
+import ProfileSettings from "./components/profile/ProfileSettings.js";
 
 // Elementos da UI
 const profileUsername = document.getElementById('profile-username');
@@ -249,6 +250,29 @@ async function loadInventory() {
 
 // Inicializar configurações
 function initSettings() {
+    const settingsPane = document.querySelector('[data-pane="settings"]');
+    if (!settingsPane || settingsPane.querySelector('.profile-settings-container')) return; // Already loaded
+
+    // Create ProfileSettings component
+    const profileSettings = new ProfileSettings({
+        userId: currentUser?.id,
+        userEmail: currentUser?.email || ''
+    });
+
+    const settingsElement = profileSettings.render();
+
+    // Insert ProfileSettings before the existing settings container
+    const existingSettings = settingsPane.querySelector('.settings-container');
+    if (existingSettings) {
+        settingsPane.insertBefore(settingsElement, existingSettings);
+    } else {
+        settingsPane.appendChild(settingsElement);
+    }
+
+    // Load user preferences
+    profileSettings.loadPreferences();
+
+    // Keep the old settings for audio/game preferences
     const saveBtn = document.getElementById('save-settings-btn');
     const resetBtn = document.getElementById('reset-settings-btn');
 
