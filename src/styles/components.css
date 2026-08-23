@@ -317,18 +317,16 @@
 }
 
 .ui-tabs__pane {
+    display: none;
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--transition-normal);
 }
 
 .ui-tabs__pane--active {
+    display: block;
     opacity: 1;
     pointer-events: auto;
-}
-
-.ui-tabs__pane.fade-in {
-    animation: fadeIn var(--transition-normal) ease-out;
+    animation: fadeIn var(--transition-fast) ease-out;
 }
 
 /* ========== SEARCHBAR COMPONENT ========== */
