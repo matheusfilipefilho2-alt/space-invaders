@@ -5,3 +5,16 @@
 *.log
 .env.local
 package-lock.json
+.env
+
+# Solana keypairs (NEVER commit these!)
+*.json
+!package.json
+!tsconfig.json
+!deployments/*.json
+/deployments/*.json
+
+# Wallet keys
+id.json
+keypair.json
+wallet.json

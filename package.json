@@ -1,0 +1,15 @@
+{
+  "name": "space-invaders",
+  "version": "1.0.0",
+  "description": "Space Invaders game with Solana blockchain integration",
+  "type": "module",
+  "scripts": {
+    "deploy:token:devnet": "node scripts/deploy-token.js --network devnet",
+    "deploy:token:mainnet": "node scripts/deploy-token.js --network mainnet-beta"
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.3.8",
+    "@solana/web3.js": "^1.87.6",
+    "jsdom": "^29.1.1"
+  }
+}
