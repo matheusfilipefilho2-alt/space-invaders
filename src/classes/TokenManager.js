@@ -26,6 +26,16 @@ function uint8ArrayToBase64(uint8Array) {
     return btoa(binary);
 }
 
+// Helper: Convert base64 to Uint8Array (browser-compatible)
+function base64ToUint8Array(base64) {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+}
+
 // Manual calculation of associated token address
 async function getAssociatedTokenAddressManual(mint, owner) {
     const [address] = await PublicKey.findProgramAddress(
@@ -249,68 +259,13 @@ class TokenManager {
         }
     }
 
-    // Transfer SPACE tokens from treasury to player wallet (TREASURY APPROACH)
+    // Transfer SPACE tokens from treasury to player wallet (TWO-STEP APPROACH)
     async transferFromTreasury(playerWallet, amount) {
-        const tokenMint = new PublicKey(SOLANA_CONFIG.spaceTokenMint);
-        const treasuryWallet = new PublicKey(SOLANA_CONFIG.creatorWallet); // Treasury = Creator wallet
-
-        // Get treasury's token account
-        const treasuryTokenAccount = await getAssociatedTokenAddressManual(
-            tokenMint,
-            treasuryWallet
-        );
-
-        // Get or create player's token account
-        const playerTokenAccount = await getAssociatedTokenAddressManual(
-            tokenMint,
-            playerWallet
-        );
-
-        // Check if player's account exists
-        let playerAccountExists = true;
-        try {
-            await getAccount(this.connection, playerTokenAccount);
-        } catch {
-            playerAccountExists = false;
-        }
-
-        const tx = new Transaction();
-
-        // Create player's account if needed (player pays for account creation)
-        if (!playerAccountExists) {
-            tx.add(
-                createAssociatedTokenAccountInstructionManual(
-                    playerWallet,           // Payer (player pays)
-                    playerTokenAccount,     // Account to create
-                    playerWallet,           // Owner (player)
-                    tokenMint              // Mint
-                )
-            );
-        }
-
-        // Transfer tokens from treasury to player
-        tx.add(
-            createTransferInstructionManual(
-                treasuryTokenAccount,      // Source (treasury)
-                playerTokenAccount,        // Destination (player)
-                treasuryWallet,           // Authority (treasury owner)
-                amount * 10**9            // Amount in lamports
-            )
-        );
-
-        // Player signs first (pays gas fee)
-        tx.feePayer = playerWallet;
-        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-
-        const signedTx = await window.solana.signTransaction(tx);
-        const serializedBytes = signedTx.serialize({ requireAllSignatures: false });
-        const serializedTx = uint8ArrayToBase64(serializedBytes);
-
-        // Send to backend for treasury signature
-        console.log('📤 Enviando transação para backend assinar...');
         const currentUser = NavigationHelper.getCurrentUser();
 
-        const response = await fetch(`${SOLANA_CONFIG.supabaseUrl}/functions/v1/solana-transfer-tokens`, {
+        // STEP 1: Ask backend to prepare transaction and sign with treasury
+        console.log('📝 Solicitando transação preparada do backend...');
+        const prepareResponse = await fetch(`${SOLANA_CONFIG.supabaseUrl}/functions/v1/solana-transfer-tokens`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -320,16 +275,49 @@ class TokenManager {
                 playerWallet: playerWallet.toString(),
                 amount: amount,
                 playerId: currentUser.id,
-                partiallySignedTx: serializedTx
+                step: 'prepare'
             })
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Backend transfer failed');
+        if (!prepareResponse.ok) {
+            const error = await prepareResponse.json();
+            throw new Error(error.error || 'Failed to prepare transaction');
         }
 
-        const result = await response.json();
+        const { partiallySignedTx } = await prepareResponse.json();
+
+        // STEP 2: Player signs the partially signed transaction
+        console.log('✍️ Solicitando assinatura do jogador...');
+        const txBytes = base64ToUint8Array(partiallySignedTx);
+        const tx = Transaction.from(txBytes);
+
+        // Player signs
+        const signedTx = await window.solana.signTransaction(tx);
+        const fullySignedTx = uint8ArrayToBase64(signedTx.serialize());
+
+        // STEP 3: Send fully signed transaction back to backend for submission
+        console.log('📤 Enviando transação assinada para submissão...');
+        const submitResponse = await fetch(`${SOLANA_CONFIG.supabaseUrl}/functions/v1/solana-transfer-tokens`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SOLANA_CONFIG.supabaseAnonKey}`
+            },
+            body: JSON.stringify({
+                playerWallet: playerWallet.toString(),
+                amount: amount,
+                playerId: currentUser.id,
+                step: 'submit',
+                signedTx: fullySignedTx
+            })
+        });
+
+        if (!submitResponse.ok) {
+            const error = await submitResponse.json();
+            throw new Error(error.error || 'Failed to submit transaction');
+        }
+
+        const result = await submitResponse.json();
         return result.signature;
     }
 

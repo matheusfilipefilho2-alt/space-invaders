@@ -8,6 +8,7 @@ import {
   TransactionInstruction,
   SystemProgram,
 } from 'npm:@solana/web3.js@1.87.6';
+import nacl from 'npm:tweetnacl@1.0.3';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -48,6 +49,16 @@ function base64ToUint8Array(base64: string): Uint8Array {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes;
+}
+
+// Helper: Convert Uint8Array to base64
+function uint8ArrayToBase64(uint8Array: Uint8Array): string {
+  let binary = '';
+  const len = uint8Array.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary);
 }
 
 // Helper: Create transfer instruction
@@ -118,7 +129,8 @@ serve(async (req) => {
   }
 
   try {
-    const { playerWallet, amount, playerId, partiallySignedTx } = await req.json();
+    const body = await req.json();
+    const { playerWallet, amount, playerId, step, signedTx } = body;
 
     if (!playerWallet || !amount || !playerId) {
       return new Response('Missing required fields', {
@@ -127,10 +139,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('📥 Transfer request:', { playerWallet, amount, playerId });
-
-    // Verify player owns this wallet (optional - add verification logic)
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    console.log('📥 Transfer request:', { playerWallet, amount, playerId, step });
 
     // Connect to Solana
     const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
@@ -147,32 +156,96 @@ serve(async (req) => {
     const treasuryTokenAccount = await getAssociatedTokenAddress(tokenMint, treasuryKeypair.publicKey);
     const playerTokenAccount = await getAssociatedTokenAddress(tokenMint, playerPublicKey);
 
-    // Deserialize the partially signed transaction from player
-    const tx = Transaction.from(base64ToUint8Array(partiallySignedTx));
+    if (step === 'prepare') {
+      // STEP 1: Backend creates transaction and signs with treasury
+      console.log('📝 Creating transaction...');
 
-    // Treasury signs the transaction
-    tx.partialSign(treasuryKeypair);
-
-    // Send the fully signed transaction
-    const signature = await connection.sendRawTransaction(tx.serialize());
-    console.log('📤 Transaction sent:', signature);
-
-    // Wait for confirmation
-    await connection.confirmTransaction(signature, 'confirmed');
-    console.log('✅ Transaction confirmed:', signature);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        signature,
-        playerWallet,
-        amount
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
+      // Check if player token account exists
+      let playerAccountExists = true;
+      try {
+        await connection.getAccountInfo(playerTokenAccount);
+      } catch {
+        playerAccountExists = false;
       }
-    );
+
+      const tx = new Transaction();
+
+      // Create player's account if needed
+      if (!playerAccountExists) {
+        console.log('➕ Adding create ATA instruction');
+        tx.add(
+          createAssociatedTokenAccountInstruction(
+            playerPublicKey,     // Payer
+            playerTokenAccount,  // ATA
+            playerPublicKey,     // Owner
+            tokenMint           // Mint
+          )
+        );
+      }
+
+      // Transfer tokens from treasury to player
+      console.log('💸 Adding transfer instruction');
+      tx.add(
+        createTransferInstruction(
+          treasuryTokenAccount,  // Source
+          playerTokenAccount,    // Destination
+          treasuryKeypair.publicKey,  // Owner
+          BigInt(amount) * BigInt(1e9)  // Amount
+        )
+      );
+
+      // Set fee payer and recent blockhash
+      tx.feePayer = playerPublicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      // Treasury signs first
+      tx.partialSign(treasuryKeypair);
+
+      console.log('✅ Treasury signed, returning to player');
+
+      // Return partially signed transaction
+      return new Response(
+        JSON.stringify({
+          success: true,
+          partiallySignedTx: uint8ArrayToBase64(tx.serialize({ requireAllSignatures: false }))
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+
+    } else if (step === 'submit') {
+      // STEP 2: Receive fully signed transaction from player and submit
+      console.log('📤 Submitting fully signed transaction...');
+
+      const tx = Transaction.from(base64ToUint8Array(signedTx));
+      const txSignature = await connection.sendRawTransaction(tx.serialize());
+
+      console.log('📤 Transaction sent:', txSignature);
+
+      // Wait for confirmation
+      await connection.confirmTransaction(txSignature, 'confirmed');
+      console.log('✅ Transaction confirmed:', txSignature);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          signature: txSignature,
+          playerWallet,
+          amount
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    } else {
+      return new Response('Invalid step', {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
 
   } catch (error) {
     console.error('❌ Transfer error:', error);
