@@ -194,7 +194,8 @@ class AbacatePayManager {
         });
 
         if (!response.success || !response.data?.id) {
-            throw new Error('Failed to create product');
+            // Include the original error message from the API
+            throw new Error(response.error || 'Failed to create product');
         }
 
         return response.data.id;
