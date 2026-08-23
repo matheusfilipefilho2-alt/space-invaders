@@ -176,20 +176,32 @@ class PvPLobby {
    * Show challenge modal
    */
   showChallengeModal(challengeData) {
+    console.log('🎯 showChallengeModal called:', challengeData);
     this.pendingChallenge = challengeData;
 
     const modal = document.getElementById('challenge-modal');
     const text = document.getElementById('challenge-text');
 
+    if (!modal || !text) {
+      console.error('❌ Modal elements not found!', { modal, text });
+      return;
+    }
+
     text.textContent = `${challengeData.challengerUsername} te desafiou para uma partida de ${challengeData.betAmount} moedas!`;
-    modal?.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    console.log('✅ Modal should be visible now');
   }
 
   /**
    * Respond to challenge
    */
   async respondToChallenge(accept) {
-    if (!this.pendingChallenge) return;
+    console.log('🔔 respondToChallenge called:', { accept, hasPendingChallenge: !!this.pendingChallenge });
+
+    if (!this.pendingChallenge) {
+      console.log('⚠️ No pending challenge, ignoring');
+      return;
+    }
 
     try {
       await this.matchmaker.respondToChallenge(this.pendingChallenge.challengeId, accept);
@@ -222,9 +234,9 @@ class PvPLobby {
     // Show game container
     document.getElementById('game-container')?.classList.remove('hidden');
 
-    // Create game instance
+    // Create game instance (convert matchId to string)
     const game = new PvPGame(
-      matchData.matchId,
+      String(matchData.matchId),
       matchData.isOfferer,
       matchData.gameSeed,
       'game-canvas'
