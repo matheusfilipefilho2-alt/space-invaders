@@ -441,7 +441,34 @@ class PvPGame {
       this.connection.close();
     }
 
-    // TODO: Report result to backend
+    // Report match result to backend
+    const duration = Math.floor((Date.now() - this.gameStartTime) / 1000);
+    this.reportResult(winner, duration);
+  }
+
+  /**
+   * Report match result to backend
+   */
+  async reportResult(winner, duration) {
+    try {
+      const response = await fetch(`${window.location.origin}/functions/v1/pvp-validate-match`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matchId: this.matchId,
+          playerId: this.localPlayer.id,
+          winnerId: winner === 'local' ? this.localPlayer.id : this.remotePlayer.id,
+          player1Kills: this.localPlayer.kills,
+          player2Kills: this.remotePlayer.kills,
+          duration
+        })
+      });
+
+      const result = await response.json();
+      console.log('[PvPGame] Match result submitted:', result);
+    } catch (error) {
+      console.error('[PvPGame] Failed to report result:', error);
+    }
   }
 
   /**
