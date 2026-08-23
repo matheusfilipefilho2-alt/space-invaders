@@ -26,10 +26,13 @@ const __dirname = path.dirname(__filename);
 
 // Parse command line arguments
 const args = process.argv.slice(2);
+const networkIndex = args.indexOf('--network');
+const keypairIndex = args.indexOf('--keypair');
+
 const networkArg = args.find(arg => arg.startsWith('--network='))?.split('=')[1] ||
-                   (args[args.indexOf('--network') + 1]) || 'devnet';
+                   (networkIndex >= 0 && args[networkIndex + 1]) || 'devnet';
 const keypairArg = args.find(arg => arg.startsWith('--keypair='))?.split('=')[1] ||
-                   (args[args.indexOf('--keypair') + 1]);
+                   (keypairIndex >= 0 && args[keypairIndex + 1]);
 
 const NETWORK = networkArg;
 const RPC_ENDPOINT = NETWORK === 'devnet'
