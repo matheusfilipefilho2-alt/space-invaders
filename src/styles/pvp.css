@@ -1,0 +1,120 @@
+.pvp-lobby {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.pvp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.mode-selection {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 15px;
+  font-size: 18px;
+  border: 2px solid #333;
+  background: #222;
+  color: #fff;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: #0066cc;
+  border-color: #0066cc;
+}
+
+.bet-selector {
+  margin-bottom: 20px;
+}
+
+.bet-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.bet-btn {
+  padding: 20px;
+  font-size: 16px;
+  background: #333;
+  color: #fff;
+  border: 2px solid #555;
+  cursor: pointer;
+}
+
+.bet-btn:hover {
+  background: #444;
+}
+
+.queue-status {
+  text-align: center;
+  padding: 40px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #333;
+  border-top-color: #0066cc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.hidden {
+  display: none;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #222;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+}

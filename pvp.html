@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PvP Arena - Space Invaders</title>
+  <link rel="stylesheet" href="src/styles/pvp.css">
+</head>
+<body>
+  <div class="pvp-lobby">
+    <header class="pvp-header">
+      <h1>⚔️ PvP Arena</h1>
+      <button id="back-btn" class="btn-secondary">← Voltar ao Menu</button>
+    </header>
+
+    <main class="pvp-main">
+      <!-- Mode Selection -->
+      <section class="mode-selection">
+        <button id="quick-match-btn" class="mode-btn active">
+          🎯 Partida Rápida
+        </button>
+        <button id="challenge-friend-btn" class="mode-btn">
+          👥 Desafiar Amigo
+        </button>
+      </section>
+
+      <!-- Quick Match Section -->
+      <section id="quick-match-section" class="pvp-section active">
+        <div class="bet-selector">
+          <h3>Escolha sua Aposta</h3>
+          <div class="bet-options">
+            <button class="bet-btn" data-bet="10">10 Moedas</button>
+            <button class="bet-btn" data-bet="50">50 Moedas</button>
+            <button class="bet-btn" data-bet="100">100 Moedas</button>
+            <button class="bet-btn" data-bet="500">500 Moedas</button>
+          </div>
+        </div>
+
+        <div id="queue-status" class="queue-status hidden">
+          <div class="spinner"></div>
+          <p>Procurando oponente...</p>
+          <button id="cancel-queue-btn" class="btn-danger">Cancelar</button>
+        </div>
+      </section>
+
+      <!-- Challenge Friend Section -->
+      <section id="challenge-section" class="pvp-section hidden">
+        <div class="challenge-input">
+          <h3>Desafiar Jogador</h3>
+          <input type="text" id="friend-username" placeholder="Nome do jogador">
+          <div class="bet-selector">
+            <h4>Aposta</h4>
+            <select id="challenge-bet">
+              <option value="10">10 Moedas</option>
+              <option value="50">50 Moedas</option>
+              <option value="100">100 Moedas</option>
+              <option value="500">500 Moedas</option>
+            </select>
+          </div>
+          <button id="send-challenge-btn" class="btn-primary">Enviar Desafio</button>
+        </div>
+      </section>
+
+      <!-- Stats Sidebar -->
+      <aside class="stats-sidebar">
+        <div class="elo-card">
+          <h3>Ranking ELO</h3>
+          <div id="elo-display" class="elo-value">1000</div>
+          <p class="elo-rank">Iniciante</p>
+        </div>
+
+        <div class="match-history">
+          <h3>Histórico Recente</h3>
+          <div id="history-list" class="history-items">
+            <!-- Match history items -->
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Challenge Modal -->
+  <div id="challenge-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Desafio Recebido!</h2>
+      <p id="challenge-text"></p>
+      <div class="modal-actions">
+        <button id="accept-challenge-btn" class="btn-success">Aceitar</button>
+        <button id="decline-challenge-btn" class="btn-danger">Recusar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/pvp/PvPLobby.js"></script>
+</body>
+</html>
