@@ -63,7 +63,7 @@ serve(async (req) => {
     const payload = JSON.parse(body);
     console.log('📥 Webhook received:', {
       event: payload.event,
-      checkoutId: payload.data?.id
+      checkoutId: payload.data?.transparent?.id
     });
     console.log('📦 Full payload:', JSON.stringify(payload, null, 2));
 
@@ -76,8 +76,14 @@ serve(async (req) => {
       });
     }
 
-    // Extract metadata
-    const { metadata } = payload.data;
+    // Extract metadata from transparent object
+    const transparent = payload.data.transparent;
+    if (!transparent) {
+      console.error('❌ Missing transparent data');
+      return new Response('Bad request', { status: 400 });
+    }
+
+    const { metadata } = transparent;
     if (!metadata || !metadata.playerId || !metadata.coinAmount) {
       console.error('❌ Missing required metadata');
       return new Response('Bad request', { status: 400 });
@@ -85,7 +91,7 @@ serve(async (req) => {
 
     const playerId = metadata.playerId;
     const coinAmount = metadata.coinAmount;
-    const checkoutId = payload.data.id;
+    const checkoutId = transparent.id;
 
     console.log('💰 Crediting coins:', {
       playerId,
