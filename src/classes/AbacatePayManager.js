@@ -283,25 +283,35 @@ class AbacatePayManager {
             throw new Error('Invalid price range');
         }
 
-        // Get/create customer
-        const { customerId } = await this.getOrCreateCustomer(player);
+        // Validate player has email
+        if (!player.email || player.email === '') {
+            throw new Error('Player email is required. Please update your profile.');
+        }
+
+        if (!this._isValidEmail(player.email)) {
+            throw new Error('Invalid email format. Please update your profile.');
+        }
 
         // Create transparent checkout (PIX)
         try {
             const response = await this._callAbacatePay('/transparents/create', {
                 method: 'POST',
                 body: JSON.stringify({
-                    amount: this._toCentavos(config.price),
-                    method: 'PIX',
-                    expiresIn: 1800,  // 30 minutes
-                    description: `${config.coins} moedas - Space Invaders`,
-                    customer: customerId,
-                    metadata: {
-                        playerId: player.id,
-                        playerUsername: player.username,
-                        coinPackId: coinPackId,
-                        coinAmount: config.coins,
-                        gameTimestamp: new Date().toISOString()
+                    data: {
+                        amount: this._toCentavos(config.price),
+                        description: `${config.coins} moedas - Space Invaders`,
+                        expiresIn: 1800,  // 30 minutes
+                        customer: {
+                            name: player.username || 'Space Invaders Player',
+                            email: player.email
+                        },
+                        metadata: {
+                            playerId: player.id,
+                            playerUsername: player.username,
+                            coinPackId: coinPackId,
+                            coinAmount: config.coins,
+                            gameTimestamp: new Date().toISOString()
+                        }
                     }
                 })
             });
