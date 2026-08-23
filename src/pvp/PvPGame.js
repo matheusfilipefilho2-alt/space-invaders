@@ -451,7 +451,7 @@ class PvPGame {
    */
   async reportResult(winner, duration) {
     try {
-      const response = await fetch(`${window.location.origin}/functions/v1/pvp-validate-match`, {
+      const response = await fetch('https://apbbhuhtdqfwfmlzxnwv.supabase.co/functions/v1/pvp-validate-match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

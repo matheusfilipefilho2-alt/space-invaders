@@ -14,7 +14,7 @@ const ICE_SERVERS = [
   { urls: 'stun:stun1.l.google.com:19302' },
 ];
 
-const SIGNALING_URL = window.location.origin + '/functions/v1/pvp-signaling';
+const SIGNALING_URL = 'https://apbbhuhtdqfwfmlzxnwv.supabase.co/functions/v1/pvp-signaling';
 
 class WebRTCConnection {
   /**
