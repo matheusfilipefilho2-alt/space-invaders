@@ -1,12 +1,30 @@
 // Access Solana libraries from CDN globals
-const { Transaction, PublicKey } = window.solanaWeb3 || {};
+const { Transaction, PublicKey, SystemProgram } = window.solanaWeb3 || {};
 const {
     createMintToInstruction,
     createBurnInstruction,
-    getAssociatedTokenAddress,
     createAssociatedTokenAccountInstruction,
-    getAccount
+    getAccount,
+    TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
 } = window.splToken || {};
+
+// SPL Token Program IDs (constants)
+const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
+// Manual calculation of associated token address (replacement for getAssociatedTokenAddressManual)
+async function getAssociatedTokenAddressManualManual(mint, owner) {
+    const [address] = await PublicKey.findProgramAddress(
+        [
+            owner.toBuffer(),
+            SPL_TOKEN_PROGRAM_ID.toBuffer(),
+            mint.toBuffer(),
+        ],
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+    return address;
+}
 import walletManager from './SolanaWalletManager.js';
 import SOLANA_CONFIG from '../config/solana-config.js';
 import { supabase } from '../supabase.js';
@@ -146,7 +164,7 @@ class TokenManager {
         const mintAuthority = new PublicKey(SOLANA_CONFIG.creatorWallet);
 
         // Get or create player's token account
-        const playerTokenAccount = await getAssociatedTokenAddress(
+        const playerTokenAccount = await getAssociatedTokenAddressManualManual(
             tokenMint,
             playerWallet
         );
@@ -286,7 +304,7 @@ class TokenManager {
     async burnTokens(playerWallet, amount) {
         const tokenMint = new PublicKey(SOLANA_CONFIG.spaceTokenMint);
 
-        const playerTokenAccount = await getAssociatedTokenAddress(
+        const playerTokenAccount = await getAssociatedTokenAddressManual(
             tokenMint,
             playerWallet
         );
@@ -315,7 +333,7 @@ class TokenManager {
     async getTokenBalance(playerWallet) {
         try {
             const tokenMint = new PublicKey(SOLANA_CONFIG.spaceTokenMint);
-            const playerTokenAccount = await getAssociatedTokenAddress(
+            const playerTokenAccount = await getAssociatedTokenAddressManual(
                 tokenMint,
                 playerWallet || walletManager.getPublicKey()
             );
