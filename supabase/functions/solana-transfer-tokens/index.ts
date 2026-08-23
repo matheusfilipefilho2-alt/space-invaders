@@ -80,27 +80,34 @@ function createAssociatedTokenAccountInstruction(
   });
 }
 
+// CORS headers helper
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-      }
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', {
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   try {
     const { playerWallet, amount, playerId, partiallySignedTx } = await req.json();
 
     if (!playerWallet || !amount || !playerId) {
-      return new Response('Missing required fields', { status: 400 });
+      return new Response('Missing required fields', {
+        status: 400,
+        headers: corsHeaders
+      });
     }
 
     console.log('📥 Transfer request:', { playerWallet, amount, playerId });
@@ -145,7 +152,7 @@ serve(async (req) => {
         amount
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       }
     );
@@ -155,7 +162,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }
     );
