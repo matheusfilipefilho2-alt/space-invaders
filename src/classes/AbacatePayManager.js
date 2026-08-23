@@ -292,6 +292,7 @@ class AbacatePayManager {
                 method: 'POST',
                 body: JSON.stringify({
                     amount: this._toCentavos(config.price),
+                    method: 'PIX',
                     expiresIn: 1800,  // 30 minutes
                     description: `${config.coins} moedas - Space Invaders`,
                     customer: customerId,
