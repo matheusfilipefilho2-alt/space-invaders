@@ -350,10 +350,27 @@ window.openPixModal = async function(item) {
     showProcessingModal('Gerando PIX...');
 
     try {
-        // Create real PIX payment
+        // Fetch fresh user data from database to ensure we have email and latest info
+        const { data: freshUser, error: fetchError } = await supabase
+            .from('players')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (fetchError || !freshUser) {
+            closeProcessingModal();
+            console.error('❌ Failed to fetch user data:', fetchError);
+            showResultModal('❌ Erro', 'Erro ao carregar dados do usuário.', true);
+            return;
+        }
+
+        // Update localStorage with fresh data
+        NavigationHelper.setCurrentUser(freshUser);
+
+        // Create real PIX payment with fresh user data
         const payment = await abacatePayManager.createPixPayment(
             item.id,
-            currentUser
+            freshUser
         );
 
         closeProcessingModal();
