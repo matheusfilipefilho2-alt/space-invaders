@@ -3,6 +3,9 @@ import RankingManager from "./classes/RankingManager.js";
 import AchievementSystem from "./classes/AchievementSystem.js";
 import { supabase } from "./supabase.js";
 import { walletUI } from "./components/WalletUI.js"; // Wallet UI
+import RankingList from "./components/ranking/RankingList.js";
+import UISearchBar from "./components/ui/SearchBar.js";
+import Toast from "./components/ui/Toast.js";
 
 // Inicializar managers
 const rankingManager = new RankingManager();
@@ -11,8 +14,20 @@ let achievementSystem = null;
 // Elementos da UI
 const currentUserName = document.getElementById('current-user-name');
 const currentUserScore = document.getElementById('current-user-score');
-const rankingList = document.querySelector('.ranking-list');
+const rankingContainer = document.querySelector('.ranking-container');
+const searchContainer = document.querySelector('.ranking-search-container');
+const scrollToMeBtn = document.getElementById('scroll-to-me-btn');
 const shopCoinIndicator = document.getElementById('shop-coin-indicator');
+
+// Initialize components
+let rankingList = null;
+let searchBar = null;
+
+// Toast container setup
+const toastContainer = document.createElement('div');
+toastContainer.id = 'toast-container';
+toastContainer.className = 'toast-container';
+document.body.appendChild(toastContainer);
 
 // Configurar usuário atual
 const currentUser = NavigationHelper.getCurrentUser();
@@ -98,44 +113,59 @@ async function loadCurrentUserInfo() {
 // Função para carregar e exibir o ranking
 async function loadRanking() {
   if (!rankingList) return;
-  
+
   try {
-    // Mostrar loading
-    rankingList.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Carregando ranking...</div>';
-    
-    // Buscar ranking do banco de dados
+    // Show loading state
+    rankingList.showLoading(10);
+
+    // Fetch ranking from database
     const ranking = await rankingManager.getRanking();
-    
+
     if (!ranking || ranking.length === 0) {
-      rankingList.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Nenhum jogador encontrado</div>';
+      rankingList.updatePlayers([]);
       return;
     }
-    
-    // Gerar HTML do ranking
-    const rankingHTML = ranking.map((player, index) => {
-      const position = index + 1;
-      const isCurrentUser = currentUser && player.id === currentUser.id;
-      const medal = position <= 3 ? ['🥇', '🥈', '🥉'][position - 1] : `#${position}`;
-      
-      return `
-        <div class="ranking-item ${isCurrentUser ? 'current-user' : ''}">
-          <div class="ranking-position">${medal}</div>
-          <div class="ranking-player">
-            <div class="player-name">${player.username}</div>
-            <div class="player-level">Nível ${player.current_level || 1}</div>
-          </div>
-          <div class="ranking-score">${player.high_score || 0}</div>
-          <div class="ranking-coins">🪙 ${player.coins || 0}</div>
-        </div>
-      `;
-    }).join('');
-    
-    rankingList.innerHTML = rankingHTML;
-    
+
+    // Update list with player data
+    rankingList.updatePlayers(ranking);
+
+    // Show scroll-to-me button if current user is in ranking
+    if (currentUser && ranking.some(p => p.id === currentUser.id)) {
+      scrollToMeBtn.style.display = 'flex';
+    }
+
   } catch (error) {
     console.error('Erro ao carregar ranking:', error);
-    rankingList.innerHTML = '<div style="text-align: center; color: #ff4757; padding: 20px;">Erro ao carregar ranking</div>';
+
+    // Show error toast
+    const errorToast = new Toast({
+      type: 'error',
+      message: 'Erro ao carregar ranking',
+      duration: 3000
+    });
+    const toastEl = errorToast.render();
+    toastContainer.appendChild(toastEl);
+    errorToast.show();
+
+    // Show empty state
+    rankingList.updatePlayers([]);
   }
+}
+
+// Function to refresh ranking manually
+async function refreshRanking() {
+  console.log('🔄 Atualizando ranking...');
+
+  const refreshToast = new Toast({
+    type: 'info',
+    message: 'Atualizando ranking...',
+    duration: 2000
+  });
+  const toastEl = refreshToast.render();
+  toastContainer.appendChild(toastEl);
+  refreshToast.show();
+
+  await loadRanking();
 }
 
 // Função para carregar conquistas do usuário (referenciada no HTML)
@@ -168,6 +198,47 @@ window.loadUserAchievements = async function() {
   }
 };
 
+// Initialize UI components
+function initializeComponents() {
+  // Initialize ranking list component
+  if (rankingContainer && currentUser) {
+    rankingList = new RankingList({
+      container: rankingContainer,
+      currentUserId: currentUser.id,
+      onRefresh: refreshRanking
+    });
+
+    // Render the ranking list
+    rankingContainer.innerHTML = '';
+    rankingContainer.appendChild(rankingList.render());
+  }
+
+  // Initialize search bar component
+  if (searchContainer) {
+    searchBar = new UISearchBar({
+      placeholder: 'Buscar jogador...',
+      onSearch: (query) => {
+        if (rankingList) {
+          rankingList.setSearchQuery(query);
+        }
+      },
+      debounceTime: 300
+    });
+
+    // Render the search bar
+    searchContainer.appendChild(searchBar.render());
+  }
+
+  // Scroll to me button
+  if (scrollToMeBtn) {
+    scrollToMeBtn.addEventListener('click', () => {
+      if (rankingList) {
+        rankingList.scrollToMe();
+      }
+    });
+  }
+}
+
 // Event listeners para botões
 function setupEventListeners() {
   // Botão Jogar Agora
@@ -177,7 +248,7 @@ function setupEventListeners() {
       NavigationHelper.navigateToGame();
     });
   }
-  
+
   // Botão Sair
   const logoutButton = document.querySelector('.button-logout');
   if (logoutButton) {
@@ -190,23 +261,26 @@ function setupEventListeners() {
 // Função de inicialização principal
 async function initializeRankingPage() {
   console.log('🏆 Inicializando página de ranking...');
-  
+
   // Verificar se usuário está logado
   if (!currentUser) {
     console.warn('⚠️ Usuário não logado, redirecionando...');
     NavigationHelper.navigateToLogin();
     return;
   }
-  
+
+  // Initialize UI components first
+  initializeComponents();
+
   // Configurar event listeners
   setupEventListeners();
-  
+
   // Carregar dados em paralelo
   await Promise.all([
     loadCurrentUserInfo(),
     loadRanking()
   ]);
-  
+
   console.log('✅ Página de ranking inicializada com sucesso');
 }
 

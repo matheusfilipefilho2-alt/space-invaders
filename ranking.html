@@ -6,6 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="src/styles/wallet-ui.css" />
+    <link rel="stylesheet" href="src/styles/pages/ranking.css" />
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <title>Ranking - Space Invaders</title>
@@ -53,12 +54,21 @@
                 </div>
             </div>
             
+            <!-- Search Bar -->
+            <div class="ranking-search-container">
+                <!-- Search bar component will be rendered here -->
+            </div>
+
             <!-- Lista de ranking -->
             <div class="ranking-container">
-                <div class="ranking-list">
-                    <!-- O ranking será carregado aqui -->
-                </div>
+                <!-- Ranking list component will be rendered here -->
             </div>
+
+            <!-- Scroll to Me Button -->
+            <button class="scroll-to-me-btn" id="scroll-to-me-btn" style="display: none;">
+                <span class="btn-icon">📍</span>
+                <span>MINHA POSIÇÃO</span>
+            </button>
             
             <!-- Botões de ação ATUALIZADOS -->
             <div class="menu-buttons">
