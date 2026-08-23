@@ -53,6 +53,12 @@ class PvPMatchmaker {
 
     this.currentBet = betAmount;
 
+    // Remove any existing queue entries for this player first
+    await this.supabase
+      .from('pvp_queue')
+      .delete()
+      .eq('player_id', this.currentUser.id);
+
     // Insert into queue
     const { data, error } = await this.supabase
       .from('pvp_queue')
