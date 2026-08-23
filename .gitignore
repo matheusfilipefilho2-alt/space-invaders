@@ -17,4 +17,4 @@ package-lock.json
 # Wallet keys
 id.json
 keypair.json
-wallet.json
+wallet.json.env

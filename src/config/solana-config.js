@@ -10,10 +10,14 @@ export const SOLANA_CONFIG = {
         ? 'https://api.devnet.solana.com'
         : 'https://api.mainnet-beta.solana.com',
 
+    // Supabase (for Edge Functions)
+    supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://apbbhuhtdqfwfmlzxnwv.supabase.co',
+    supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+
     // SPL Token (SPACE)
     // TODO: Deploy token and update these addresses
     spaceTokenMint: NETWORK === 'devnet'
-        ? null  // Deploy token first
+        ? '8agg22nPJnCZ91gxDYc1JikpuQJ2rXiJrEpxK2L8jyZo'  // Deploy token first
         : null, // Deploy token first
 
     // NFT Collection
@@ -31,11 +35,11 @@ export const SOLANA_CONFIG = {
     // Project Wallets
     // TODO: Update with your actual wallet addresses
     creatorWallet: NETWORK === 'devnet'
-        ? null  // Your devnet wallet
+        ? 'HTkgYAFgfFfEk1rZEj4sXpnZCNKFojJbHXaLKM5UoByH'  // Your devnet wallet
         : null, // Your mainnet wallet
 
     marketplaceFeeWallet: NETWORK === 'devnet'
-        ? null  // Your devnet wallet
+        ? 'HTkgYAFgfFfEk1rZEj4sXpnZCNKFojJbHXaLKM5UoByH'  // Your devnet wallet
         : null, // Your mainnet wallet
 
     // Royalties

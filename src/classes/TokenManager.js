@@ -78,6 +78,26 @@ function createBurnInstructionManual(account, mint, owner, amount) {
         data,
     });
 }
+
+// Manual creation of transfer instruction
+function createTransferInstructionManual(source, destination, owner, amount) {
+    const keys = [
+        { pubkey: source, isSigner: false, isWritable: true },
+        { pubkey: destination, isSigner: false, isWritable: true },
+        { pubkey: owner, isSigner: true, isWritable: false },
+    ];
+
+    // Instruction data: [instruction_type (1 byte), amount (8 bytes)]
+    const data = Buffer.alloc(9);
+    data.writeUInt8(3, 0); // Transfer instruction = 3
+    data.writeBigUInt64LE(BigInt(amount), 1);
+
+    return new TransactionInstruction({
+        keys,
+        programId: SPL_TOKEN_PROGRAM_ID,
+        data,
+    });
+}
 import walletManager from './SolanaWalletManager.js';
 import SOLANA_CONFIG from '../config/solana-config.js';
 import { supabase } from '../supabase.js';
@@ -158,14 +178,14 @@ class TokenManager {
 
             console.log('✅ Moedas deduzidas. Novo saldo:', withdrawResult.new_balance);
 
-            // Mint tokens on Solana
-            console.log('⛓️ Mintando SPACE tokens...');
+            // Transfer tokens from treasury to player
+            console.log('⛓️ Transferindo SPACE tokens da treasury...');
             let signature;
             try {
-                signature = await this.mintTokens(playerWallet, amount);
-                console.log('✅ Tokens mintados! TX:', signature);
-            } catch (mintError) {
-                console.error('❌ Erro ao mintar tokens, revertendo transação...', mintError);
+                signature = await this.transferFromTreasury(playerWallet, amount);
+                console.log('✅ Tokens transferidos! TX:', signature);
+            } catch (transferError) {
+                console.error('❌ Erro ao transferir tokens, revertendo transação...', transferError);
 
                 // ROLLBACK: Restore coins to database
                 try {
@@ -177,10 +197,10 @@ class TokenManager {
                     console.log('✅ Rollback completo: moedas restauradas');
                 } catch (rollbackError) {
                     console.error('❌ CRITICAL: Rollback falhou!', rollbackError);
-                    throw new Error('Mint failed and rollback failed. Contact support. Original error: ' + mintError.message);
+                    throw new Error('Transfer failed and rollback failed. Contact support. Original error: ' + transferError.message);
                 }
 
-                throw new Error('Mint failed: ' + mintError.message);
+                throw new Error('Transfer failed: ' + transferError.message);
             }
 
             // Log transaction
@@ -211,56 +231,87 @@ class TokenManager {
         }
     }
 
-    // Mint SPACE tokens to player wallet
-    async mintTokens(playerWallet, amount) {
+    // Transfer SPACE tokens from treasury to player wallet (TREASURY APPROACH)
+    async transferFromTreasury(playerWallet, amount) {
         const tokenMint = new PublicKey(SOLANA_CONFIG.spaceTokenMint);
-        const mintAuthority = new PublicKey(SOLANA_CONFIG.creatorWallet);
+        const treasuryWallet = new PublicKey(SOLANA_CONFIG.creatorWallet); // Treasury = Creator wallet
+
+        // Get treasury's token account
+        const treasuryTokenAccount = await getAssociatedTokenAddressManual(
+            tokenMint,
+            treasuryWallet
+        );
 
         // Get or create player's token account
-        const playerTokenAccount = await getAssociatedTokenAddressManualManual(
+        const playerTokenAccount = await getAssociatedTokenAddressManual(
             tokenMint,
             playerWallet
         );
 
-        // Check if account exists
-        let accountExists = true;
+        // Check if player's account exists
+        let playerAccountExists = true;
         try {
             await getAccount(this.connection, playerTokenAccount);
         } catch {
-            accountExists = false;
+            playerAccountExists = false;
         }
 
         const tx = new Transaction();
 
-        // Create account if needed
-        if (!accountExists) {
+        // Create player's account if needed (player pays for account creation)
+        if (!playerAccountExists) {
             tx.add(
                 createAssociatedTokenAccountInstructionManual(
-                    playerWallet,           // Payer
+                    playerWallet,           // Payer (player pays)
                     playerTokenAccount,     // Account to create
-                    playerWallet,           // Owner
+                    playerWallet,           // Owner (player)
                     tokenMint              // Mint
                 )
             );
         }
 
-        // Mint tokens
-        // NOTE: This transaction requires BOTH player signature (for gas fees) AND mint authority signature.
-        // Currently, only the player signs via window.solana.signTransaction().
-        // This will FAIL on-chain until a backend service with mint authority is implemented to co-sign.
-        // TODO: Implement backend mint authority service for production use.
+        // Transfer tokens from treasury to player
         tx.add(
-            createMintToInstructionManual(
-                tokenMint,
-                playerTokenAccount,
-                mintAuthority,
-                amount * 10**9  // Convert to lamports (9 decimals)
+            createTransferInstructionManual(
+                treasuryTokenAccount,      // Source (treasury)
+                playerTokenAccount,        // Destination (player)
+                treasuryWallet,           // Authority (treasury owner)
+                amount * 10**9            // Amount in lamports
             )
         );
 
-        // Sign and send (player pays gas fee)
+        // Player signs first (pays gas fee)
         tx.feePayer = playerWallet;
         tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+        const signedTx = await window.solana.signTransaction(tx);
+        const serializedTx = signedTx.serialize({ requireAllSignatures: false }).toString('base64');
+
+        // Send to backend for treasury signature
+        console.log('📤 Enviando transação para backend assinar...');
+        const currentUser = NavigationHelper.getCurrentUser();
+
+        const response = await fetch(`${SOLANA_CONFIG.supabaseUrl}/functions/v1/solana-transfer-tokens`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SOLANA_CONFIG.supabaseAnonKey}`
+            },
+            body: JSON.stringify({
+                playerWallet: playerWallet.toString(),
+                amount: amount,
+                playerId: currentUser.id,
+                partiallySignedTx: serializedTx
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Backend transfer failed');
+        }
+
+        const result = await response.json();
+        return result.signature;
 
         // Request signature from wallet
         // LIMITATION: Only player signs here. Mint authority signature is missing.
