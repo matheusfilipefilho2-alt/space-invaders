@@ -117,26 +117,34 @@ serve(async (req) => {
       }
 
       case 'get_offer': {
-        const { data: room } = await supabase
+        const { data: room, error } = await supabase
           .from('pvp_signaling')
           .select('offer')
           .eq('room_id', roomId)
           .single();
 
-        console.log(`Get offer for room ${roomId}: ${room?.offer ? 'found' : 'not found'}`);
+        if (error) {
+          console.error(`Get offer ERROR for room ${roomId}:`, error);
+        }
+
+        console.log(`Get offer for room ${roomId}: ${room?.offer ? 'found' : 'not found'}`, { error: error?.message });
         return new Response(JSON.stringify({ offer: room?.offer || null }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
       case 'get_answer': {
-        const { data: room } = await supabase
+        const { data: room, error } = await supabase
           .from('pvp_signaling')
           .select('answer')
           .eq('room_id', roomId)
           .single();
 
-        console.log(`Get answer for room ${roomId}: ${room?.answer ? 'found' : 'not found'}`);
+        if (error) {
+          console.error(`Get answer ERROR for room ${roomId}:`, error);
+        }
+
+        console.log(`Get answer for room ${roomId}: ${room?.answer ? 'found' : 'not found'}`, { error: error?.message });
         return new Response(JSON.stringify({ answer: room?.answer || null }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
