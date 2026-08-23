@@ -213,8 +213,14 @@ class PvPLobby {
   startMatch(matchData) {
     console.log('Starting match:', matchData);
 
-    // Hide lobby, start game
+    // Hide lobby
     document.querySelector('.pvp-lobby')?.classList.add('hidden');
+
+    // Hide modal if open
+    document.getElementById('challenge-modal')?.classList.add('hidden');
+
+    // Show game container
+    document.getElementById('game-container')?.classList.remove('hidden');
 
     // Create game instance
     const game = new PvPGame(
