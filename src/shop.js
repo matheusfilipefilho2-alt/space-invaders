@@ -972,6 +972,10 @@ async function init() {
     // Initialize new component system
     await initShopComponents();
 
+    // ⭐ SEMPRE buscar moedas atualizadas do banco ao abrir a loja
+    console.log('🔄 Buscando moedas do banco de dados...');
+    await reloadPlayerCoins();
+
     // Update user coins display
     updateUserCoins();
 
