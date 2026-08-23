@@ -167,9 +167,24 @@ class RankingManager {
     }
 
     try {
-      const previousHighScore = this.currentUser.high_score || 0;
-      const previousLevelId = this.currentUser.level_id || 1;
-      const previousCoins = this.currentUser.coins || 0;
+      // ⭐ CRÍTICO: Buscar dados FRESCOS do Supabase antes de calcular recompensas
+      console.log("🔄 Buscando dados frescos do Supabase antes de atualizar...");
+      const { data: freshUser, error: fetchError } = await supabase
+        .from("players")
+        .select("*")
+        .eq("id", this.currentUser.id)
+        .single();
+
+      if (fetchError || !freshUser) {
+        console.error("❌ Erro ao buscar dados frescos:", fetchError);
+        return { success: false, rewards: null, error: "Erro ao buscar dados do jogador" };
+      }
+
+      console.log("✅ Dados frescos obtidos. Coins no banco:", freshUser.coins);
+
+      const previousHighScore = freshUser.high_score || 0;
+      const previousLevelId = freshUser.level_id || 1;
+      const previousCoins = freshUser.coins || 0;
 
       // Processar recompensas sempre baseado na pontuação da partida
       const rewards = this.rewardSystem.processGameRewards(
@@ -189,36 +204,42 @@ class RankingManager {
 
       let updated = false;
 
-      // ⭐ CORREÇÃO: Incluir moedas ganhas na partida
-      const newCoinsTotal = (this.currentUser.coins || 0) + (rewards.coinsEarned || 0);
-      
+      // ⭐ FONTE DE VERDADE: Usar coins do banco, não do localStorage
+      const newCoinsTotal = previousCoins + (rewards.coinsEarned || 0);
+
       // Preparar dados para atualização (SEM triggers SQL problemáticos)
       const updateData = {
-        coins: parseInt(newCoinsTotal), // Incluir moedas ganhas na partida
+        coins: parseInt(newCoinsTotal), // Baseado em dados frescos do banco
         level_id: parseInt(newLevelId), // Calculado localmente
-        total_games: parseInt((this.currentUser.total_games || 0) + 1),
+        total_games: parseInt((freshUser.total_games || 0) + 1),
         last_played: new Date().toISOString(),
         high_score: parseInt(finalHighScore), // Sempre salvar o maior score
       };
 
       // Log para debug
       console.log("📊 Dados para atualização:", updateData);
+      console.log("💰 Cálculo de moedas:", {
+        coinsNoBanco: previousCoins,
+        coinsGanhas: rewards.coinsEarned,
+        novoTotal: newCoinsTotal
+      });
 
       // ⭐ ATUALIZAÇÃO SEGURA: Usar .eq() específico para evitar triggers
-      const { error } = await supabase
+      const { data: updatedData, error } = await supabase
         .from("players")
         .update(updateData)
         .eq("id", this.currentUser.id)
-        .select(); // Forçar retorno para confirmar atualização
+        .select()
+        .single(); // Retornar dados atualizados
 
-      if (!error) {
+      if (!error && updatedData) {
         console.log("✅ Dados atualizados com sucesso no banco!");
 
-        // Atualizar dados locais APÓS sucesso no banco
-        this.currentUser.high_score = finalHighScore;
-        this.currentUser.level_id = newLevelId;
-        this.currentUser.total_games = (this.currentUser.total_games || 0) + 1;
-        this.currentUser.coins = newCoinsTotal; // Usar o total calculado
+        // Atualizar dados locais com os dados RETORNADOS do banco
+        this.currentUser.high_score = updatedData.high_score;
+        this.currentUser.level_id = updatedData.level_id;
+        this.currentUser.total_games = updatedData.total_games;
+        this.currentUser.coins = updatedData.coins; // Usar valor do banco
 
         updated = true;
       } else {
@@ -236,8 +257,7 @@ class RankingManager {
           // ⭐ FIX: Atualizar dados locais corretamente mesmo com erro SQL
           this.currentUser.high_score = finalHighScore;
           this.currentUser.level_id = newLevelId;
-          this.currentUser.total_games =
-            (this.currentUser.total_games || 0) + 1;
+          this.currentUser.total_games = (freshUser.total_games || 0) + 1;
           this.currentUser.coins = newCoinsTotal; // Usar o total calculado
 
           updated = true; // Considerar como sucesso para não quebrar o fluxo
