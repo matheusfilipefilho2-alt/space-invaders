@@ -147,26 +147,28 @@
                 </div>
 
                 <!-- QR Code -->
-                <div class="pix-qr-code" id="qr-code-container" style="text-align: center; padding: 20px;">
-                    <img src="" alt="QR Code PIX" style="width: 200px; height: 200px; border: 2px solid #4ECDC4; border-radius: 8px;">
+                <div class="pix-qr-container">
+                    <div class="pix-qr-code" id="qr-code-container">
+                        <img src="" alt="QR Code PIX" class="pix-qr-image">
+                    </div>
                 </div>
 
                 <!-- Copy Code -->
-                <div style="margin: 10px 0;">
-                    <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #888;">Código PIX Copia e Cola:</label>
-                    <input type="text" id="pix-code" readonly style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid #4ECDC4; color: #fff; font-size: 10px;">
-                    <button onclick="copyPixCode()" style="margin-top: 10px; padding: 8px 16px; background: #4ECDC4; border: none; border-radius: 8px; color: #000; cursor: pointer; font-weight: bold;">📋 COPIAR CÓDIGO</button>
+                <div class="pix-code-section">
+                    <label class="pix-code-label">Código PIX Copia e Cola:</label>
+                    <input type="text" id="pix-code" readonly class="pix-code-input">
+                    <button onclick="copyPixCode()" class="pix-copy-button">📋 COPIAR CÓDIGO</button>
                 </div>
 
                 <!-- Expiration Timer -->
-                <div class="pix-expiration-timer" style="text-align: center; font-size: 14px; font-weight: bold; margin: 10px 0;">⏱️ Expira em 30:00</div>
+                <div class="pix-expiration-timer">⏱️ Expira em 29:15</div>
 
                 <!-- Instructions -->
-                <div style="font-size: 11px; color: #888; text-align: center; margin-top: 10px;">
-                    <p>1. Abra o app do seu banco</p>
-                    <p>2. Escaneie o QR Code ou copie o código</p>
-                    <p>3. Confirme o pagamento</p>
-                    <p style="margin-top: 10px; color: #4ECDC4;">O pagamento será detectado automaticamente!</p>
+                <div class="pix-instructions">
+                    <p class="pix-instruction-step"><strong>1.</strong> Abra o app do seu banco</p>
+                    <p class="pix-instruction-step"><strong>2.</strong> Escaneie o QR Code ou copie o código</p>
+                    <p class="pix-instruction-step"><strong>3.</strong> Confirme o pagamento</p>
+                    <p class="pix-instruction-note">O pagamento será detectado automaticamente!</p>
                 </div>
             </div>
 

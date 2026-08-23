@@ -847,18 +847,115 @@ body.admin-page {
     border: 2px dashed rgba(78, 205, 196, 0.3);
 }
 
-.pix-qr-code {
-    display: inline-block;
-    padding: 15px;
-    background: white;
-    border-radius: 12px;
-    margin-bottom: 15px;
+/* PIX QR Code Container */
+.pix-qr-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    margin: 15px 0;
 }
 
-.pix-qr-code img {
-    width: 150px;
-    height: 150px;
+.pix-qr-code {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pix-qr-image {
+    width: 220px !important;
+    height: 220px !important;
     display: block;
+    border: 2px solid #4ECDC4;
+    border-radius: 8px;
+}
+
+/* PIX Code Section */
+.pix-code-section {
+    margin: 20px 0;
+}
+
+.pix-code-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.pix-code-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #4ECDC4;
+    color: #fff;
+    font-size: 11px;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.pix-copy-button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    background: #4ECDC4;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.pix-copy-button:hover {
+    background: #3db8b0;
+    transform: translateY(-2px);
+}
+
+/* PIX Expiration Timer */
+.pix-expiration-timer {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 15px 0;
+    color: #4ECDC4;
+}
+
+/* PIX Instructions */
+.pix-instructions {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #4ECDC4;
+}
+
+.pix-instruction-step {
+    font-size: 13px;
+    color: #ccc;
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+.pix-instruction-step strong {
+    color: #4ECDC4;
+    margin-right: 8px;
+}
+
+.pix-instruction-note {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(78, 205, 196, 0.2);
+    color: #4ECDC4;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
 }
 
 .pix-instruction {
