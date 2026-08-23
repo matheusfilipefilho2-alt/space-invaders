@@ -426,7 +426,11 @@ function displayPixModal(payment, item) {
 
     // Set QR code image (base64 PNG)
     if (qrCodeImg) {
-        qrCodeImg.src = `data:image/png;base64,${payment.brCodeBase64}`;
+        // Check if brCodeBase64 already includes the data URL prefix
+        const qrCodeSrc = payment.brCodeBase64.startsWith('data:image/png;base64,')
+            ? payment.brCodeBase64
+            : `data:image/png;base64,${payment.brCodeBase64}`;
+        qrCodeImg.src = qrCodeSrc;
         qrCodeImg.alt = 'QR Code PIX';
     }
 
