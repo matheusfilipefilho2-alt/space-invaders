@@ -48,13 +48,13 @@ export const SOLANA_CONFIG = {
     // Marketplace
     marketplaceFeeBasisPoints: 250, // 2.5%
 
-    // Rate Limits
+    // Rate Limits (increased for testing on devnet)
     rateLimits: {
-        WITHDRAW: { max: 5, windowSeconds: 3600 },      // 5 per hour
-        DEPOSIT: { max: 10, windowSeconds: 3600 },       // 10 per hour
-        MINT_NFT: { max: 3, windowSeconds: 86400 },      // 3 per day
-        LIST_NFT: { max: 20, windowSeconds: 86400 },     // 20 per day
-        MAKE_OFFER: { max: 50, windowSeconds: 86400 }    // 50 per day
+        WITHDRAW: { max: 100, windowSeconds: 3600 },     // 100 per hour (testing)
+        DEPOSIT: { max: 100, windowSeconds: 3600 },      // 100 per hour (testing)
+        MINT_NFT: { max: 50, windowSeconds: 86400 },     // 50 per day
+        LIST_NFT: { max: 100, windowSeconds: 86400 },    // 100 per day
+        MAKE_OFFER: { max: 200, windowSeconds: 86400 }   // 200 per day
     },
 
     // Transaction Limits
