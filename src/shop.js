@@ -1,3 +1,4 @@
+import { supabase } from "./supabase.js";
 import RankingManager from "./classes/RankingManager.js";
 import Shop from "./classes/ShopClass.js";
 import { NavigationHelper } from "./navigation.js";
