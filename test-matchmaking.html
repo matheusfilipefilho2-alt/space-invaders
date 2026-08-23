@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PvP Matchmaking Test Runner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .status {
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .running { color: #28a745; }
+    .stopped { color: #dc3545; }
+    button {
+      padding: 15px 30px;
+      font-size: 16px;
+      margin: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+    .start { background: #28a745; color: white; }
+    .stop { background: #dc3545; color: white; }
+    #log {
+      background: #000;
+      padding: 15px;
+      border-radius: 5px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 PvP Matchmaking Test Runner</h1>
+
+  <div class="status">
+    <h3>Status: <span id="status" class="stopped">PARADO</span></h3>
+    <p>Executando a cada: <strong>2 segundos</strong></p>
+    <p>Total de execuções: <strong><span id="count">0</span></strong></p>
+    <p>Último resultado: <span id="last-result">-</span></p>
+  </div>
+
+  <button class="start" onclick="startMatchmaking()">▶️ Iniciar Matchmaking</button>
+  <button class="stop" onclick="stopMatchmaking()">⏹️ Parar Matchmaking</button>
+  <button onclick="clearLog()">🗑️ Limpar Log</button>
+
+  <h3>Log de Execução:</h3>
+  <div id="log"></div>
+
+  <script>
+    let interval = null;
+    let count = 0;
+
+    const MATCHMAKING_URL = window.location.origin + '/functions/v1/pvp-matchmaking';
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      const color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#888';
+      logEl.innerHTML += `<div style="color: ${color}">[${time}] ${message}</div>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function runMatchmaking() {
+      try {
+        const response = await fetch(MATCHMAKING_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+        count++;
+
+        document.getElementById('count').textContent = count;
+        document.getElementById('last-result').textContent =
+          result.matched ? `${result.matched} partidas criadas` : 'Sem partidas';
+
+        if (result.matched > 0) {
+          log(`✅ ${result.matched} partida(s) criada(s) de ${result.total_queued} jogadores na fila`, 'success');
+        } else {
+          log(`⏳ Sem partidas (${result.total_queued || 0} na fila)`, 'info');
+        }
+      } catch (error) {
+        log(`❌ Erro: ${error.message}`, 'error');
+      }
+    }
+
+    function startMatchmaking() {
+      if (interval) return;
+
+      document.getElementById('status').textContent = 'RODANDO';
+      document.getElementById('status').className = 'running';
+      log('🚀 Matchmaking iniciado', 'success');
+
+      runMatchmaking(); // Executa imediatamente
+      interval = setInterval(runMatchmaking, 2000); // A cada 2 segundos
+    }
+
+    function stopMatchmaking() {
+      if (!interval) return;
+
+      clearInterval(interval);
+      interval = null;
+
+      document.getElementById('status').textContent = 'PARADO';
+      document.getElementById('status').className = 'stopped';
+      log('⏹️ Matchmaking parado', 'info');
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+
+    // Auto-start para facilitar teste
+    log('📝 Pronto para iniciar. Clique em "Iniciar Matchmaking"', 'info');
+  </script>
+</body>
+</html>

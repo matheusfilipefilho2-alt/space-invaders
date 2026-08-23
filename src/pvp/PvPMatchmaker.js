@@ -1,5 +1,3 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
 /**
  * PvPMatchmaker - Frontend Matchmaking Service
  *
@@ -12,9 +10,15 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 class PvPMatchmaker {
   constructor() {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    // Usar o cliente global do Supabase (window.supabase já está carregado via script tag)
+    if (!window.supabase) {
+      throw new Error('Supabase not loaded. Include Supabase script in HTML.');
+    }
+
+    const SUPABASE_URL = 'https://apbbhuhtdqfwfmlzxnwv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwYmJodWh0ZHFmd2ZtbHp4bnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTcyNjUsImV4cCI6MjA3MTI5MzI2NX0.D330nS8F9ZIMqnZHzvFIST-wv4ccCyyumV6s4zSmAGs';
+
+    this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     this.currentUser = null;
     this.queueSubscription = null;
