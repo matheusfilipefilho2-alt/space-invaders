@@ -312,17 +312,6 @@ class TokenManager {
 
         const result = await response.json();
         return result.signature;
-
-        // Request signature from wallet
-        // LIMITATION: Only player signs here. Mint authority signature is missing.
-        // This transaction will fail unless mint authority is also signing.
-        const signedTx = await window.solana.signTransaction(tx);
-        const signature = await this.connection.sendRawTransaction(signedTx.serialize());
-
-        // Confirm
-        await this.connection.confirmTransaction(signature, SOLANA_CONFIG.commitment);
-
-        return signature;
     }
 
     // Deposit SPACE tokens from blockchain → coins in game
