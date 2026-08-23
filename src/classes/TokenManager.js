@@ -8,6 +8,14 @@ const {
 const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
+// Helper: Write u64 little-endian
+function writeU64LE(value, buffer, offset) {
+    const bigValue = BigInt(value);
+    for (let i = 0; i < 8; i++) {
+        buffer[offset + i] = Number((bigValue >> BigInt(i * 8)) & BigInt(0xFF));
+    }
+}
+
 // Manual calculation of associated token address
 async function getAssociatedTokenAddressManual(mint, owner) {
     const [address] = await PublicKey.findProgramAddress(
@@ -35,7 +43,7 @@ function createAssociatedTokenAccountInstructionManual(payer, associatedToken, o
     return new TransactionInstruction({
         keys,
         programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-        data: Buffer.alloc(0),
+        data: new Uint8Array(0),
     });
 }
 
@@ -48,9 +56,9 @@ function createMintToInstructionManual(mint, destination, authority, amount) {
     ];
 
     // Instruction data: [instruction_type (1 byte), amount (8 bytes)]
-    const data = Buffer.alloc(9);
-    data.writeUInt8(7, 0); // MintTo instruction = 7
-    data.writeBigUInt64LE(BigInt(amount), 1);
+    const data = new Uint8Array(9);
+    data[0] = 7; // MintTo instruction = 7
+    writeU64LE(amount, data, 1);
 
     return new TransactionInstruction({
         keys,
@@ -68,9 +76,9 @@ function createBurnInstructionManual(account, mint, owner, amount) {
     ];
 
     // Instruction data: [instruction_type (1 byte), amount (8 bytes)]
-    const data = Buffer.alloc(9);
-    data.writeUInt8(8, 0); // Burn instruction = 8
-    data.writeBigUInt64LE(BigInt(amount), 1);
+    const data = new Uint8Array(9);
+    data[0] = 8; // Burn instruction = 8
+    writeU64LE(amount, data, 1);
 
     return new TransactionInstruction({
         keys,
@@ -88,9 +96,9 @@ function createTransferInstructionManual(source, destination, owner, amount) {
     ];
 
     // Instruction data: [instruction_type (1 byte), amount (8 bytes)]
-    const data = Buffer.alloc(9);
-    data.writeUInt8(3, 0); // Transfer instruction = 3
-    data.writeBigUInt64LE(BigInt(amount), 1);
+    const data = new Uint8Array(9);
+    data[0] = 3; // Transfer instruction = 3
+    writeU64LE(amount, data, 1);
 
     return new TransactionInstruction({
         keys,
