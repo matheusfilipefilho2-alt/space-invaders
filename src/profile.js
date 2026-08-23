@@ -1,6 +1,7 @@
 import { NavigationHelper } from "./navigation.js";
 import { supabase } from "./supabase.js";
 import { walletUI } from "./components/WalletUI.js"; // Wallet UI
+import ProfileStats from "./components/profile/ProfileStats.js";
 
 // Elementos da UI
 const profileUsername = document.getElementById('profile-username');
@@ -54,33 +55,33 @@ async function initProfile() {
 // Atualizar estatísticas do usuário
 function updateStats(user) {
     // Dados de exemplo - em produção viriam do banco de dados
-    const stats = {
-        gamesPlayed: user.games_played || 0,
-        wins: user.wins || 0,
-        bestScore: user.high_score || 0,
-        enemiesKilled: user.enemies_killed || 0,
-        playtime: user.playtime_hours || 0
-    };
-
-    const winRate = stats.gamesPlayed > 0
-        ? ((stats.wins / stats.gamesPlayed) * 100).toFixed(1)
+    const gamesPlayed = user.games_played || 0;
+    const wins = user.wins || 0;
+    const winRate = gamesPlayed > 0
+        ? parseFloat(((wins / gamesPlayed) * 100).toFixed(1))
         : 0;
 
-    // Atualizar elementos de stats
-    const statElements = {
-        'stat-games-played': stats.gamesPlayed,
-        'stat-wins': stats.wins,
-        'stat-win-rate': `${winRate}%`,
-        'stat-best-score': stats.bestScore,
-        'stat-enemies-killed': stats.enemiesKilled,
-        'stat-playtime': `${stats.playtime}h`
+    const stats = {
+        gamesPlayed: gamesPlayed,
+        wins: wins,
+        winRate: winRate,
+        bestScore: user.high_score || 0,
+        enemiesKilled: user.enemies_killed || 0,
+        playtimeHours: user.playtime_hours || 0
     };
 
-    for (const [id, value] of Object.entries(statElements)) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
+    // Create or update ProfileStats component
+    const statsContainer = document.querySelector('.stats-grid');
+    if (statsContainer && statsContainer.parentElement) {
+        const profileStats = new ProfileStats({ stats });
+        const newStatsElement = profileStats.render();
+
+        // Replace the old stats grid with the new component
+        statsContainer.parentElement.insertBefore(newStatsElement, statsContainer);
+        statsContainer.remove();
+
+        // Animate the stats
+        profileStats.animateCountUp();
     }
 
     // Atualizar progresso XP
