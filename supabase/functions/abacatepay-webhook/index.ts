@@ -65,6 +65,7 @@ serve(async (req) => {
       event: payload.event,
       checkoutId: payload.data?.id
     });
+    console.log('📦 Full payload:', JSON.stringify(payload, null, 2));
 
     // Only process completed payments
     if (payload.event !== 'transparent.completed') {
