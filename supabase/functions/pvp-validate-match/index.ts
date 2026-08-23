@@ -18,6 +18,11 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const ELO_K_FACTOR = 32;
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 interface MatchResult {
   matchId: string;
   playerId: string;
@@ -28,8 +33,12 @@ interface MatchResult {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -47,7 +56,7 @@ serve(async (req) => {
     if (matchError || !match) {
       return new Response(JSON.stringify({ error: 'Match not found' }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -75,7 +84,7 @@ serve(async (req) => {
 
     if (!updatedMatch?.player1_result || !updatedMatch?.player2_result) {
       return new Response(JSON.stringify({ message: 'Waiting for other player' }), {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -107,7 +116,7 @@ serve(async (req) => {
         p2Result
       }), {
         status: 409,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -146,7 +155,7 @@ serve(async (req) => {
       console.error('Finalize error:', finalizeError);
       return new Response(JSON.stringify({ error: finalizeError.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -156,14 +165,14 @@ serve(async (req) => {
       winnerEloChange,
       loserEloChange
     }), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Validation error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
