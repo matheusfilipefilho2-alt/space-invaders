@@ -11,8 +11,8 @@ export const SOLANA_CONFIG = {
         : 'https://api.mainnet-beta.solana.com',
 
     // Supabase (for Edge Functions)
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://apbbhuhtdqfwfmlzxnwv.supabase.co',
-    supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+    supabaseUrl: 'https://apbbhuhtdqfwfmlzxnwv.supabase.co',
+    supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwYmJodWh0ZHFmd2ZtbHp4bnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTcyNjUsImV4cCI6MjA3MTI5MzI2NX0.D330nS8F9ZIMqnZHzvFIST-wv4ccCyyumV6s4zSmAGs',
 
     // SPL Token (SPACE)
     // TODO: Deploy token and update these addresses
