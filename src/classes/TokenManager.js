@@ -1,20 +1,15 @@
 // Access Solana libraries from CDN globals
-const { Transaction, PublicKey, SystemProgram } = window.solanaWeb3 || {};
+const { Transaction, PublicKey, SystemProgram, TransactionInstruction } = window.solanaWeb3 || {};
 const {
-    createMintToInstruction,
-    createBurnInstruction,
-    createAssociatedTokenAccountInstruction,
-    getAccount,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    getAccount
 } = window.splToken || {};
 
 // SPL Token Program IDs (constants)
 const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
-// Manual calculation of associated token address (replacement for getAssociatedTokenAddressManual)
-async function getAssociatedTokenAddressManualManual(mint, owner) {
+// Manual calculation of associated token address
+async function getAssociatedTokenAddressManual(mint, owner) {
     const [address] = await PublicKey.findProgramAddress(
         [
             owner.toBuffer(),
@@ -24,6 +19,64 @@ async function getAssociatedTokenAddressManualManual(mint, owner) {
         SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
     return address;
+}
+
+// Manual creation of associated token account instruction
+function createAssociatedTokenAccountInstructionManual(payer, associatedToken, owner, mint) {
+    const keys = [
+        { pubkey: payer, isSigner: true, isWritable: true },
+        { pubkey: associatedToken, isSigner: false, isWritable: true },
+        { pubkey: owner, isSigner: false, isWritable: false },
+        { pubkey: mint, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: SPL_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ];
+
+    return new TransactionInstruction({
+        keys,
+        programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+        data: Buffer.alloc(0),
+    });
+}
+
+// Manual creation of mint to instruction
+function createMintToInstructionManual(mint, destination, authority, amount) {
+    const keys = [
+        { pubkey: mint, isSigner: false, isWritable: true },
+        { pubkey: destination, isSigner: false, isWritable: true },
+        { pubkey: authority, isSigner: true, isWritable: false },
+    ];
+
+    // Instruction data: [instruction_type (1 byte), amount (8 bytes)]
+    const data = Buffer.alloc(9);
+    data.writeUInt8(7, 0); // MintTo instruction = 7
+    data.writeBigUInt64LE(BigInt(amount), 1);
+
+    return new TransactionInstruction({
+        keys,
+        programId: SPL_TOKEN_PROGRAM_ID,
+        data,
+    });
+}
+
+// Manual creation of burn instruction
+function createBurnInstructionManual(account, mint, owner, amount) {
+    const keys = [
+        { pubkey: account, isSigner: false, isWritable: true },
+        { pubkey: mint, isSigner: false, isWritable: true },
+        { pubkey: owner, isSigner: true, isWritable: false },
+    ];
+
+    // Instruction data: [instruction_type (1 byte), amount (8 bytes)]
+    const data = Buffer.alloc(9);
+    data.writeUInt8(8, 0); // Burn instruction = 8
+    data.writeBigUInt64LE(BigInt(amount), 1);
+
+    return new TransactionInstruction({
+        keys,
+        programId: SPL_TOKEN_PROGRAM_ID,
+        data,
+    });
 }
 import walletManager from './SolanaWalletManager.js';
 import SOLANA_CONFIG from '../config/solana-config.js';
@@ -182,7 +235,7 @@ class TokenManager {
         // Create account if needed
         if (!accountExists) {
             tx.add(
-                createAssociatedTokenAccountInstruction(
+                createAssociatedTokenAccountInstructionManual(
                     playerWallet,           // Payer
                     playerTokenAccount,     // Account to create
                     playerWallet,           // Owner
@@ -197,7 +250,7 @@ class TokenManager {
         // This will FAIL on-chain until a backend service with mint authority is implemented to co-sign.
         // TODO: Implement backend mint authority service for production use.
         tx.add(
-            createMintToInstruction(
+            createMintToInstructionManual(
                 tokenMint,
                 playerTokenAccount,
                 mintAuthority,
@@ -310,7 +363,7 @@ class TokenManager {
         );
 
         const tx = new Transaction().add(
-            createBurnInstruction(
+            createBurnInstructionManual(
                 playerTokenAccount,
                 tokenMint,
                 playerWallet,
