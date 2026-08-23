@@ -8,9 +8,22 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', {
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -21,7 +34,7 @@ serve(async (req) => {
     if (!['accepted', 'declined'].includes(response)) {
       return new Response(JSON.stringify({ error: 'Invalid response' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -35,7 +48,7 @@ serve(async (req) => {
     if (challengeError || !challenge) {
       return new Response(JSON.stringify({ error: 'Challenge not found' }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -43,7 +56,7 @@ serve(async (req) => {
     if (challenge.challenged_id !== playerId) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 403,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -51,7 +64,7 @@ serve(async (req) => {
     if (challenge.status !== 'pending') {
       return new Response(JSON.stringify({ error: 'Challenge already responded to' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -63,7 +76,7 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ error: 'Challenge expired' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -74,7 +87,7 @@ serve(async (req) => {
         .eq('id', challengeId);
 
       return new Response(JSON.stringify({ success: true, message: 'Challenge declined' }), {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -109,14 +122,14 @@ serve(async (req) => {
       roomId: roomId,
       gameSeed: gameSeed
     }), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Response error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });

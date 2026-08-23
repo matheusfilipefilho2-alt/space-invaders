@@ -15,9 +15,22 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', {
+      status: 405,
+      headers: corsHeaders
+    });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -29,14 +42,14 @@ serve(async (req) => {
     if (!challengerId || !challengedId || !betAmount) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     if (challengerId === challengedId) {
       return new Response(JSON.stringify({ error: 'Cannot challenge yourself' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -44,7 +57,7 @@ serve(async (req) => {
     if (![10, 50, 100, 500].includes(betAmount)) {
       return new Response(JSON.stringify({ error: 'Invalid bet amount' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -58,7 +71,7 @@ serve(async (req) => {
     if (userError || !challengedUser) {
       return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -75,7 +88,7 @@ serve(async (req) => {
     if (recentChallenges && recentChallenges.length >= 10) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded (max 10 challenges per hour)' }), {
         status: 429,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -89,7 +102,7 @@ serve(async (req) => {
     if (!challenger || challenger.coins < betAmount) {
       return new Response(JSON.stringify({ error: 'Insufficient coins' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -116,14 +129,14 @@ serve(async (req) => {
       challengeId: challenge.id,
       challengedUsername: challengedUser.username
     }), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Challenge error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
