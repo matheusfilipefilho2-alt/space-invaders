@@ -714,3 +714,178 @@
 .skeleton.fade-out {
     animation: fadeOut var(--transition-normal) ease-out forwards;
 }
+
+/* ========== BADGE COMPONENT ========== */
+
+.ui-badge {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-primary);
+    font-size: var(--text-sm);
+    font-weight: bold;
+    border-radius: var(--border-radius-sm);
+    padding: var(--space-xs) var(--space-sm);
+    min-width: 40px;
+    min-height: 24px;
+    z-index: var(--z-base);
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all var(--transition-normal);
+}
+
+/* Positions */
+.ui-badge--top-left {
+    top: -10px;
+    left: -10px;
+}
+
+.ui-badge--top-right {
+    top: -10px;
+    right: -10px;
+}
+
+.ui-badge--bottom-left {
+    bottom: -10px;
+    left: -10px;
+}
+
+.ui-badge--bottom-right {
+    bottom: -10px;
+    right: -10px;
+}
+
+/* Variants */
+.ui-badge--discount {
+    background: linear-gradient(135deg, var(--color-error), #ff6a00);
+    color: white;
+    font-size: var(--text-xs);
+}
+
+.ui-badge--discount:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg), 0 0 15px rgba(255, 71, 87, 0.6);
+}
+
+.ui-badge__value {
+    font-weight: bold;
+}
+
+.ui-badge--new {
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-dark));
+    color: white;
+    letter-spacing: 1px;
+}
+
+.ui-badge--new:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg), var(--glow-teal);
+}
+
+.ui-badge--owned {
+    background: linear-gradient(135deg, var(--color-success), #00cc66);
+    color: white;
+    font-size: var(--text-lg);
+}
+
+.ui-badge--owned:hover {
+    transform: scale(1.15);
+    box-shadow: var(--shadow-lg), var(--glow-green);
+}
+
+.ui-badge__checkmark {
+    font-weight: bold;
+    letter-spacing: 0;
+}
+
+.ui-badge--hot {
+    background: linear-gradient(135deg, var(--color-warning), #ff6b35);
+    color: white;
+    font-size: var(--text-lg);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.ui-badge--hot:hover {
+    transform: scale(1.15);
+    box-shadow: var(--shadow-lg), 0 0 15px rgba(255, 165, 2, 0.8);
+}
+
+.ui-badge__icon {
+    font-size: var(--text-xl);
+    padding: var(--space-xs);
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.ui-badge--rarity {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.ui-badge--rarity-common {
+    background: rgba(128, 128, 128, 0.2);
+    border-color: var(--rarity-common);
+    color: var(--rarity-common);
+}
+
+.ui-badge--rarity-uncommon {
+    background: rgba(0, 255, 0, 0.1);
+    border-color: var(--rarity-uncommon);
+    color: var(--rarity-uncommon);
+}
+
+.ui-badge--rarity-rare {
+    background: rgba(0, 112, 221, 0.1);
+    border-color: var(--rarity-rare);
+    color: var(--rarity-rare);
+}
+
+.ui-badge--rarity-epic {
+    background: rgba(163, 53, 238, 0.1);
+    border-color: var(--rarity-epic);
+    color: var(--rarity-epic);
+}
+
+.ui-badge--rarity-legendary {
+    background: rgba(255, 128, 0, 0.2);
+    border-color: var(--rarity-legendary);
+    color: var(--rarity-legendary);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(255, 128, 0, 0.4);
+}
+
+.ui-badge__rarity-icon {
+    font-size: var(--text-base);
+    letter-spacing: 2px;
+}
+
+/* Animation */
+.ui-badge--animate {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.ui-badge--animate.ui-badge--rarity-legendary {
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ui-badge {
+        font-size: var(--text-xs);
+        padding: var(--space-xs) var(--space-sm);
+        min-width: 32px;
+        min-height: 20px;
+    }
+
+    .ui-badge--top-left,
+    .ui-badge--top-right,
+    .ui-badge--bottom-left,
+    .ui-badge--bottom-right {
+        top: -5px;
+        right: -5px;
+        bottom: -5px;
+        left: -5px;
+    }
+}
