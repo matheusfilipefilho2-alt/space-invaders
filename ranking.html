@@ -15,6 +15,32 @@
     <!-- Fundo animado com estrelas -->
     <canvas id="bg-canvas"></canvas>
 
+    <!-- Fixed Navigation Bar -->
+    <nav class="game-navbar">
+        <div class="navbar-container">
+            <button class="navbar-btn navbar-btn-play" onclick="window.location.href='game.html'">
+                <span class="navbar-icon">🚀</span>
+                <span class="navbar-text">JOGAR</span>
+            </button>
+            <button class="navbar-btn navbar-btn-profile" onclick="window.location.href='profile.html'">
+                <span class="navbar-icon">👨‍🚀</span>
+                <span class="navbar-text">PERFIL</span>
+            </button>
+            <button class="navbar-btn navbar-btn-shop" onclick="NavigationHelper.navigateToShop()">
+                <span class="navbar-icon">🛍️</span>
+                <span class="navbar-text">LOJA</span>
+            </button>
+            <button class="navbar-btn navbar-btn-bridge" onclick="window.location.href='token-bridge.html'">
+                <span class="navbar-icon">🌉</span>
+                <span class="navbar-text">BRIDGE</span>
+            </button>
+            <button class="navbar-btn navbar-btn-home" onclick="window.location.href='index.html'">
+                <span class="navbar-icon">🏠</span>
+                <span class="navbar-text">INÍCIO</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Wallet UI Container -->
     <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
       <button id="wallet-connect-btn" class="wallet-btn">
@@ -70,36 +96,7 @@
                 <span>MINHA POSIÇÃO</span>
             </button>
             
-            <!-- Botões de ação ATUALIZADOS -->
-            <div class="menu-buttons">
-                <button class="button-play button-play-ranking">
-                    <span class="button-icon">🚀</span>
-                    JOGAR AGORA
-                </button>
-
-                <!-- NOVO: Botão do Perfil -->
-                <button class="button-view-ranking button-profile-ranking" onclick="window.location.href='profile.html'">
-                    <span class="button-icon">👨‍🚀</span>
-                    PERFIL
-                </button>
-
-                <!-- NOVO: Botão da Loja -->
-                <button class="button-view-ranking button-shop-ranking" onclick="NavigationHelper.navigateToShop()">
-                    <span class="button-icon">🛍️</span>
-                    LOJA
-                </button>
-
-                <!-- NOVO: Botão Token Bridge -->
-                <button class="button-view-ranking button-token-bridge" onclick="window.location.href='token-bridge.html'">
-                    <span class="button-icon">🌉</span>
-                    TOKEN BRIDGE
-                </button>
-
-                <button class="button-view-ranking button-logout">
-                    <span class="button-icon">🚪</span>
-                    SAIR
-                </button>
-            </div>
+            <!-- Navigation moved to fixed navbar at top -->
         </div>
         
         <!-- Footer -->

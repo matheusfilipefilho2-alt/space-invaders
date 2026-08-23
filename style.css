@@ -135,6 +135,17 @@ body {
   box-shadow: 0 4px 8px rgba(138, 43, 226, 0.3);
 }
 
+.navbar-btn-bridge {
+  border-color: rgba(0, 191, 255, 0.3);
+  color: #00BFFF;
+}
+
+.navbar-btn-bridge:hover {
+  background: rgba(0, 191, 255, 0.2);
+  border-color: #00BFFF;
+  box-shadow: 0 4px 8px rgba(0, 191, 255, 0.3);
+}
+
 .navbar-btn-home {
   border-color: rgba(255, 99, 71, 0.3);
   color: #FF6347;

@@ -15,6 +15,32 @@
     <!-- Fundo animado com estrelas -->
     <canvas id="bg-canvas"></canvas>
 
+    <!-- Fixed Navigation Bar -->
+    <nav class="game-navbar">
+        <div class="navbar-container">
+            <button class="navbar-btn navbar-btn-play" onclick="NavigationHelper.navigateToGame()">
+                <span class="navbar-icon">🚀</span>
+                <span class="navbar-text">JOGAR</span>
+            </button>
+            <button class="navbar-btn navbar-btn-profile" onclick="window.location.href='profile.html'">
+                <span class="navbar-icon">👨‍🚀</span>
+                <span class="navbar-text">PERFIL</span>
+            </button>
+            <button class="navbar-btn navbar-btn-shop" onclick="NavigationHelper.navigateToShop()">
+                <span class="navbar-icon">🛍️</span>
+                <span class="navbar-text">LOJA</span>
+            </button>
+            <button class="navbar-btn navbar-btn-ranking" onclick="NavigationHelper.navigateToRanking()">
+                <span class="navbar-icon">🏆</span>
+                <span class="navbar-text">RANKING</span>
+            </button>
+            <button class="navbar-btn navbar-btn-home" onclick="window.location.href='index.html'">
+                <span class="navbar-icon">🏠</span>
+                <span class="navbar-text">INÍCIO</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Wallet UI Container -->
     <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
       <button id="wallet-connect-btn" class="wallet-btn">
@@ -121,28 +147,7 @@
                 </div>
             </div>
 
-            <!-- Navigation Buttons -->
-            <div class="menu-buttons">
-                <button class="button-play" onclick="NavigationHelper.navigateToGame()">
-                    <span class="button-icon">🚀</span>
-                    JOGAR AGORA
-                </button>
-
-                <button class="button-view-ranking" onclick="window.location.href='profile.html'">
-                    <span class="button-icon">👨‍🚀</span>
-                    PERFIL
-                </button>
-
-                <button class="button-view-ranking" onclick="NavigationHelper.navigateToShop()">
-                    <span class="button-icon">🛍️</span>
-                    LOJA
-                </button>
-
-                <button class="button-view-ranking" onclick="NavigationHelper.navigateToRanking()">
-                    <span class="button-icon">🏆</span>
-                    RANKING
-                </button>
-            </div>
+            <!-- Navigation moved to fixed navbar at top -->
         </div>
 
         <!-- Footer -->
