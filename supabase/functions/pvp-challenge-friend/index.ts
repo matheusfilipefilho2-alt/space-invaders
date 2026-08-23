@@ -75,22 +75,22 @@ serve(async (req) => {
       });
     }
 
-    // Check rate limit (10 challenges per hour)
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { data: recentChallenges, error: countError } = await supabase
-      .from('pvp_challenges')
-      .select('id')
-      .eq('challenger_id', challengerId)
-      .gte('created_at', oneHourAgo);
+    // Rate limit disabled for testing
+    // const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    // const { data: recentChallenges, error: countError } = await supabase
+    //   .from('pvp_challenges')
+    //   .select('id')
+    //   .eq('challenger_id', challengerId)
+    //   .gte('created_at', oneHourAgo);
 
-    if (countError) throw countError;
+    // if (countError) throw countError;
 
-    if (recentChallenges && recentChallenges.length >= 10) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded (max 10 challenges per hour)' }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // if (recentChallenges && recentChallenges.length >= 10) {
+    //   return new Response(JSON.stringify({ error: 'Rate limit exceeded (max 10 challenges per hour)' }), {
+    //     status: 429,
+    //     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    //   });
+    // }
 
     // Check if user has enough coins
     const { data: challenger } = await supabase
