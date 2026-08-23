@@ -16,6 +16,11 @@
     box-shadow: var(--shadow-lg);
 }
 
+.ui-card:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+}
+
 /* Rarity borders */
 .ui-card--rarity-common {
     border-color: var(--rarity-common);
@@ -136,6 +141,11 @@
 }
 
 /* States */
+.ui-button:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+}
+
 .ui-button:active:not(:disabled) {
     transform: scale(0.98);
     transition: all var(--transition-fast);
@@ -235,6 +245,11 @@
 .ui-modal__close:hover {
     color: var(--color-gold);
     transform: scale(1.1);
+}
+
+.ui-modal__close:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
 }
 
 .ui-modal__content {
@@ -364,6 +379,14 @@
 
 .ui-searchbar__input::placeholder {
     color: rgba(255, 255, 255, 0.5);
+}
+
+.ui-searchbar__input:focus {
+    outline: none;
+}
+
+.ui-searchbar:focus-within {
+    box-shadow: var(--shadow-md), 0 0 0 2px var(--color-teal);
 }
 
 .ui-searchbar__input:disabled {
