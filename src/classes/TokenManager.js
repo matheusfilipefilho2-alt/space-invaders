@@ -16,6 +16,16 @@ function writeU64LE(value, buffer, offset) {
     }
 }
 
+// Helper: Convert Uint8Array to base64 (browser-compatible)
+function uint8ArrayToBase64(uint8Array) {
+    let binary = '';
+    const len = uint8Array.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+    }
+    return btoa(binary);
+}
+
 // Manual calculation of associated token address
 async function getAssociatedTokenAddressManual(mint, owner) {
     const [address] = await PublicKey.findProgramAddress(
@@ -293,7 +303,8 @@ class TokenManager {
         tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
 
         const signedTx = await window.solana.signTransaction(tx);
-        const serializedTx = signedTx.serialize({ requireAllSignatures: false }).toString('base64');
+        const serializedBytes = signedTx.serialize({ requireAllSignatures: false });
+        const serializedTx = uint8ArrayToBase64(serializedBytes);
 
         // Send to backend for treasury signature
         console.log('📤 Enviando transação para backend assinar...');
