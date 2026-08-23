@@ -33,6 +33,23 @@ async function getAssociatedTokenAddress(mint: PublicKey, owner: PublicKey): Pro
   return address;
 }
 
+// Helper: Write u64 little-endian
+function writeU64LE(value: bigint, buffer: Uint8Array, offset: number) {
+  for (let i = 0; i < 8; i++) {
+    buffer[offset + i] = Number((value >> BigInt(i * 8)) & BigInt(0xFF));
+  }
+}
+
+// Helper: Convert base64 to Uint8Array
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
 // Helper: Create transfer instruction
 function createTransferInstruction(
   source: PublicKey,
@@ -46,9 +63,9 @@ function createTransferInstruction(
     { pubkey: owner, isSigner: true, isWritable: false },
   ];
 
-  const data = Buffer.alloc(9);
-  data.writeUInt8(3, 0); // Transfer instruction = 3
-  data.writeBigUInt64LE(amount, 1);
+  const data = new Uint8Array(9);
+  data[0] = 3; // Transfer instruction = 3
+  writeU64LE(amount, data, 1);
 
   return new TransactionInstruction({
     keys,
@@ -76,7 +93,7 @@ function createAssociatedTokenAccountInstruction(
   return new TransactionInstruction({
     keys,
     programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-    data: Buffer.alloc(0),
+    data: new Uint8Array(0),
   });
 }
 
@@ -131,7 +148,7 @@ serve(async (req) => {
     const playerTokenAccount = await getAssociatedTokenAddress(tokenMint, playerPublicKey);
 
     // Deserialize the partially signed transaction from player
-    const tx = Transaction.from(Buffer.from(partiallySignedTx, 'base64'));
+    const tx = Transaction.from(base64ToUint8Array(partiallySignedTx));
 
     // Treasury signs the transaction
     tx.partialSign(treasuryKeypair);
