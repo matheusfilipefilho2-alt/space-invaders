@@ -51,7 +51,7 @@ CREATE INDEX idx_pvp_matches_created ON pvp_matches(created_at DESC);
 -- Table: pvp_queue
 CREATE TABLE pvp_queue (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  player_id UUID REFERENCES players(id) NOT NULL UNIQUE,
+  player_id UUID REFERENCES players(id) NOT NULL,
 
   bet_amount INTEGER NOT NULL CHECK (bet_amount IN (10, 50, 100, 500)),
   elo_rating INTEGER NOT NULL,
@@ -272,24 +272,45 @@ DECLARE
   v_winner_kills INTEGER;
   v_loser_kills INTEGER;
 BEGIN
-  -- Get match data
-  SELECT * INTO v_match FROM pvp_matches WHERE id = p_match_id;
+  -- Start transaction with exception handling
+  BEGIN
+    -- Validate match exists and is in progress
+    SELECT * INTO v_match FROM pvp_matches WHERE id = p_match_id;
 
-  -- Get usernames
-  SELECT username INTO v_winner_username FROM players WHERE id = p_winner_id;
-  SELECT username INTO v_loser_username FROM players WHERE id = p_loser_id;
+    IF v_match IS NULL THEN
+      RAISE EXCEPTION 'Match % does not exist', p_match_id;
+    END IF;
 
-  -- Get kills
-  IF v_match.player1_id = p_winner_id THEN
-    v_winner_kills := v_match.player1_kills;
-    v_loser_kills := v_match.player2_kills;
-  ELSE
-    v_winner_kills := v_match.player2_kills;
-    v_loser_kills := v_match.player1_kills;
-  END IF;
+    IF v_match.status != 'in_progress' THEN
+      RAISE EXCEPTION 'Match % is not in progress (status: %)', p_match_id, v_match.status;
+    END IF;
 
-  -- Update winner coins
-  UPDATE players SET coins = coins + (p_bet_amount * 2) WHERE id = p_winner_id;
+    -- Validate participants
+    IF NOT ((v_match.player1_id = p_winner_id AND v_match.player2_id = p_loser_id) OR
+            (v_match.player1_id = p_loser_id AND v_match.player2_id = p_winner_id)) THEN
+      RAISE EXCEPTION 'Winner % and loser % are not participants of match %', p_winner_id, p_loser_id, p_match_id;
+    END IF;
+
+    -- Validate bet amount matches
+    IF v_match.bet_amount != p_bet_amount THEN
+      RAISE EXCEPTION 'Bet amount % does not match match bet amount %', p_bet_amount, v_match.bet_amount;
+    END IF;
+
+    -- Get usernames
+    SELECT username INTO v_winner_username FROM players WHERE id = p_winner_id;
+    SELECT username INTO v_loser_username FROM players WHERE id = p_loser_id;
+
+    -- Get kills
+    IF v_match.player1_id = p_winner_id THEN
+      v_winner_kills := v_match.player1_kills;
+      v_loser_kills := v_match.player2_kills;
+    ELSE
+      v_winner_kills := v_match.player2_kills;
+      v_loser_kills := v_match.player1_kills;
+    END IF;
+
+    -- Transfer escrowed coins to winner (coins already deducted at match start)
+    UPDATE players SET coins = coins + v_match.escrowed_coins WHERE id = p_winner_id;
 
   -- Update/create ELO rankings for winner
   INSERT INTO pvp_elo_rankings (player_id, elo_rating, peak_elo, total_matches, wins, win_streak, best_win_streak, total_coins_won, first_match_at, last_match_at)
@@ -325,13 +346,18 @@ BEGIN
   INSERT INTO pvp_match_history (match_id, player_id, opponent_id, opponent_username, won, kills, deaths, duration_seconds, coins_change, elo_change)
   VALUES (p_match_id, p_loser_id, p_winner_id, v_winner_username, FALSE, v_loser_kills, v_winner_kills, p_duration, -p_bet_amount, p_loser_elo_change);
 
-  -- Update match status
-  UPDATE pvp_matches SET
-    status = 'completed',
-    winner_id = p_winner_id,
-    ended_at = NOW(),
-    validated = TRUE,
-    duration_seconds = p_duration
-  WHERE id = p_match_id;
+    -- Update match status
+    UPDATE pvp_matches SET
+      status = 'completed',
+      winner_id = p_winner_id,
+      ended_at = NOW(),
+      validated = TRUE,
+      duration_seconds = p_duration
+    WHERE id = p_match_id;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE;
+  END;
 END;
 $$ LANGUAGE plpgsql;
