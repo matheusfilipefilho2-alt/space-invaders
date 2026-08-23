@@ -52,8 +52,8 @@ serve(async (req) => {
   try {
     const { action, roomId, data } = await req.json();
 
-    if (!roomId) {
-      return new Response(JSON.stringify({ error: 'roomId required' }), {
+    if (!action || !roomId) {
+      return new Response(JSON.stringify({ error: 'action and roomId required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
