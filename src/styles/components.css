@@ -244,3 +244,74 @@
     color: white;
     line-height: 1.6;
 }
+
+/* ========== TABS COMPONENT ========== */
+
+.ui-tabs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.ui-tabs__header {
+    display: flex;
+    align-items: center;
+    position: relative;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    gap: var(--space-lg);
+}
+
+.ui-tabs__button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    padding: var(--space-md) var(--space-lg);
+    cursor: pointer;
+    transition: color var(--transition-normal);
+    position: relative;
+    white-space: nowrap;
+}
+
+.ui-tabs__button:hover {
+    color: white;
+}
+
+.ui-tabs__button--active {
+    color: var(--color-gold);
+}
+
+.ui-tabs__button:focus {
+    outline: 2px solid var(--color-gold);
+    outline-offset: -2px;
+}
+
+/* Animated underline */
+.ui-tabs__underline {
+    position: absolute;
+    bottom: -2px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-gold), var(--color-gold-light));
+    transition: left var(--transition-normal), width var(--transition-normal);
+    box-shadow: var(--glow-gold);
+}
+
+.ui-tabs__content {
+    padding: var(--space-lg) 0;
+}
+
+.ui-tabs__pane {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+}
+
+.ui-tabs__pane--active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ui-tabs__pane.fade-in {
+    animation: fadeIn var(--transition-normal) ease-out;
+}
