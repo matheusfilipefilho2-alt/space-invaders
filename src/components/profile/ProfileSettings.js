@@ -521,13 +521,13 @@ class ProfileSettings {
             // Verify password before allowing email change
             const { data: player, error: fetchError } = await supabase
                 .from('players')
-                .select('password')
+                .select('pin')
                 .eq('id', this.userId)
                 .single();
 
             if (fetchError) throw fetchError;
 
-            // In a real app, you'd verify the password here
+            // TODO: Verify the password/PIN matches before allowing email change
             // For now, we'll just update the email
             const { error: updateError } = await supabase
                 .from('players')
@@ -613,10 +613,10 @@ class ProfileSettings {
                 throw new Error('ID do usuário não encontrado');
             }
 
-            // Get current password hash from database
+            // Get current PIN hash from database
             const { data: player, error: fetchError } = await supabase
                 .from('players')
-                .select('password')
+                .select('pin')
                 .eq('id', this.userId)
                 .single();
 
@@ -627,7 +627,7 @@ class ProfileSettings {
                 throw new Error('Sistema de segurança não carregado');
             }
 
-            const passwordMatches = bcrypt.compareSync(currentPassword, player.password);
+            const passwordMatches = bcrypt.compareSync(currentPassword, player.pin);
             if (!passwordMatches) {
                 throw new Error('Senha atual incorreta');
             }
@@ -635,10 +635,10 @@ class ProfileSettings {
             // Hash new password
             const hashedPassword = bcrypt.hashSync(newPassword, 10);
 
-            // Update password in database
+            // Update PIN in database
             const { error: updateError } = await supabase
                 .from('players')
-                .update({ password: hashedPassword })
+                .update({ pin: hashedPassword })
                 .eq('id', this.userId);
 
             if (updateError) throw updateError;
