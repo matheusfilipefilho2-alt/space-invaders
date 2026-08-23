@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { verifySignature } from './_shared/verify-signature.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_KEY')!;
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const WEBHOOK_SECRET = Deno.env.get('ABACATE_PAY_SECRET') || 'space_invaders_webhook_secret_2026';
 
 console.log('🚀 AbacatePay Webhook Handler initialized');
