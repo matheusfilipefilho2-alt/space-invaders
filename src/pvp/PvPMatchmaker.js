@@ -220,6 +220,7 @@ class PvPMatchmaker {
 
     this.challengeSubscription = this.supabase
       .channel('pvp_challenges')
+      // Receive challenges (when someone challenges me)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -228,6 +229,18 @@ class PvPMatchmaker {
       }, (payload) => {
         console.log('[PvPMatchmaker] Challenge notification received:', payload);
         this.handleChallengeReceived(payload.new);
+      })
+      // Challenge accepted (when someone accepts my challenge)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pvp_challenges',
+        filter: `challenger_id=eq.${this.currentUser.id}`
+      }, (payload) => {
+        console.log('[PvPMatchmaker] Challenge update received:', payload);
+        if (payload.new.status === 'accepted' && payload.new.match_id) {
+          this.handleChallengeAccepted(payload.new.match_id);
+        }
       })
       .subscribe();
   }
@@ -263,6 +276,40 @@ class PvPMatchmaker {
         challengerUsername: challenger?.username,
         betAmount: challenge.bet_amount,
         expiresAt: challenge.expires_at
+      });
+    }
+  }
+
+  /**
+   * Handle challenge accepted (I challenged someone and they accepted)
+   * @param {number} matchId - Match ID
+   */
+  async handleChallengeAccepted(matchId) {
+    console.log(`[PvPMatchmaker] Challenge accepted! Match ID: ${matchId}`);
+
+    // Get match details
+    const { data: match, error } = await this.supabase
+      .from('pvp_matches')
+      .select('*')
+      .eq('id', matchId)
+      .single();
+
+    if (error) {
+      console.error('[PvPMatchmaker] Error getting match:', error);
+      return;
+    }
+
+    // I'm the challenger, so I'm player1 (the offerer)
+    const isOfferer = match.player1_id === this.currentUser.id;
+
+    // Notify callback to start the match
+    if (this.onMatchFoundCallback) {
+      this.onMatchFoundCallback({
+        matchId: match.id,
+        roomId: match.room_id,
+        gameSeed: match.game_seed,
+        isOfferer,
+        betAmount: match.bet_amount
       });
     }
   }
