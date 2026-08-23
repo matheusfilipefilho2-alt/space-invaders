@@ -1,3 +1,68 @@
+/* ========== CARD COMPONENT ========== */
+
+.ui-card {
+    background: var(--bg-card);
+    border: var(--border-width) solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-lg);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.ui-card:hover {
+    transform: translateY(-5px);
+    background: var(--bg-card-hover);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Rarity borders */
+.ui-card--rarity-common {
+    border-color: var(--rarity-common);
+}
+
+.ui-card--rarity-uncommon {
+    border-color: var(--rarity-uncommon);
+}
+
+.ui-card--rarity-rare {
+    border-color: var(--rarity-rare);
+}
+
+.ui-card--rarity-epic {
+    border-color: var(--rarity-epic);
+}
+
+.ui-card--rarity-legendary {
+    border-color: var(--rarity-legendary);
+}
+
+.ui-card--rarity-legendary:hover {
+    box-shadow: var(--shadow-lg), var(--glow-gold);
+}
+
+/* Card elements */
+.ui-card__image {
+    width: 100%;
+    height: auto;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--space-md);
+}
+
+.ui-card__title {
+    font-family: var(--font-primary);
+    font-size: var(--text-xl);
+    color: white;
+    margin-bottom: var(--space-sm);
+}
+
+.ui-card__description {
+    font-family: var(--font-secondary);
+    font-size: var(--text-base);
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+}
+
 /* ========== BUTTON COMPONENT ========== */
 
 .ui-button {
