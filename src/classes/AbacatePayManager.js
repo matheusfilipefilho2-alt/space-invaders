@@ -291,18 +291,16 @@ class AbacatePayManager {
             const response = await this._callAbacatePay('/transparents/create', {
                 method: 'POST',
                 body: JSON.stringify({
-                    data: {
-                        amount: this._toCentavos(config.price),
-                        expiresIn: 1800,  // 30 minutes
-                        description: `${config.coins} moedas - Space Invaders`,
-                        customer: customerId,
-                        metadata: {
-                            playerId: player.id,
-                            playerUsername: player.username,
-                            coinPackId: coinPackId,
-                            coinAmount: config.coins,
-                            gameTimestamp: new Date().toISOString()
-                        }
+                    amount: this._toCentavos(config.price),
+                    expiresIn: 1800,  // 30 minutes
+                    description: `${config.coins} moedas - Space Invaders`,
+                    customer: customerId,
+                    metadata: {
+                        playerId: player.id,
+                        playerUsername: player.username,
+                        coinPackId: coinPackId,
+                        coinAmount: config.coins,
+                        gameTimestamp: new Date().toISOString()
                     }
                 })
             });
