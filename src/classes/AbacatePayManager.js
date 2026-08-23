@@ -295,9 +295,7 @@ class AbacatePayManager {
                         amount: this._toCentavos(config.price),
                         expiresIn: 1800,  // 30 minutes
                         description: `${config.coins} moedas - Space Invaders`,
-                        customer: {
-                            id: customerId
-                        },
+                        customer: customerId,
                         metadata: {
                             playerId: player.id,
                             playerUsername: player.username,
