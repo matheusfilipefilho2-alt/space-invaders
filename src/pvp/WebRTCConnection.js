@@ -22,6 +22,10 @@ class WebRTCConnection {
    * @param {boolean} isOfferer - True if this client creates the offer
    */
   constructor(matchId, isOfferer) {
+    if (!matchId || typeof matchId !== 'string') {
+      throw new Error('matchId must be a non-empty string');
+    }
+
     this.matchId = matchId;
     this.isOfferer = isOfferer;
 
@@ -35,6 +39,7 @@ class WebRTCConnection {
     this.connectionState = 'new'; // new, connecting, connected, disconnected, failed
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 3;
+    this.iceCandidatePollingInterval = null;
   }
 
   /**
@@ -147,8 +152,12 @@ class WebRTCConnection {
 
     this.dataChannel.onmessage = event => {
       if (this.onMessageCallback) {
-        const message = JSON.parse(event.data);
-        this.onMessageCallback(message);
+        try {
+          const message = JSON.parse(event.data);
+          this.onMessageCallback(message);
+        } catch (err) {
+          console.error('[WebRTC] Failed to parse message:', err);
+        }
       }
     };
   }
@@ -211,8 +220,20 @@ class WebRTCConnection {
    * Poll for ICE candidates from other peer
    */
   async pollForIceCandidates() {
-    setInterval(async () => {
+    // Clear any existing interval
+    if (this.iceCandidatePollingInterval) {
+      clearInterval(this.iceCandidatePollingInterval);
+    }
+
+    this.iceCandidatePollingInterval = setInterval(async () => {
       try {
+        // Check if connection still exists
+        if (!this.peerConnection) {
+          clearInterval(this.iceCandidatePollingInterval);
+          this.iceCandidatePollingInterval = null;
+          return;
+        }
+
         const response = await this.sendToSignalingServer('get_ice_candidates', null);
         if (response.candidates && response.candidates.length > 0) {
           for (const candidate of response.candidates) {
@@ -289,12 +310,26 @@ class WebRTCConnection {
    * Close connection
    */
   close() {
+    // Clear ICE candidate polling interval
+    if (this.iceCandidatePollingInterval) {
+      clearInterval(this.iceCandidatePollingInterval);
+      this.iceCandidatePollingInterval = null;
+    }
+
+    // Close data channel
     if (this.dataChannel) {
+      this.dataChannel.onopen = null;
+      this.dataChannel.onclose = null;
+      this.dataChannel.onmessage = null;
       this.dataChannel.close();
       this.dataChannel = null;
     }
 
+    // Close peer connection
     if (this.peerConnection) {
+      this.peerConnection.onconnectionstatechange = null;
+      this.peerConnection.onicecandidate = null;
+      this.peerConnection.ondatachannel = null;
       this.peerConnection.close();
       this.peerConnection = null;
     }
