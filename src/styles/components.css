@@ -1,0 +1,100 @@
+/* ========== BUTTON COMPONENT ========== */
+
+.ui-button {
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    padding: var(--space-md) var(--space-lg);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    transform: scale(1);
+    display: inline-block;
+    text-align: center;
+}
+
+/* Variants */
+.ui-button--primary {
+    background: linear-gradient(135deg, var(--color-gold), var(--color-gold-light));
+    color: var(--bg-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.ui-button--primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), var(--glow-gold);
+}
+
+.ui-button--secondary {
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-dark));
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.ui-button--secondary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), var(--glow-teal);
+}
+
+.ui-button--danger {
+    background: var(--color-error);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.ui-button--danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    filter: brightness(1.1);
+}
+
+.ui-button--success {
+    background: var(--color-success);
+    color: var(--bg-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.ui-button--success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), var(--glow-green);
+}
+
+/* Sizes */
+.ui-button--sm {
+    font-size: var(--text-sm);
+    padding: var(--space-sm) var(--space-md);
+}
+
+.ui-button--lg {
+    font-size: var(--text-lg);
+    padding: var(--space-lg) var(--space-xl);
+}
+
+/* States */
+.ui-button:active:not(:disabled) {
+    transform: scale(0.98);
+    transition: all var(--transition-fast);
+}
+
+.ui-button:disabled,
+.ui-button--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.ui-button--loading {
+    cursor: wait;
+}
+
+/* Spinner */
+.ui-button__spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    margin-right: var(--space-sm);
+    vertical-align: middle;
+}
