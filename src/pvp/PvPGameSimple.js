@@ -124,10 +124,14 @@ class PvPGameSimple {
 
     // Send projectile creation event to remote (they'll create it from their view of our position)
     if (this.connection) {
+      console.log('[PvPGame] 📤 Sending projectile event to remote');
       this.connection.send({
         type: 'projectile',
         data: { shot: true }
       });
+      console.log('[PvPGame] ✅ Projectile event sent');
+    } else {
+      console.error('[PvPGame] ❌ Cannot send projectile - no connection!');
     }
   }
 
@@ -276,7 +280,14 @@ class PvPGameSimple {
       case 'projectile':
         // Create remote player's projectile (shooting downward from top)
         // Use the remote player's current position on this screen
-        console.log('[PvPGame] Remote player shot! Creating projectile from remote position');
+        console.log('[PvPGame] 🎯 REMOTE SHOT EVENT!');
+        console.log('[PvPGame] Remote player position:', {
+          x: this.remotePlayer.position.x,
+          y: this.remotePlayer.position.y,
+          width: this.remotePlayer.width,
+          height: this.remotePlayer.height
+        });
+
         const remoteProjectile = new Projectile(
           {
             x: this.remotePlayer.position.x + this.remotePlayer.width / 2 - 2,
@@ -285,7 +296,12 @@ class PvPGameSimple {
           10 // Shoot downward (positive Y) from top player
         );
         this.remoteProjectiles.push(remoteProjectile);
-        console.log('[PvPGame] Remote projectile created at:', remoteProjectile.position);
+
+        console.log('[PvPGame] ✅ Remote projectile created!', {
+          position: remoteProjectile.position,
+          velocity: remoteProjectile.velocity,
+          totalRemoteProjectiles: this.remoteProjectiles.length
+        });
         break;
 
       case 'alienHit':
@@ -394,6 +410,9 @@ class PvPGameSimple {
     });
 
     // Update remote projectiles
+    if (this.remoteProjectiles.length > 0) {
+      console.log(`[PvPGame] Updating ${this.remoteProjectiles.length} remote projectiles`);
+    }
     this.remoteProjectiles.forEach(projectile => {
       projectile.update();
     });
@@ -648,14 +667,24 @@ class PvPGameSimple {
     });
 
     // Remote Projectiles (going down)
+    if (this.remoteProjectiles.length > 0) {
+      console.log(`[PvPGame] Drawing ${this.remoteProjectiles.length} remote projectiles`);
+    }
     this.remoteProjectiles.forEach(proj => {
+      console.log('[PvPGame] Drawing remote projectile at:', proj.position);
       proj.draw(this.ctx);
 
-      // Debug: Draw a yellow circle around remote projectiles
+      // Debug: Draw a LARGE yellow circle around remote projectiles
       this.ctx.strokeStyle = 'yellow';
+      this.ctx.lineWidth = 3;
       this.ctx.beginPath();
-      this.ctx.arc(proj.position.x, proj.position.y, 10, 0, Math.PI * 2);
+      this.ctx.arc(proj.position.x, proj.position.y, 15, 0, Math.PI * 2);
       this.ctx.stroke();
+
+      // Draw text label
+      this.ctx.fillStyle = 'yellow';
+      this.ctx.font = '12px Arial';
+      this.ctx.fillText('REMOTE', proj.position.x - 20, proj.position.y - 20);
     });
 
     // Particles
