@@ -2,13 +2,21 @@ package configs
 
 import (
 	"embed"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/braiphub/go-core/queue"
+	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
+}
 
 //go:embed config.yaml
 var _ embed.FS
@@ -93,4 +101,58 @@ func GetHashIDConfig() HashIDConfig {
 
 func GetAPIPort() uint16 {
 	return cfg.APIPort
+}
+
+// New environment variable getters for Space Invaders
+
+func GetDatabaseURL() string {
+	return os.Getenv("DATABASE_URL")
+}
+
+func GetRedisURL() string {
+	return os.Getenv("REDIS_URL")
+}
+
+func GetRabbitMQURL() string {
+	return os.Getenv("RABBITMQ_URL")
+}
+
+func GetAPIPortFromEnv() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		return "3000"
+	}
+	return port
+}
+
+func GetJWTSecret() string {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		log.Fatal("JWT_SECRET must be set")
+	}
+	return secret
+}
+
+func GetSolanaRPCURL() string {
+	return os.Getenv("SOLANA_RPC_URL")
+}
+
+func GetSolanaNetwork() string {
+	network := os.Getenv("SOLANA_NETWORK")
+	if network == "" {
+		return "devnet"
+	}
+	return network
+}
+
+func GetAbacatePayAPIKey() string {
+	return os.Getenv("ABACATEPAY_API_KEY")
+}
+
+func GetSupabaseURL() string {
+	return os.Getenv("SUPABASE_URL")
+}
+
+func GetSupabaseKey() string {
+	return os.Getenv("SUPABASE_KEY")
 }
