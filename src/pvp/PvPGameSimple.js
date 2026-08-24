@@ -433,12 +433,23 @@ class PvPGameSimple {
   }
 
   checkCollision(obj1, obj2) {
-    return (
+    const collision = (
       obj1.position.x < obj2.position.x + obj2.width &&
       obj1.position.x + obj1.width > obj2.position.x &&
       obj1.position.y < obj2.position.y + obj2.height &&
       obj1.position.y + obj1.height > obj2.position.y
     );
+
+    // Debug: Log collision attempts with remote player
+    if (obj2 === this.remotePlayer && obj1.position) {
+      console.log('[Collision Check]', {
+        projectile: { x: obj1.position.x, y: obj1.position.y, w: obj1.width, h: obj1.height },
+        player: { x: obj2.position.x, y: obj2.position.y, w: obj2.width, h: obj2.height },
+        collision: collision
+      });
+    }
+
+    return collision;
   }
 
   render() {
@@ -485,6 +496,25 @@ class PvPGameSimple {
     );
     this.remotePlayer.draw(this.ctx);
     this.ctx.restore();
+
+    // Debug: Draw collision boxes
+    this.ctx.strokeStyle = 'lime';
+    this.ctx.lineWidth = 2;
+    // Local player hitbox
+    this.ctx.strokeRect(
+      this.localPlayer.position.x,
+      this.localPlayer.position.y,
+      this.localPlayer.width,
+      this.localPlayer.height
+    );
+    // Remote player hitbox
+    this.ctx.strokeStyle = 'red';
+    this.ctx.strokeRect(
+      this.remotePlayer.position.x,
+      this.remotePlayer.position.y,
+      this.remotePlayer.width,
+      this.remotePlayer.height
+    );
 
     // UI
     this.drawUI();
