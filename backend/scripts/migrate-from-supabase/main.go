@@ -101,15 +101,40 @@ func main() {
 		log.Fatalf("Load failed: %v", err)
 	}
 
-	// Print success message
+	// Phase 4: Validate Migration
 	fmt.Println("\n" + strings.Repeat("=", 60))
-	fmt.Println("MIGRATION COMPLETED SUCCESSFULLY")
+	fmt.Println("PHASE 4: VALIDATE MIGRATION")
 	fmt.Println(strings.Repeat("=", 60))
-	fmt.Println("\nAll data has been successfully migrated from Supabase to PostgreSQL!")
-	fmt.Println("\nNext steps:")
-	fmt.Println("1. Run validation script to verify data integrity")
-	fmt.Println("2. Test application with PostgreSQL backend")
-	fmt.Println("3. Update application configuration to use PostgreSQL")
+	
+	validationReports := ValidateMigration(ctx, db, transformedData)
+	PrintValidationReport(validationReports)
+
+	// Check if all validations passed
+	allMatched := true
+	for _, report := range validationReports {
+		if !report.Matched {
+			allMatched = false
+			break
+		}
+	}
+
+	// Print final success message only if validation passed
+	if allMatched {
+		fmt.Println("\n" + strings.Repeat("=", 60))
+		fmt.Println("MIGRATION COMPLETED SUCCESSFULLY")
+		fmt.Println(strings.Repeat("=", 60))
+		fmt.Println("\nAll data has been successfully migrated from Supabase to PostgreSQL!")
+		fmt.Println("\nNext steps:")
+		fmt.Println("1. Test application with PostgreSQL backend")
+		fmt.Println("2. Update application configuration to use PostgreSQL")
+		fmt.Println("3. Decommission Supabase instance")
+	} else {
+		fmt.Println("\n" + strings.Repeat("=", 60))
+		fmt.Println("MIGRATION COMPLETED WITH VALIDATION ERRORS")
+		fmt.Println(strings.Repeat("=", 60))
+		fmt.Println("\nData has been loaded, but validation found mismatches.")
+		fmt.Println("Please investigate the issues before proceeding.")
+	}
 }
 
 // connectDatabase creates a database connection
