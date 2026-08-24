@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/braiphub/go-scaffold/configs"
+	"github.com/yourusername/space-invaders/configs"
 	"log"
 
-	"github.com/braiphub/go-scaffold/cmd/http/components"
-	"github.com/braiphub/go-scaffold/internal/api/http"
+	"github.com/yourusername/space-invaders/cmd/http/components"
+	"github.com/yourusername/space-invaders/internal/api/http"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pkg/errors"
 )

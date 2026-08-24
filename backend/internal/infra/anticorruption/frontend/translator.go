@@ -1,8 +1,8 @@
 package frontend
 
 import (
-	"github.com/braiphub/go-scaffold/internal/domain/entity"
-	"github.com/braiphub/go-scaffold/internal/domain/model"
+	"github.com/yourusername/space-invaders/internal/domain/entity"
+	"github.com/yourusername/space-invaders/internal/domain/model"
 )
 
 func SearchBookRequestToFilter(dto SearchBookRequestDTO) model.SearchBookFilters {

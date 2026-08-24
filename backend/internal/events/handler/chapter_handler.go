@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/braiphub/go-scaffold/internal/events/event"
+	"github.com/yourusername/space-invaders/internal/events/event"
 )
 
 func (handler *EventHandler) InitFirstChapter(ev event.BookCreatedEvent) {

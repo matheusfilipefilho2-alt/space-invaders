@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-scaffold/internal/events/event"
+	"github.com/yourusername/space-invaders/internal/events/event"
 )
 
 func (handler *EventHandler) LogBookCreated(ev event.BookCreatedEvent) {

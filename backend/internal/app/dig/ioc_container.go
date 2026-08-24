@@ -6,11 +6,11 @@ import (
 	"github.com/braiphub/go-core/hashid"
 	"github.com/braiphub/go-core/log"
 	"github.com/braiphub/go-core/queue"
-	"github.com/braiphub/go-scaffold/internal/api/http/controller"
-	"github.com/braiphub/go-scaffold/internal/domain/repository"
-	"github.com/braiphub/go-scaffold/internal/domain/service"
-	handlers "github.com/braiphub/go-scaffold/internal/events/handler"
-	"github.com/braiphub/go-scaffold/internal/infra/anticorruption/msbooks"
+	"github.com/yourusername/space-invaders/internal/api/http/controller"
+	"github.com/yourusername/space-invaders/internal/domain/repository"
+	"github.com/yourusername/space-invaders/internal/domain/service"
+	handlers "github.com/yourusername/space-invaders/internal/events/handler"
+	"github.com/yourusername/space-invaders/internal/infra/anticorruption/msbooks"
 	"gorm.io/gorm"
 )
 

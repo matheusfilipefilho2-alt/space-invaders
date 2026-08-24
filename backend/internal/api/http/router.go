@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-scaffold/internal/api/http/controller"
-	"github.com/braiphub/go-scaffold/internal/api/http/middleware"
+	"github.com/yourusername/space-invaders/internal/api/http/controller"
+	"github.com/yourusername/space-invaders/internal/api/http/middleware"
 	"github.com/labstack/echo/v4"
 	echo_middleware "github.com/labstack/echo/v4/middleware"
 )

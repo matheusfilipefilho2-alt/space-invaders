@@ -3,9 +3,9 @@ package handlers
 import (
 	"github.com/braiphub/go-core/eventbus"
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-scaffold/internal/domain/service"
-	"github.com/braiphub/go-scaffold/internal/events/event"
-	"github.com/braiphub/go-scaffold/internal/infra/anticorruption/msbooks"
+	"github.com/yourusername/space-invaders/internal/domain/service"
+	"github.com/yourusername/space-invaders/internal/events/event"
+	"github.com/yourusername/space-invaders/internal/infra/anticorruption/msbooks"
 )
 
 type EventHandler struct {

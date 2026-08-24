@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/braiphub/go-core/queue"
-	"github.com/braiphub/go-scaffold/internal/domain/entity"
+	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"github.com/pkg/errors"
 )
 

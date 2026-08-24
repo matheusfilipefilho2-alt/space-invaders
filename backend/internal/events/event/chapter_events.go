@@ -1,6 +1,6 @@
 package event
 
-import "github.com/braiphub/go-scaffold/internal/domain/entity"
+import "github.com/yourusername/space-invaders/internal/domain/entity"
 
 const (
 	ChapterCreated = "chapter:created"

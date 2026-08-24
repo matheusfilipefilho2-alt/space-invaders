@@ -3,8 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/braiphub/go-scaffold/internal/domain/service"
-	"github.com/braiphub/go-scaffold/internal/infra/anticorruption/frontend"
+	"github.com/yourusername/space-invaders/internal/domain/service"
+	"github.com/yourusername/space-invaders/internal/infra/anticorruption/frontend"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
