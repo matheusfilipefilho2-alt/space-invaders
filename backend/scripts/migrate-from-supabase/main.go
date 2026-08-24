@@ -118,6 +118,17 @@ func main() {
 		}
 	}
 
+	// Phase 5: Save UUID Mappings
+	fmt.Println("\n" + strings.Repeat("=", 60))
+	fmt.Println("PHASE 5: SAVE UUID MAPPINGS")
+	fmt.Println(strings.Repeat("=", 60))
+	fmt.Println("\nSaving UUID to ID mappings...")
+	if err := SaveUUIDMapping(ctx, db); err != nil {
+		log.Printf("Warning: Failed to save UUID mappings: %v", err)
+	} else {
+		fmt.Printf("✓ Saved %d UUID mappings\n", len(uuidToUintMap))
+	}
+
 	// Print final success message only if validation passed
 	if allMatched {
 		fmt.Println("\n" + strings.Repeat("=", 60))
@@ -177,6 +188,7 @@ func autoMigrateTables(db *gorm.DB) error {
 		&entity.DailyEmission{},
 		&entity.RewardHistory{},
 		&entity.Order{},
+		&entity.UUIDMapping{}, // Added UUID mapping table
 	}
 
 	for _, e := range entities {
