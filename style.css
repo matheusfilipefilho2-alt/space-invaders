@@ -842,17 +842,10 @@ body.admin-page {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
-  padding: 20px 60px;
-}
-
-.shop-header .back-btn-header {
-  position: fixed;
-  top: 80px;
-  left: 20px;
-  transform: none;
+  padding: 20px;
 }
 
 @media (max-width: 768px) {
@@ -868,13 +861,10 @@ body.admin-page {
     left: 10px;
   }
 
-  .shop-header .back-btn-header {
-    top: 70px;
-    left: 10px;
-  }
-
   .shop-header {
     padding: 20px 10px;
+    flex-direction: column;
+    align-items: center;
   }
 }
 
