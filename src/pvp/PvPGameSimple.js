@@ -55,8 +55,9 @@ class PvPGameSimple {
     this.running = false;
     this.score = 0;
     this.level = 1;
-    this.kills = 0;
-    this.remoteKills = 0;
+    this.playerKills = 0; // Only count player eliminations
+    this.remotePlayerKills = 0; // Only count player eliminations
+    this.alienKills = 0; // Separate counter for aliens (doesn't affect win)
     this.startTime = 0;
 
     // Input
@@ -240,10 +241,11 @@ class PvPGameSimple {
           y: this.localPlayer.position.y,
           lives: this.localPlayer.lives
         },
-        projectiles: this.projectiles.map(p => ({
-          x: p.position.x,
-          y: p.position.y
-        }))
+        grid: {
+          direction: this.grid.direction,
+          position: this.grid.position,
+          velocity: this.grid.velocity
+        }
       }
     });
   }
@@ -258,6 +260,16 @@ class PvPGameSimple {
           this.remotePlayer.position.x = data.player.x;
           this.remotePlayer.position.y = 30; // Keep at top
           this.remotePlayer.lives = data.player.lives;
+        }
+        // Sync alien grid movement
+        if (data.grid) {
+          this.grid.direction = data.grid.direction;
+          if (data.grid.position) {
+            this.grid.position = data.grid.position;
+          }
+          if (data.grid.velocity) {
+            this.grid.velocity = data.grid.velocity;
+          }
         }
         break;
 
@@ -446,7 +458,7 @@ class PvPGameSimple {
             }
 
             this.score += 100;
-            this.kills++;
+            this.alienKills++; // Aliens don't count for win condition
 
             // Send alien hit event to remote
             if (this.connection) {
@@ -488,7 +500,7 @@ class PvPGameSimple {
               ));
             }
 
-            this.remoteKills++;
+            // Remote aliens don't count for win
             console.log('[PvPGame] Remote player destroyed alien');
           }
         }
@@ -501,10 +513,10 @@ class PvPGameSimple {
         this.localPlayer.lives--;
         projectile.active = false;
 
-        // Check if we were eliminated (remote player gets a kill)
+        // Check if we were eliminated (remote player gets a PLAYER KILL)
         if (this.localPlayer.lives <= 0) {
-          this.remoteKills++;
-          console.log('[PvPGame] 💀 ELIMINATED! Remote player got a kill!');
+          this.remotePlayerKills++; // Only player kills count
+          console.log('[PvPGame] 💀 ELIMINATED! Remote player got a kill! Their kills:', this.remotePlayerKills);
           this.localPlayer.lives = 3; // Respawn
         }
 
@@ -531,10 +543,10 @@ class PvPGameSimple {
         this.remotePlayer.lives--;
         projectile.active = false;
 
-        // Check if player was eliminated (kill)
+        // Check if player was eliminated (PLAYER KILL)
         if (this.remotePlayer.lives <= 0) {
-          this.kills++;
-          console.log('[PvPGame] 💀 KILL! Remote player eliminated!');
+          this.playerKills++; // Only player kills count for victory
+          console.log('[PvPGame] 💀 PLAYER KILL! Eliminated opponent! Kills:', this.playerKills);
           this.remotePlayer.lives = 3;
         }
 
@@ -568,12 +580,12 @@ class PvPGameSimple {
   }
 
   checkWinCondition() {
-    // Check if someone reached 3 kills
-    if (this.kills >= 3) {
-      console.log('[PvPGame] 🏆 VICTORY! You won with 3 kills!');
+    // Check if someone reached 3 PLAYER kills (only eliminating opponent counts)
+    if (this.playerKills >= 3) {
+      console.log('[PvPGame] 🏆 VICTORY! You eliminated opponent 3 times!');
       this.endGame('victory');
-    } else if (this.remoteKills >= 3) {
-      console.log('[PvPGame] 💀 DEFEAT! Opponent won with 3 kills!');
+    } else if (this.remotePlayerKills >= 3) {
+      console.log('[PvPGame] 💀 DEFEAT! Opponent eliminated you 3 times!');
       this.endGame('defeat');
     }
   }
@@ -704,12 +716,12 @@ class PvPGameSimple {
 
     // Update local player stats
     if (scoreLocal) scoreLocal.textContent = this.score;
-    if (killsLocal) killsLocal.textContent = this.kills;
+    if (killsLocal) killsLocal.textContent = this.playerKills; // Only player eliminations
     if (livesLocal) livesLocal.textContent = this.localPlayer.lives;
 
     // Update remote player stats
     if (scoreRemote) scoreRemote.textContent = '0'; // Will be synced later
-    if (killsRemote) killsRemote.textContent = this.remoteKills;
+    if (killsRemote) killsRemote.textContent = this.remotePlayerKills; // Only player eliminations
     if (livesRemote) livesRemote.textContent = this.remotePlayer.lives;
 
     // Update timer
