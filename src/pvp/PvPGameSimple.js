@@ -390,33 +390,38 @@ class PvPGameSimple {
 
     // Projectiles vs Remote Player
     this.projectiles.forEach(projectile => {
-      if (projectile.active !== false && this.checkCollision(projectile, this.remotePlayer)) {
-        // Hit the remote player
-        this.remotePlayer.lives--;
-        projectile.active = false;
+      if (projectile.active !== false) {
+        // Debug: Log collision check
+        const collision = this.checkCollision(projectile, this.remotePlayer);
 
-        // Check if player was eliminated (kill)
-        if (this.remotePlayer.lives <= 0) {
-          this.kills++;
-          console.log('[PvPGame] 💀 KILL! Remote player eliminated!');
-          // Respawn remote player with reduced lives
-          this.remotePlayer.lives = 3;
+        if (collision) {
+          // Hit the remote player
+          this.remotePlayer.lives--;
+          projectile.active = false;
+
+          // Check if player was eliminated (kill)
+          if (this.remotePlayer.lives <= 0) {
+            this.kills++;
+            console.log('[PvPGame] 💀 KILL! Remote player eliminated!');
+            // Respawn remote player with full lives
+            this.remotePlayer.lives = 3;
+          }
+
+          // Add particles
+          for (let i = 0; i < 20; i++) {
+            this.particles.push(new Particle(
+              { x: this.remotePlayer.position.x + this.remotePlayer.width / 2, y: this.remotePlayer.position.y + this.remotePlayer.height / 2 },
+              { x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 },
+              Math.random() * 4,
+              `hsl(${Math.random() * 360}, 100%, 50%)`
+            ));
+          }
+
+          console.log('[PvPGame] 💥 HIT! Remote player lives remaining:', this.remotePlayer.lives);
+
+          // Send updated state
+          this.sendGameState();
         }
-
-        // Add particles
-        for (let i = 0; i < 15; i++) {
-          this.particles.push(new Particle(
-            { x: this.remotePlayer.position.x + this.remotePlayer.width / 2, y: this.remotePlayer.position.y + this.remotePlayer.height / 2 },
-            { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 },
-            Math.random() * 3,
-            `hsl(${Math.random() * 360}, 50%, 50%)`
-          ));
-        }
-
-        console.log('[PvPGame] Hit remote player! Lives remaining:', this.remotePlayer.lives);
-
-        // Send updated state
-        this.sendGameState();
       }
     });
 
