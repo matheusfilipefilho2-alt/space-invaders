@@ -745,6 +745,7 @@ body.admin-page {
 
 .button-play,
 .button-view-ranking,
+.button-pvp,
 .button-restart {
   padding: 15px 20px;
   font-family: 'Press Start 2P', monospace;
@@ -785,6 +786,19 @@ body.admin-page {
   background: #ffa502;
   color: #050519;
   box-shadow: 0 0 30px #ffa502;
+  transform: translateY(-2px);
+}
+
+.button-pvp {
+  color: #ff4081;
+  border-color: #ff4081;
+  box-shadow: 0 0 20px rgba(255, 64, 129, 0.3);
+}
+
+.button-pvp:hover {
+  background: #ff4081;
+  color: #050519;
+  box-shadow: 0 0 30px #ff4081;
   transform: translateY(-2px);
 }
 
