@@ -157,6 +157,62 @@
   <!-- Game Canvas (hidden until match starts) -->
   <div id="game-container" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000;">
     <canvas id="game-canvas"></canvas>
+
+    <!-- PvP Score UI -->
+    <section class="score-ui pvp-score-ui">
+      <!-- Player 1 Stats (You - Bottom) -->
+      <div class="pvp-player-stats player-bottom">
+        <div class="player-indicator">
+          <span class="player-label">VOCÊ</span>
+          <span class="player-icon">🚀</span>
+        </div>
+        <div class="game-stats">
+          <div class="score-item">
+            <span class="score-label">SCORE</span>
+            <span class="score-value" id="pvp-score-local">0</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">KILLS</span>
+            <span class="score-value" id="pvp-kills-local">0</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">LIVES</span>
+            <span class="score-value" id="pvp-lives-local">3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Info -->
+      <div class="pvp-center-info">
+        <div class="match-timer" id="pvp-timer">0:00</div>
+        <div class="alien-count" id="pvp-aliens">
+          <span class="alien-icon">👾</span>
+          <span id="pvp-alien-count">0</span>
+        </div>
+      </div>
+
+      <!-- Player 2 Stats (Enemy - Top) -->
+      <div class="pvp-player-stats player-top">
+        <div class="player-indicator">
+          <span class="player-icon">🛸</span>
+          <span class="player-label">INIMIGO</span>
+        </div>
+        <div class="game-stats">
+          <div class="score-item">
+            <span class="score-label">LIVES</span>
+            <span class="score-value" id="pvp-lives-remote">3</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">KILLS</span>
+            <span class="score-value" id="pvp-kills-remote">0</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">SCORE</span>
+            <span class="score-value" id="pvp-score-remote">0</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- Scripts -->

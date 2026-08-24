@@ -54,6 +54,9 @@ class PvPGameSimple {
     this.running = false;
     this.score = 0;
     this.level = 1;
+    this.kills = 0;
+    this.remoteKills = 0;
+    this.startTime = 0;
 
     // Input
     this.keys = {
@@ -149,6 +152,7 @@ class PvPGameSimple {
 
     // Start game loop
     this.running = true;
+    this.startTime = Date.now();
     console.log('[PvPGame] 🎮 GAME LOOP STARTING! Canvas:', this.canvas.width, 'x', this.canvas.height);
     this.gameLoop();
 
@@ -375,6 +379,7 @@ class PvPGameSimple {
             }
 
             this.score += 100;
+            this.kills++;
           }
         }
       });
@@ -473,26 +478,38 @@ class PvPGameSimple {
   }
 
   drawUI() {
-    this.ctx.fillStyle = '#FFF';
-    this.ctx.font = '24px Arial';
-    this.ctx.textAlign = 'left';
+    // Update DOM elements instead of drawing on canvas
+    const scoreLocal = document.getElementById('pvp-score-local');
+    const killsLocal = document.getElementById('pvp-kills-local');
+    const livesLocal = document.getElementById('pvp-lives-local');
 
-    // Left side UI (your stats)
-    this.ctx.fillText(`YOU`, 10, 30);
-    this.ctx.fillText(`Score: ${this.score}`, 10, 60);
-    this.ctx.fillText(`Level: ${this.level}`, 10, 90);
-    this.ctx.fillText(`Lives: ${this.localPlayer.lives}`, 10, 120);
-    this.ctx.fillText(`Aliens: ${this.grid.invaders.length}`, 10, 150);
+    const scoreRemote = document.getElementById('pvp-score-remote');
+    const killsRemote = document.getElementById('pvp-kills-remote');
+    const livesRemote = document.getElementById('pvp-lives-remote');
 
-    // Right side UI (enemy stats)
-    this.ctx.textAlign = 'right';
-    this.ctx.fillText(`ENEMY`, this.canvas.width - 10, 30);
-    this.ctx.fillText(`Lives: ${this.remotePlayer.lives}`, this.canvas.width - 10, 60);
+    const timer = document.getElementById('pvp-timer');
+    const alienCount = document.getElementById('pvp-alien-count');
 
-    // Center UI
-    this.ctx.textAlign = 'center';
-    this.ctx.font = '20px Arial';
-    this.ctx.fillText(`← → Move | SPACE Shoot`, this.canvas.width / 2, this.canvas.height - 20);
+    // Update local player stats
+    if (scoreLocal) scoreLocal.textContent = this.score;
+    if (killsLocal) killsLocal.textContent = this.kills;
+    if (livesLocal) livesLocal.textContent = this.localPlayer.lives;
+
+    // Update remote player stats
+    if (scoreRemote) scoreRemote.textContent = '0'; // Will be synced later
+    if (killsRemote) killsRemote.textContent = this.remoteKills;
+    if (livesRemote) livesRemote.textContent = this.remotePlayer.lives;
+
+    // Update timer
+    if (timer) {
+      const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      timer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Update alien count
+    if (alienCount) alienCount.textContent = this.grid.invaders.length;
   }
 
   stop() {
