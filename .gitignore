@@ -43,3 +43,4 @@ postgres_data/
 # OS
 .DS_Store
 Thumbs.db
+/backend/scripts/seed/seed
