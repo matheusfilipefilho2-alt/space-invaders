@@ -43,11 +43,12 @@ class PvPGameSimple {
     this.remotePlayer.position.y = 30;
 
     // Game entities (ORIGINAL CLASSES)
-    this.grid = new Grid(5, 4); // Smaller grid for PvP
+    this.grid = new Grid(5, 4); // Smaller grid for PvP - SHARED between players
     this.gridOffsetX = 0; // Will be calculated after canvas is sized
     this.gridOffsetY = 0;
     this.particles = [];
-    this.projectiles = [];
+    this.projectiles = []; // Local player projectiles
+    this.remoteProjectiles = []; // Remote player projectiles
     this.stars = [];
 
     // Game state
@@ -118,10 +119,19 @@ class PvPGameSimple {
       -10 // Vertical shot upward (negative Y = up)
     );
     this.projectiles.push(projectile);
-    console.log('[PvPGame] Shot fired!', this.projectiles.length, 'total projectiles', 'at position:', projectile.position);
+    console.log('[PvPGame] Shot fired!', this.projectiles.length, 'total projectiles');
 
-    // Send to remote
-    this.sendGameState();
+    // Send projectile creation event to remote
+    if (this.connection) {
+      this.connection.send({
+        type: 'projectile',
+        data: {
+          x: projectile.position.x,
+          y: projectile.position.y,
+          velocity: projectile.velocity
+        }
+      });
+    }
   }
 
   async start() {
@@ -200,15 +210,16 @@ class PvPGameSimple {
         });
       }
 
-      // Listen for remote ready
+      // Listen for remote ready and all messages
       this.connection.onMessage((msg) => {
         console.log('[PvPGame] Message received:', msg.type);
         if (msg.type === 'ready') {
           console.log('[PvPGame] Remote player ready!');
           remoteReady = true;
           check();
-        } else if (msg.type === 'state') {
-          this.updateRemoteState(msg.data);
+        } else {
+          // Handle all other message types
+          this.updateRemoteState(msg);
         }
       });
 
@@ -241,16 +252,68 @@ class PvPGameSimple {
     });
   }
 
-  updateRemoteState(data) {
-    if (data.player) {
-      // Only sync X position (horizontal movement)
-      // Keep remote player at top, mirror their horizontal position
-      this.remotePlayer.position.x = data.player.x;
+  updateRemoteState(message) {
+    const { type, data } = message;
 
-      // Keep remote player fixed at top
-      this.remotePlayer.position.y = 30;
+    switch (type) {
+      case 'state':
+        // Update remote player position and state
+        if (data.player) {
+          this.remotePlayer.position.x = data.player.x;
+          this.remotePlayer.position.y = 30; // Keep at top
+          this.remotePlayer.lives = data.player.lives;
+        }
+        break;
 
-      this.remotePlayer.lives = data.player.lives;
+      case 'projectile':
+        // Create remote player's projectile (shooting downward from top)
+        console.log('[PvPGame] Remote projectile created');
+        const remoteProjectile = new Projectile(
+          {
+            x: data.x,
+            y: data.y
+          },
+          10 // Shoot downward (positive Y) from top player
+        );
+        this.remoteProjectiles.push(remoteProjectile);
+        break;
+
+      case 'alienHit':
+        // Sync alien destruction
+        console.log('[PvPGame] Remote hit alien at index:', data.alienIndex);
+        const invader = this.grid.invaders[data.alienIndex];
+        if (invader) {
+          invader.shouldRemove = true;
+          invader.alive = false;
+          // Add particles for visual feedback
+          for (let i = 0; i < 15; i++) {
+            this.particles.push(new Particle(
+              { x: invader.position.x + this.gridOffsetX, y: invader.position.y + this.gridOffsetY },
+              { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 },
+              Math.random() * 3,
+              `hsl(${Math.random() * 360}, 50%, 50%)`
+            ));
+          }
+        }
+        break;
+
+      case 'playerHit':
+        // Remote player hit us
+        console.log('[PvPGame] We were hit by remote player!');
+        this.localPlayer.lives--;
+        // Add particles
+        for (let i = 0; i < 20; i++) {
+          this.particles.push(new Particle(
+            { x: this.localPlayer.position.x + this.localPlayer.width / 2, y: this.localPlayer.position.y + this.localPlayer.height / 2 },
+            { x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 },
+            Math.random() * 4,
+            `hsl(${Math.random() * 360}, 100%, 50%)`
+          ));
+        }
+        break;
+
+      default:
+        console.log('[PvPGame] Unknown message type:', type);
     }
   }
 
@@ -320,13 +383,12 @@ class PvPGameSimple {
       projectile.update();
     });
 
-    // Log projectiles for debugging
-    if (this.projectiles.length > 0) {
-      console.log(`[PvPGame] ${this.projectiles.length} projectiles active`);
-    }
+    // Update remote projectiles
+    this.remoteProjectiles.forEach(projectile => {
+      projectile.update();
+    });
 
     // Remove off-screen or inactive projectiles
-    const beforeFilter = this.projectiles.length;
     this.projectiles = this.projectiles.filter(p =>
       p.active !== false &&
       p.position.x > -50 &&
@@ -335,9 +397,13 @@ class PvPGameSimple {
       p.position.y < this.canvas.height + 50
     );
 
-    if (beforeFilter !== this.projectiles.length) {
-      console.log(`[PvPGame] Filtered out ${beforeFilter - this.projectiles.length} projectiles`);
-    }
+    this.remoteProjectiles = this.remoteProjectiles.filter(p =>
+      p.active !== false &&
+      p.position.x > -50 &&
+      p.position.x < this.canvas.width + 50 &&
+      p.position.y > -50 &&
+      p.position.y < this.canvas.height + 50
+    );
 
     // Check collisions
     this.checkCollisions();
@@ -348,10 +414,10 @@ class PvPGameSimple {
   }
 
   checkCollisions() {
-    // Projectiles vs Invaders (account for grid offset)
+    // Local Projectiles vs Invaders (account for grid offset)
     this.projectiles.forEach(projectile => {
-      this.grid.invaders.forEach(invader => {
-        if (invader) {
+      this.grid.invaders.forEach((invader, index) => {
+        if (invader && !invader.shouldRemove) {
           // Create temporary invader position with offset applied
           const invaderWithOffset = {
             position: {
@@ -380,47 +446,108 @@ class PvPGameSimple {
 
             this.score += 100;
             this.kills++;
+
+            // Send alien hit event to remote
+            if (this.connection) {
+              this.connection.send({
+                type: 'alienHit',
+                data: { alienIndex: index }
+              });
+            }
           }
         }
       });
     });
 
+    // Remote Projectiles vs Invaders
+    this.remoteProjectiles.forEach(projectile => {
+      this.grid.invaders.forEach((invader, index) => {
+        if (invader && !invader.shouldRemove) {
+          const invaderWithOffset = {
+            position: {
+              x: invader.position.x + this.gridOffsetX,
+              y: invader.position.y + this.gridOffsetY
+            },
+            width: invader.width,
+            height: invader.height
+          };
+
+          if (this.checkCollision(projectile, invaderWithOffset)) {
+            invader.shouldRemove = true;
+            invader.alive = false;
+            projectile.active = false;
+
+            // Add particles
+            for (let i = 0; i < 15; i++) {
+              this.particles.push(new Particle(
+                { x: invader.position.x + this.gridOffsetX, y: invader.position.y + this.gridOffsetY },
+                { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 },
+                Math.random() * 3,
+                `hsl(${Math.random() * 360}, 50%, 50%)`
+              ));
+            }
+
+            this.remoteKills++;
+            console.log('[PvPGame] Remote player destroyed alien');
+          }
+        }
+      });
+    });
+
+    // Remote Projectiles vs Local Player
+    this.remoteProjectiles.forEach(projectile => {
+      if (projectile.active !== false && this.checkCollision(projectile, this.localPlayer)) {
+        this.localPlayer.lives--;
+        projectile.active = false;
+
+        console.log('[PvPGame] 💥 HIT by remote! Lives remaining:', this.localPlayer.lives);
+
+        // Add particles
+        for (let i = 0; i < 20; i++) {
+          this.particles.push(new Particle(
+            { x: this.localPlayer.position.x + this.localPlayer.width / 2, y: this.localPlayer.position.y + this.localPlayer.height / 2 },
+            { x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 },
+            Math.random() * 4,
+            `hsl(${Math.random() * 360}, 100%, 50%)`
+          ));
+        }
+      }
+    });
+
     // Remove dead invaders
     this.grid.invaders = this.grid.invaders.filter(inv => inv && !inv.shouldRemove);
 
-    // Projectiles vs Remote Player
+    // Local Projectiles vs Remote Player
     this.projectiles.forEach(projectile => {
-      if (projectile.active !== false) {
-        // Debug: Log collision check
-        const collision = this.checkCollision(projectile, this.remotePlayer);
+      if (projectile.active !== false && this.checkCollision(projectile, this.remotePlayer)) {
+        this.remotePlayer.lives--;
+        projectile.active = false;
 
-        if (collision) {
-          // Hit the remote player
-          this.remotePlayer.lives--;
-          projectile.active = false;
+        // Check if player was eliminated (kill)
+        if (this.remotePlayer.lives <= 0) {
+          this.kills++;
+          console.log('[PvPGame] 💀 KILL! Remote player eliminated!');
+          this.remotePlayer.lives = 3;
+        }
 
-          // Check if player was eliminated (kill)
-          if (this.remotePlayer.lives <= 0) {
-            this.kills++;
-            console.log('[PvPGame] 💀 KILL! Remote player eliminated!');
-            // Respawn remote player with full lives
-            this.remotePlayer.lives = 3;
-          }
+        // Add particles
+        for (let i = 0; i < 20; i++) {
+          this.particles.push(new Particle(
+            { x: this.remotePlayer.position.x + this.remotePlayer.width / 2, y: this.remotePlayer.position.y + this.remotePlayer.height / 2 },
+            { x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 },
+            Math.random() * 4,
+            `hsl(${Math.random() * 360}, 100%, 50%)`
+          ));
+        }
 
-          // Add particles
-          for (let i = 0; i < 20; i++) {
-            this.particles.push(new Particle(
-              { x: this.remotePlayer.position.x + this.remotePlayer.width / 2, y: this.remotePlayer.position.y + this.remotePlayer.height / 2 },
-              { x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 },
-              Math.random() * 4,
-              `hsl(${Math.random() * 360}, 100%, 50%)`
-            ));
-          }
+        console.log('[PvPGame] 💥 HIT! Remote player lives remaining:', this.remotePlayer.lives);
 
-          console.log('[PvPGame] 💥 HIT! Remote player lives remaining:', this.remotePlayer.lives);
-
-          // Send updated state
-          this.sendGameState();
+        // Send player hit event to remote
+        if (this.connection) {
+          this.connection.send({
+            type: 'playerHit',
+            data: { damage: 1 }
+          });
         }
       }
     });
@@ -466,12 +593,23 @@ class PvPGameSimple {
     this.grid.draw(this.ctx);
     this.ctx.restore();
 
-    // Projectiles
+    // Local Projectiles (going up)
     this.projectiles.forEach(proj => {
       proj.draw(this.ctx);
 
-      // Debug: Draw a red circle around projectiles to make them visible
+      // Debug: Draw a red circle around projectiles
       this.ctx.strokeStyle = 'red';
+      this.ctx.beginPath();
+      this.ctx.arc(proj.position.x, proj.position.y, 10, 0, Math.PI * 2);
+      this.ctx.stroke();
+    });
+
+    // Remote Projectiles (going down)
+    this.remoteProjectiles.forEach(proj => {
+      proj.draw(this.ctx);
+
+      // Debug: Draw a yellow circle around remote projectiles
+      this.ctx.strokeStyle = 'yellow';
       this.ctx.beginPath();
       this.ctx.arc(proj.position.x, proj.position.y, 10, 0, Math.PI * 2);
       this.ctx.stroke();
