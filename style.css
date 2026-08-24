@@ -822,53 +822,59 @@ body.admin-page {
 
 /* Page Header Controls */
 .page-header-controls {
-  position: absolute;
-  top: 20px;
+  position: fixed;
+  top: 80px;
   left: 20px;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .back-btn-header {
   margin: 0;
   padding: 10px 16px;
   font-size: 10px;
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  z-index: 1000;
 }
 
 .shop-header {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 20px;
   flex-wrap: wrap;
+  padding: 20px 60px;
 }
 
 .shop-header .back-btn-header {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  transform: none;
 }
 
 @media (max-width: 768px) {
   .page-header-controls {
-    top: 10px;
+    top: 70px;
     left: 10px;
   }
 
   .back-btn-header {
     padding: 8px 12px;
     font-size: 8px;
+    top: 70px;
+    left: 10px;
   }
 
   .shop-header .back-btn-header {
-    position: relative;
-    transform: none;
+    top: 70px;
+    left: 10px;
   }
 
   .shop-header {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 20px 10px;
   }
 }
 
