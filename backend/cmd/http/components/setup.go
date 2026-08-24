@@ -186,3 +186,28 @@ func setupBus(logger log.LoggerI) *eventbus.Bus {
 
 	return bus
 }
+
+// SetupResult contains the initialized database connection for Fase 1 architecture
+type SetupResult struct {
+	DB *gorm.DB
+}
+
+// SetUp initializes the application with simplified Fase 1 architecture.
+// It connects to PostgreSQL using DATABASE_URL and auto-migrates all entities.
+func SetUpSimple() (*SetupResult, error) {
+	// Get DATABASE_URL from environment
+	databaseURL := configs.GetDatabaseURL()
+	if databaseURL == "" {
+		return nil, errors.New("DATABASE_URL environment variable is not set")
+	}
+
+	// Connect to database with auto-migration
+	db, err := database.NewPostgresConnection(databaseURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect to database")
+	}
+
+	return &SetupResult{
+		DB: db,
+	}, nil
+}
