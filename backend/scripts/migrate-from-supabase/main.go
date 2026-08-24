@@ -1,65 +1,180 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/yourusername/space-invaders/internal/domain/entity"
+	"github.com/yourusername/space-invaders/internal/infra/database"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
-	// Parse command-line flags
-	dryRun := flag.Bool("dry-run", true, "Run extraction without saving to database (just save JSON files)")
-	verbose := flag.Bool("verbose", false, "Enable verbose logging")
+	// Parse command line flags
+	dryRun := flag.Bool("dry-run", false, "Extract and transform only, do not load data")
 	flag.Parse()
 
-	// Load environment variables
-	if err := godotenv.Load("../../.env"); err != nil {
-		log.Println("Warning: No .env file found, using environment variables")
+	// Load environment variables from backend/.env
+	envPath := "../../.env"
+	if err := godotenv.Load(envPath); err != nil {
+		log.Printf("Warning: No .env file found at %s, using environment variables", envPath)
 	}
 
-	// Set up logging
-	if *verbose {
-		log.SetFlags(log.LstdFlags | log.Lshortfile)
-	} else {
-		log.SetFlags(log.LstdFlags)
-	}
-
-	log.Println("Starting Supabase data extraction...")
-	log.Printf("Dry run mode: %v\n", *dryRun)
-
-	// Get Supabase credentials from environment
+	// Validate required Supabase credentials
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	supabaseKey := os.Getenv("SUPABASE_KEY")
 
 	if supabaseURL == "" || supabaseKey == "" {
-		log.Fatal("Error: SUPABASE_URL and SUPABASE_KEY must be set in environment variables")
+		log.Fatal("ERROR: SUPABASE_URL and SUPABASE_KEY environment variables are required")
 	}
 
-	// Create Supabase client
+	// Get database URL
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("ERROR: DATABASE_URL environment variable is required")
+	}
+
+	ctx := context.Background()
+
+	// Print migration header
+	printHeader()
+
+	// Phase 1: Extract from Supabase
+	fmt.Println("\n" + strings.Repeat("=", 60))
+	fmt.Println("PHASE 1: EXTRACT DATA FROM SUPABASE")
+	fmt.Println(strings.Repeat("=", 60))
+	
 	client := NewSupabaseClient(supabaseURL, supabaseKey)
-	log.Println("✓ Connected to Supabase successfully")
-
-	// Extract all data
-	data, err := ExtractAllData(client)
+	extractedData, err := ExtractAllData(client)
 	if err != nil {
-		log.Fatalf("Failed to extract data: %v", err)
+		log.Fatalf("Extraction failed: %v", err)
 	}
+	
+	PrintExtractionSummary(extractedData)
 
-	// Print summary
-	PrintExtractionSummary(data)
+	// Phase 2: Transform data
+	fmt.Println("\n" + strings.Repeat("=", 60))
+	fmt.Println("PHASE 2: TRANSFORM DATA")
+	fmt.Println(strings.Repeat("=", 60))
+	
+	transformedData, err := TransformData(extractedData)
+	if err != nil {
+		log.Fatalf("Transformation failed: %v", err)
+	}
+	
+	PrintTransformationSummary(transformedData)
 
+	// If dry-run, stop here
 	if *dryRun {
-		log.Println("\n✅ Dry run completed successfully!")
-		log.Println("Data has been saved to JSON files in the extracted/ directory")
-		log.Println("Review the files before proceeding with transformation and loading")
+		fmt.Println("\n" + strings.Repeat("=", 60))
+		fmt.Println("DRY RUN MODE: Skipping database load")
+		fmt.Println(strings.Repeat("=", 60))
+		fmt.Println("\nMigration dry-run completed successfully!")
+		fmt.Println("To perform actual migration, run without --dry-run flag")
 		return
 	}
 
-	log.Println("\n✅ Extraction completed successfully!")
-	log.Println("Next steps:")
-	log.Println("1. Review the extracted JSON files in the extracted/ directory")
-	log.Println("2. Run the transformation script: go run transform.go")
-	log.Println("3. Run the load script: go run load.go")
+	// Phase 3: Load into PostgreSQL
+	fmt.Println("\n" + strings.Repeat("=", 60))
+	fmt.Println("PHASE 3: LOAD DATA INTO POSTGRESQL")
+	fmt.Println(strings.Repeat("=", 60))
+
+	// Connect to database
+	db, err := connectDatabase(databaseURL)
+	if err != nil {
+		log.Fatalf("Database connection failed: %v", err)
+	}
+
+	// Auto-migrate tables
+	if err := autoMigrateTables(db); err != nil {
+		log.Fatalf("Auto-migration failed: %v", err)
+	}
+
+	// Load data
+	if err := LoadData(ctx, db, transformedData); err != nil {
+		log.Fatalf("Load failed: %v", err)
+	}
+
+	// Print success message
+	fmt.Println("\n" + strings.Repeat("=", 60))
+	fmt.Println("MIGRATION COMPLETED SUCCESSFULLY")
+	fmt.Println(strings.Repeat("=", 60))
+	fmt.Println("\nAll data has been successfully migrated from Supabase to PostgreSQL!")
+	fmt.Println("\nNext steps:")
+	fmt.Println("1. Run validation script to verify data integrity")
+	fmt.Println("2. Test application with PostgreSQL backend")
+	fmt.Println("3. Update application configuration to use PostgreSQL")
+}
+
+// connectDatabase creates a database connection
+func connectDatabase(databaseURL string) (*gorm.DB, error) {
+	log.Println("Connecting to PostgreSQL database...")
+
+	// Try to use existing database infrastructure if available
+	// Check if we can use the DBClient from internal/infra/database
+	readDSN := databaseURL
+	writeDSN := databaseURL
+
+	dbClient, err := database.NewDBClient(readDSN, writeDSN)
+	if err != nil {
+		// Fallback to direct GORM connection
+		log.Println("Using direct GORM connection...")
+		db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to database: %w", err)
+		}
+		log.Println("✓ Connected to PostgreSQL")
+		return db, nil
+	}
+
+	log.Println("✓ Connected to PostgreSQL using DBClient")
+	return dbClient.WriteDB, nil
+}
+
+// autoMigrateTables creates all required tables
+func autoMigrateTables(db *gorm.DB) error {
+	log.Println("Running auto-migration for all tables...")
+
+	// Migrate all entity types in dependency order
+	entities := []interface{}{
+		&entity.League{},
+		&entity.Player{},
+		&entity.PlayerItem{},
+		&entity.Achievement{},
+		&entity.PlayerAchievement{},
+		&entity.GoldSpaceConversion{},
+		&entity.DailyEmission{},
+		&entity.RewardHistory{},
+		&entity.Order{},
+	}
+
+	for _, e := range entities {
+		if err := db.AutoMigrate(e); err != nil {
+			return fmt.Errorf("failed to migrate %T: %w", e, err)
+		}
+	}
+
+	log.Println("✓ All tables created/updated successfully")
+	return nil
+}
+
+// printHeader prints the migration header
+func printHeader() {
+	banner := `
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║        SPACE INVADERS - SUPABASE TO POSTGRESQL MIGRATION     ║
+║                                                              ║
+║  This script will migrate all data from Supabase to          ║
+║  PostgreSQL using the ETL (Extract-Transform-Load) pattern.  ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+`
+	fmt.Println(banner)
 }
