@@ -1,0 +1,35 @@
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongIngress
+metadata:
+  name: {{ include "app.name" . }}-ingress-configuration
+proxy:
+  read_timeout: 600
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "app.name" . }}-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/protocols: https
+    konghq.com/override: {{ include "app.name" . }}-ingress-configuration
+    konghq.com/strip-path: "true"
+spec:
+  ingressClassName: kong
+  rules:
+  - host: {{ .Values.apiUrl }}
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ include "app.name" . }}-app
+            port:
+              number: 80
+  tls:
+    - hosts:
+      - {{ .Values.apiUrl }}
+      secretName: {{ include "app.name" . }}

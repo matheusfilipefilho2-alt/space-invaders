@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "app.name" . }}-app
+  labels:
+    {{- include "app.selectorLabels" . | nindent 4 }}-app
+
+    {{- if .Values.datadog.enabled  }}
+    tags.datadoghq.com/env: {{ .Values.datadog.env }}
+    tags.datadoghq.com/service: {{ include "app.name" . }}-app
+    tags.datadoghq.com/version: app-{{ .Chart.AppVersion }}
+    {{- end }}
+
+spec:
+  selector:
+    matchLabels:
+      {{- include "app.selectorLabels" . | nindent 6 }}-app
+  replicas: 1
+  revisionHistoryLimit: 1
+  progressDeadlineSeconds: 7200
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        {{- include "app.selectorLabels" . | nindent 8 }}-app
+        date: "{{ now | unixEpoch }}"
+
+        {{- if .Values.datadog.enabled  }}
+        tags.datadoghq.com/env: {{ .Values.datadog.env }}
+        tags.datadoghq.com/service: {{ include "app.name" . }}-app
+        tags.datadoghq.com/version: app-{{ .Chart.AppVersion }}
+        {{- end }}
+
+    spec:
+
+      volumes:
+      - name: {{ include "app.name" . }}-env-file
+        secret:
+          secretName: {{ include "app.name" . }}-env-file
+
+      containers:
+        - name: {{ include "app.name" . }}-app
+          image: {{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com/{{ include "app.name" . }}:app-{{ .Chart.AppVersion }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          resources:
+            limits:
+              cpu: {{ .Values.app.limit.cpu }}
+              memory: {{ .Values.app.limit.memory }}
+            requests:
+              cpu: "0.5"
+              memory: 500Mi
+          volumeMounts:
+            - name: {{ include "app.name" . }}-env-file
+              mountPath: /{{ .Values.envFile }}
+              subPath: {{ .Values.envFile }}
+              readOnly: true
+
+          {{- if .Values.datadog.enabled  }}
+          env:
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+          {{- end }}

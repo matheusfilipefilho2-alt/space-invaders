@@ -1,0 +1,9 @@
+Braip
+
+Obrigado por instalar {{ .Chart.Name }}!
+
+O nome do release é {{ .Release.Name }}.
+
+Para saber mais sobre o release, use:
+
+$ helm status {{ .Release.Name }}

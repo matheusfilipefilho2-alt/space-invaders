@@ -18,3 +18,28 @@ package-lock.json
 id.json
 keypair.json
 wallet.json.env
+
+# Backend (Go)
+backend/bin/
+backend/*.exe
+backend/.env
+backend/coverage.out
+
+# Frontend (Vue)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Docker
+postgres_data/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

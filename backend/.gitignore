@@ -1,0 +1,15 @@
+# Go workspace file
+go.work
+go.work.sum
+
+#docker volumes
+.docker
+.idea
+tmp
+
+# env file
+**/.env
+
+# mock files
+**/*_mock.go
+.

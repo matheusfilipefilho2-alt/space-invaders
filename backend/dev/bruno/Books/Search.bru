@@ -1,0 +1,22 @@
+meta {
+  name: Search
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/books?name=book name&per_page=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  name: book name
+  per_page: 1
+  ~name: invalid book name
+  ~cursor: eyJ2YWx1ZSI6MywiZGlyZWN0aW9uIjoiZm9yd2FyZCJ9
+}
+
+auth:bearer {
+  token: {{token}}
+}

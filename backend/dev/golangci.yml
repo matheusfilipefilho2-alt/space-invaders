@@ -1,0 +1,99 @@
+version: "2"
+run:
+  go: "1.24"
+  modules-download-mode: readonly
+  tests: false
+linters:
+  default: all
+  disable:
+    - depguard
+    - prealloc
+    - wsl
+  settings:
+    wrapcheck:
+      ignore-package-globs:
+        - encoding/*
+        - github.com/pkg/*
+      ignore-sigs:
+        - "(github.com/labstack/echo/v4.Context).NoContent"
+        - "(github.com/labstack/echo/v4.Context).Blob"
+        - "(github.com/labstack/echo/v4.Context).JSON"
+        - "(github.com/labstack/echo/v4.Context).String"
+        - "(github.com/labstack/echo/v4.Context).File"
+    revive:
+      rules:
+        - name: if-return
+          disabled: true
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+        use-field-name: true
+    varnamelen:
+      ignore-names:
+        - wa
+        - ev
+        - id
+        - jid
+        - db
+        - sl
+        - sllinters
+        - i
+        - ok
+      ignore-decls:
+        - c echo.Context
+        - tx *gorm.DB
+        - db *gorm.DB
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - funlen
+        path: translator.go
+      - linters:
+          - dupl
+        path: internal/domain/model
+      - linters:
+          - exhaustruct
+          - dupl
+        path: internal/domain/repository
+      - linters:
+          - exhaustruct
+          - dupl
+          - forcetypeassert
+        path: internal/api/http/controller
+      - linters:
+          - dupl
+        path: internal/app/command
+      - linters:
+          - tagliatelle
+        path: contract.go
+      - linters:
+          - wrapcheck
+        path: internal/app/erp/bling/translator.go
+      - linters:
+          - wrapcheck
+        path: internal/app/erp/bling/client.go
+    paths:
+      - docs/swagger
+      - pkg/core
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - docs/swagger
+      - pkg/core
+      - third_party$
+      - builtin$
+      - examples$

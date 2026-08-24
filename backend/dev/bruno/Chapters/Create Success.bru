@@ -1,0 +1,22 @@
+meta {
+  name: Create Success
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/chapters
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "book_id": 1,
+    "chapter_name": "my new chapter name"
+  }
+}

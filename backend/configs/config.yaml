@@ -1,0 +1,42 @@
+env: ${ENV}
+database:
+  readReplicaDsn: ${POSTGRES_READ_DSN}
+  writeReplicaDsn: ${POSTGRES_WRITE_DSN}
+
+redis:
+  host: ${REDIS_HOST}
+  port: ${REDIS_PORT}
+  password: ${REDIS_PASSWORD}
+
+hashId:
+  salt: ${HASH_ID_SALT}
+  minLength: 7
+
+apiPort: ${API_PORT}
+
+rabbitmq:
+  connectionString: ${RABBITMQ_DSN}
+  serviceName: "ms-scaffold"
+  exchange:
+    name: "ms-scaffold"
+    type: "topic"
+
+  queues:
+    - name: "ms-scaffold.*"
+      exchange: "ms-scaffold"
+      routingKey: "#"
+
+    - name: "ms-scaffold.books.created"
+      exchange: "ms-books"
+      routingKey: "book-created"
+      arguments:
+        x-dead-letter-exchange: "dead-exchange"
+        x-dead-letter-routing-key: "ms-scaffold.books.created.dead"
+        x-queue-type: "quorum"
+
+        # Dead letter queues
+    - name: "ms-scaffold.books.created.dead"
+      exchange: "dead-exchange"
+      routingKey: "ms-scaffold.books.created.dead"
+      arguments:
+        x-queue-type: "quorum"

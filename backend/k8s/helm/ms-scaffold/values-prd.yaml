@@ -1,0 +1,25 @@
+apiUrl: ms-scaffold.braip.io
+containerPort: 80
+aws:
+  accountId: "550375413462"
+  region: us-east-1
+envFile: ".env"
+datadog:
+  enabled: false
+  env: staging
+secret:
+  store: secret-store
+  refreshInterval: 1m
+  items:
+    file: "prd/services/ms-scaffold-api"
+app:
+  limit:
+    cpu: 0.5
+    memory: 1Gi
+  hpa:
+    enabled: false
+    minReplicas: 3
+    maxReplicas: 10
+    targetAverageUtilization:
+      cpu: 70
+      memory: 70
