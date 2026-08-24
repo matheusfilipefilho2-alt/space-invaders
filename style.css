@@ -820,6 +820,58 @@ body.admin-page {
   font-size: 1.2em;
 }
 
+/* Page Header Controls */
+.page-header-controls {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+}
+
+.back-btn-header {
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 10px;
+}
+
+.shop-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.shop-header .back-btn-header {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media (max-width: 768px) {
+  .page-header-controls {
+    top: 10px;
+    left: 10px;
+  }
+
+  .back-btn-header {
+    padding: 8px 12px;
+    font-size: 8px;
+  }
+
+  .shop-header .back-btn-header {
+    position: relative;
+    transform: none;
+  }
+
+  .shop-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* Footer */
 .footer-container {
   position: fixed;
