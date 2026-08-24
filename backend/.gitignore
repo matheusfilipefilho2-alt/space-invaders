@@ -13,3 +13,7 @@ tmp
 # mock files
 **/*_mock.go
 .
+# Migration scripts
+scripts/migrate-from-supabase/extracted/
+scripts/migrate-from-supabase/extract-data
+scripts/migrate-from-supabase/go.sum
