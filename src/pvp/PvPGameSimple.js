@@ -395,6 +395,14 @@ class PvPGameSimple {
         this.remotePlayer.lives--;
         projectile.active = false;
 
+        // Check if player was eliminated (kill)
+        if (this.remotePlayer.lives <= 0) {
+          this.kills++;
+          console.log('[PvPGame] 💀 KILL! Remote player eliminated!');
+          // Respawn remote player with reduced lives
+          this.remotePlayer.lives = 3;
+        }
+
         // Add particles
         for (let i = 0; i < 15; i++) {
           this.particles.push(new Particle(
