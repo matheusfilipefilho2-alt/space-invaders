@@ -54,6 +54,7 @@ class PvPPhysicsSync {
     this.localInputBuffer.push(inputWithFrame);
 
     // Send to remote peer
+    console.log('[PhysicsSync] Sending input for frame', this.currentFrame);
     this.connection.send({
       type: 'input',
       data: inputWithFrame
@@ -72,6 +73,8 @@ class PvPPhysicsSync {
 
     if (!localInput || !remoteInput) {
       // Still waiting for inputs
+      console.log(`[PhysicsSync] Waiting for frame ${this.currentFrame}: local=${!!localInput}, remote=${!!remoteInput}`);
+      console.log(`[PhysicsSync] Buffer status:`, this.getBufferStatus());
       return null;
     }
 
@@ -158,9 +161,11 @@ class PvPPhysicsSync {
    * @param {object} message - Message from WebRTC
    */
   handleMessage(message) {
+    console.log('[PhysicsSync] Received message:', message.type, message.data);
     switch (message.type) {
       case 'input':
         this.remoteInputBuffer.push(message.data);
+        console.log('[PhysicsSync] Remote input buffered, buffer size:', this.remoteInputBuffer.length);
         break;
 
       case 'checksum':
@@ -170,6 +175,9 @@ class PvPPhysicsSync {
       case 'resync':
         this.handleResync(message.data);
         break;
+
+      default:
+        console.log('[PhysicsSync] Unknown message type:', message.type);
     }
   }
 

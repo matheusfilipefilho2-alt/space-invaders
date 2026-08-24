@@ -53,6 +53,7 @@ class WebRTCConnection {
     this.onMessageCallback = null;
     this.onDisconnectCallback = null;
     this.onConnectedCallback = null;
+    this.onDataChannelOpenCallback = null;
 
     this.connectionState = 'new'; // new, connecting, connected, disconnected, failed
     this.reconnectAttempts = 0;
@@ -132,8 +133,9 @@ class WebRTCConnection {
       await this.peerConnection.setLocalDescription(offer);
       await this.sendToSignalingServer('offer', offer);
 
-      // Wait for answer
-      await this.waitForAnswer();
+      // Wait for answer and set it as remote description
+      const answer = await this.waitForAnswer();
+      await this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
 
     } else {
       // Answerer waits for data channel
@@ -162,6 +164,9 @@ class WebRTCConnection {
   setupDataChannel() {
     this.dataChannel.onopen = () => {
       console.log('[WebRTC] Data channel opened');
+      if (this.onDataChannelOpenCallback) {
+        this.onDataChannelOpenCallback();
+      }
     };
 
     this.dataChannel.onclose = () => {
@@ -192,7 +197,8 @@ class WebRTCConnection {
       body: JSON.stringify({
         action,
         roomId: this.matchId,
-        data
+        data,
+        peerType: this.isOfferer ? 'offerer' : 'answerer'
       })
     });
 
@@ -313,6 +319,19 @@ class WebRTCConnection {
    */
   onConnected(callback) {
     this.onConnectedCallback = callback;
+  }
+
+  /**
+   * Register callback for data channel opened
+   * @param {function} callback - Callback()
+   */
+  onDataChannelOpen(callback) {
+    this.onDataChannelOpenCallback = callback;
+
+    // If data channel is already open, call immediately
+    if (this.dataChannel && this.dataChannel.readyState === 'open') {
+      callback();
+    }
   }
 
   /**

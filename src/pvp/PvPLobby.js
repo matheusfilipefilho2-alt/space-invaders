@@ -1,5 +1,5 @@
 import PvPMatchmaker from './PvPMatchmaker.js';
-import PvPGame from './PvPGame.js';
+import PvPGameSimple from './PvPGameSimple.js';
 
 /**
  * PvPLobby - Main PvP Lobby Controller
@@ -235,7 +235,7 @@ class PvPLobby {
     document.getElementById('game-container')?.classList.remove('hidden');
 
     // Create game instance (convert matchId to string)
-    const game = new PvPGame(
+    const game = new PvPGameSimple(
       String(matchData.matchId),
       matchData.isOfferer,
       matchData.gameSeed,

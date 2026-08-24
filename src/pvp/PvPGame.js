@@ -2,6 +2,7 @@ import WebRTCConnection from './WebRTCConnection.js';
 import PvPPhysicsSync from './PvPPhysicsSync.js';
 import SeededRandom from './SeededRandom.js';
 import PvPPlayer from './PvPPlayer.js';
+import Star from '../classes/Star.js';
 
 /**
  * PvPGame - Main PvP Game Engine
@@ -33,7 +34,10 @@ class PvPGame {
 
     // Initialize canvas
     this.canvas = document.getElementById(canvasId);
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
     this.ctx = this.canvas.getContext('2d');
+    this.ctx.imageSmoothingEnabled = false;
 
     // Initialize components
     this.connection = null;
@@ -57,6 +61,10 @@ class PvPGame {
     this.powerUps = [];
     this.projectiles = [];
 
+    // Background stars
+    this.stars = [];
+    this.initStars();
+
     // Input state
     this.keys = {
       left: false,
@@ -72,6 +80,16 @@ class PvPGame {
 
     // Setup input listeners
     this.setupInputListeners();
+  }
+
+  /**
+   * Initialize stars background
+   */
+  initStars() {
+    const numStars = 200;
+    for (let i = 0; i < numStars; i++) {
+      this.stars.push(new Star(this.canvas.width, this.canvas.height));
+    }
   }
 
   /**
@@ -92,14 +110,17 @@ class PvPGame {
       return;
     }
 
-    // Initialize physics sync
-    this.physicsSync = new PvPPhysicsSync(this.connection);
-
     // Handle connection loss
     this.connection.onDisconnect(() => {
       console.log('[PvPGame] Connection lost');
       this.endMatch('disconnected', null);
     });
+
+    // Wait for both players to be ready
+    await this.waitForStart();
+
+    // Initialize physics sync AFTER ready exchange
+    this.physicsSync = new PvPPhysicsSync(this.connection);
 
     // Handle desyncs
     this.physicsSync.onDesync((reason) => {
@@ -107,9 +128,6 @@ class PvPGame {
         this.endMatch('desync', null);
       }
     });
-
-    // Wait for both players to be ready
-    await this.waitForStart();
 
     // Start game loop
     this.running = true;
@@ -125,26 +143,31 @@ class PvPGame {
    */
   async waitForStart() {
     return new Promise((resolve) => {
-      // Send ready signal
-      this.connection.send({ type: 'ready' });
-
+      let localReady = false;
       let remoteReady = false;
 
       const checkReady = () => {
-        if (remoteReady) {
+        if (localReady && remoteReady) {
           resolve();
         }
       };
 
+      // Wait for data channel to open before sending ready
+      this.connection.onDataChannelOpen(() => {
+        console.log('[PvPGame] Data channel ready, sending ready signal');
+        this.connection.send({ type: 'ready' });
+        localReady = true;
+        checkReady();
+      });
+
       // Listen for remote ready
       this.connection.onMessage((message) => {
         if (message.type === 'ready') {
+          console.log('[PvPGame] Remote player ready');
           remoteReady = true;
           checkReady();
         }
       });
-
-      checkReady();
     });
   }
 
@@ -171,6 +194,15 @@ class PvPGame {
    * Update game state
    */
   update(deltaTime) {
+    // Update stars
+    this.stars.forEach(star => {
+      star.update();
+      if (star.position.y > this.canvas.height) {
+        star.position.y = 0;
+        star.position.x = Math.random() * this.canvas.width;
+      }
+    });
+
     // Queue local input
     this.physicsSync.queueLocalInput(this.keys);
 
@@ -178,7 +210,13 @@ class PvPGame {
     const inputs = this.physicsSync.getInputsForFrame();
     if (!inputs) {
       // Waiting for remote input
+      console.log('[PvPGame] Waiting for remote input...');
       return;
+    }
+
+    // Debug: Log inputs
+    if (inputs.local.left || inputs.local.right) {
+      console.log('[PvPGame] Local input:', inputs.local);
     }
 
     // Update players with synchronized inputs
@@ -358,7 +396,11 @@ class PvPGame {
    */
   render() {
     // Clear canvas
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = '#000';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Draw stars background
+    this.stars.forEach(star => star.draw(this.ctx));
 
     // Draw local player (bottom)
     this.localPlayer.draw(this.ctx);

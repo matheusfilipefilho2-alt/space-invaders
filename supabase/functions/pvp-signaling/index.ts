@@ -37,7 +37,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const { action, roomId, data } = await req.json();
+    const { action, roomId, data, peerType } = await req.json();
 
     if (!action || !roomId) {
       return new Response(JSON.stringify({ error: 'action and roomId required' }), {
@@ -46,7 +46,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[Signaling] Action: ${action}, Room: ${roomId}`);
+    console.log(`[Signaling] Action: ${action}, Room: ${roomId}, PeerType: ${peerType}`);
 
     switch (action) {
       case 'offer': {
@@ -86,17 +86,20 @@ serve(async (req) => {
       }
 
       case 'ice_candidate': {
+        // Determine which candidate array to use
+        const candidateField = peerType === 'offerer' ? 'ice_candidates_offerer' : 'ice_candidates_answerer';
+
         // Get current room
         const { data: room, error: fetchError } = await supabase
           .from('pvp_signaling')
-          .select('ice_candidates')
+          .select(candidateField)
           .eq('room_id', roomId)
           .single();
 
         if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
         // Add new candidate
-        const candidates = room?.ice_candidates || [];
+        const candidates = room?.[candidateField] || [];
         candidates.push(data);
 
         // Update room
@@ -104,13 +107,13 @@ serve(async (req) => {
           .from('pvp_signaling')
           .upsert({
             room_id: roomId,
-            ice_candidates: candidates,
+            [candidateField]: candidates,
             updated_at: new Date().toISOString()
           });
 
         if (updateError) throw updateError;
 
-        console.log(`ICE candidate added for room ${roomId} (total: ${candidates.length})`);
+        console.log(`ICE candidate added for room ${roomId} (${peerType}, total: ${candidates.length})`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -151,22 +154,26 @@ serve(async (req) => {
       }
 
       case 'get_ice_candidates': {
+        // Get the OTHER peer's candidates (offerer gets answerer's, answerer gets offerer's)
+        const candidateField = peerType === 'offerer' ? 'ice_candidates_answerer' : 'ice_candidates_offerer';
+
         const { data: room } = await supabase
           .from('pvp_signaling')
-          .select('ice_candidates')
+          .select(candidateField)
           .eq('room_id', roomId)
           .single();
 
-        const candidates = room?.ice_candidates || [];
+        const candidates = room?.[candidateField] || [];
 
         // Clear candidates after retrieving
         if (candidates.length > 0) {
           await supabase
             .from('pvp_signaling')
-            .update({ ice_candidates: [] })
+            .update({ [candidateField]: [] })
             .eq('room_id', roomId);
         }
 
+        console.log(`Get ICE candidates for room ${roomId} (${peerType}): ${candidates.length} candidates`);
         return new Response(JSON.stringify({ candidates }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
