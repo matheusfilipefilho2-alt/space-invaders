@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/braiphub/go-scaffold/internal/domain/enum"
+	"github.com/yourusername/space-invaders/internal/domain/enum"
 	"gorm.io/gorm"
 )
 
