@@ -121,15 +121,11 @@ class PvPGameSimple {
     this.projectiles.push(projectile);
     console.log('[PvPGame] Shot fired!', this.projectiles.length, 'total projectiles');
 
-    // Send projectile creation event to remote
+    // Send projectile creation event to remote (they'll create it from their view of our position)
     if (this.connection) {
       this.connection.send({
         type: 'projectile',
-        data: {
-          x: projectile.position.x,
-          y: projectile.position.y,
-          velocity: projectile.velocity
-        }
+        data: { shot: true }
       });
     }
   }
@@ -267,15 +263,17 @@ class PvPGameSimple {
 
       case 'projectile':
         // Create remote player's projectile (shooting downward from top)
-        console.log('[PvPGame] Remote projectile created');
+        // Use the remote player's current position on this screen
+        console.log('[PvPGame] Remote player shot! Creating projectile from remote position');
         const remoteProjectile = new Projectile(
           {
-            x: data.x,
-            y: data.y
+            x: this.remotePlayer.position.x + this.remotePlayer.width / 2 - 2,
+            y: this.remotePlayer.position.y + this.remotePlayer.height
           },
           10 // Shoot downward (positive Y) from top player
         );
         this.remoteProjectiles.push(remoteProjectile);
+        console.log('[PvPGame] Remote projectile created at:', remoteProjectile.position);
         break;
 
       case 'alienHit':
@@ -408,6 +406,9 @@ class PvPGameSimple {
     // Check collisions
     this.checkCollisions();
 
+    // Check win condition
+    this.checkWinCondition();
+
     // Update particles
     this.particles.forEach(particle => particle.update());
     this.particles = this.particles.filter(p => p.opacity > 0);
@@ -500,6 +501,13 @@ class PvPGameSimple {
         this.localPlayer.lives--;
         projectile.active = false;
 
+        // Check if we were eliminated (remote player gets a kill)
+        if (this.localPlayer.lives <= 0) {
+          this.remoteKills++;
+          console.log('[PvPGame] 💀 ELIMINATED! Remote player got a kill!');
+          this.localPlayer.lives = 3; // Respawn
+        }
+
         console.log('[PvPGame] 💥 HIT by remote! Lives remaining:', this.localPlayer.lives);
 
         // Add particles
@@ -557,6 +565,29 @@ class PvPGameSimple {
       this.level++;
       this.grid = new Grid(3, Math.min(6 + this.level, 10));
     }
+  }
+
+  checkWinCondition() {
+    // Check if someone reached 3 kills
+    if (this.kills >= 3) {
+      console.log('[PvPGame] 🏆 VICTORY! You won with 3 kills!');
+      this.endGame('victory');
+    } else if (this.remoteKills >= 3) {
+      console.log('[PvPGame] 💀 DEFEAT! Opponent won with 3 kills!');
+      this.endGame('defeat');
+    }
+  }
+
+  endGame(result) {
+    this.running = false;
+
+    // Show result modal or screen
+    alert(result === 'victory' ? '🏆 VITÓRIA! Você venceu!' : '💀 DERROTA! O oponente venceu!');
+
+    // Return to lobby after 2 seconds
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
   }
 
   checkCollision(obj1, obj2) {
