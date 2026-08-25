@@ -17,21 +17,21 @@ const (
 
 type Order struct {
 	gorm.Model
-	PlayerID  uint `gorm:"index;not null"`
-	Player    *Player
+	PlayerID uint `gorm:"index;not null"`
+	Player   *Player
 
-	PackageID   string      `gorm:"not null"` // e.g., "gold_1000"
-	Amount      uint64      `gorm:"not null"` // centavos
-	GoldAmount  uint64      `gorm:"not null"` // gold to credit
-	Status      OrderStatus `gorm:"not null;default:PENDING"`
+	PackageID  string      `gorm:"not null"` // e.g., "gold_1000"
+	Amount     uint64      `gorm:"not null"` // centavos
+	GoldAmount uint64      `gorm:"not null"` // gold to credit
+	Status     OrderStatus `gorm:"not null;default:PENDING"`
 
 	// AbacatePay
-	ExternalID    string `gorm:"uniqueIndex;not null"` // order_{id}
-	PixCode       string
-	QRCodeURL     string
-	PaymentURL    string
-	ExpiresAt     *time.Time
-	CompletedAt   *time.Time
+	ExternalID  string `gorm:"uniqueIndex;not null"` // order_{id}
+	PixCode     string
+	QRCodeURL   string
+	PaymentURL  string
+	ExpiresAt   *time.Time
+	CompletedAt *time.Time
 }
 
 func (Order) TableName() string {

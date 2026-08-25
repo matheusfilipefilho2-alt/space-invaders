@@ -8,12 +8,12 @@ import (
 	"github.com/braiphub/go-core/hashid/hashids"
 	"github.com/braiphub/go-core/log"
 	"github.com/braiphub/go-core/queue"
+	"github.com/pkg/errors"
+	"github.com/pressly/goose/v3"
 	"github.com/yourusername/space-invaders/configs"
 	"github.com/yourusername/space-invaders/database/migrations"
 	"github.com/yourusername/space-invaders/internal/app/dig"
 	"github.com/yourusername/space-invaders/internal/infra/database"
-	"github.com/pkg/errors"
-	"github.com/pressly/goose/v3"
 	"gorm.io/gorm"
 )
 

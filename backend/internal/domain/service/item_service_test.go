@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/yourusername/space-invaders/internal/domain/entity"
 )
 
 // Mock ItemRepository
@@ -166,7 +166,7 @@ func TestPurchaseItem_AlreadyOwned(t *testing.T) {
 	playerID := uint(1)
 	itemID := uint(100)
 	item := &entity.Item{
-			PriceGold:  1000,
+		PriceGold: 1000,
 	}
 	existingPlayerItem := &entity.PlayerItem{
 		PlayerID: playerID,
@@ -196,10 +196,10 @@ func TestPurchaseItem_InsufficientGold(t *testing.T) {
 	playerID := uint(1)
 	itemID := uint(100)
 	item := &entity.Item{
-			PriceGold:  5000,
+		PriceGold: 5000,
 	}
 	player := &entity.Player{
-			GoldBalance: 1000,
+		GoldBalance: 1000,
 	}
 
 	mockItemRepo.On("FindByID", ctx, itemID).Return(item, nil)

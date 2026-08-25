@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/braiphub/go-core/hashid"
-	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"github.com/pkg/errors"
+	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"gorm.io/gorm"
 )
 

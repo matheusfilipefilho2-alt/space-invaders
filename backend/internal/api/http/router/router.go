@@ -52,7 +52,7 @@ func (r *Router) Setup() *gin.Engine {
 	// Health check
 	r.engine.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"status": "ok",
+			"status":  "ok",
 			"service": "space-invaders-api",
 		})
 	})

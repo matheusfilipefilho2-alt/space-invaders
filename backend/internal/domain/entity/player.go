@@ -8,16 +8,16 @@ import (
 
 type Player struct {
 	gorm.Model
-	Username     string  `gorm:"uniqueIndex;not null"`
-	Email        string  `gorm:"uniqueIndex"`
-	EmailVerified bool   `gorm:"default:false"`
-	PasswordHash string  `gorm:"not null"`
+	Username      string  `gorm:"uniqueIndex;not null"`
+	Email         string  `gorm:"uniqueIndex"`
+	EmailVerified bool    `gorm:"default:false"`
+	PasswordHash  string  `gorm:"not null"`
 	WalletAddress *string `gorm:"uniqueIndex"`
 
 	// Stats
-	HighScore  uint64     `gorm:"default:0"`
-	TotalGames uint       `gorm:"default:0"`
-	TotalKills uint       `gorm:"default:0"`
+	HighScore  uint64 `gorm:"default:0"`
+	TotalGames uint   `gorm:"default:0"`
+	TotalKills uint   `gorm:"default:0"`
 	LastPlayed *time.Time
 
 	// Economy

@@ -189,8 +189,8 @@ func TestGameService_EndGame_LowerScore(t *testing.T) {
 	updatedPlayer, err := playerRepo.FindByID(ctx, player.ID)
 	require.NoError(t, err)
 
-	assert.Equal(t, uint64(2000), updatedPlayer.HighScore) // Unchanged
-	assert.Equal(t, uint(6), updatedPlayer.TotalGames)     // Incremented
+	assert.Equal(t, uint64(2000), updatedPlayer.HighScore)  // Unchanged
+	assert.Equal(t, uint(6), updatedPlayer.TotalGames)      // Incremented
 	assert.Equal(t, uint64(620), updatedPlayer.GoldBalance) // 500 + 120
 }
 

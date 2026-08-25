@@ -34,8 +34,8 @@ type LoginRequest struct {
 
 // AuthResponse represents the authentication response
 type AuthResponse struct {
-	Token  string      `json:"token"`
-	Player PlayerInfo  `json:"player"`
+	Token  string     `json:"token"`
+	Player PlayerInfo `json:"player"`
 }
 
 // PlayerInfo represents player information in auth responses

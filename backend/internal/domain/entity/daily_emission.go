@@ -11,9 +11,9 @@ type DailyEmission struct {
 	Date time.Time `gorm:"uniqueIndex;not null"` // UTC date truncated
 
 	// Inputs
-	PixRevenue24h   uint64 `gorm:"not null;default:0"` // centavos
+	PixRevenue24h   uint64 `gorm:"not null;default:0"`   // centavos
 	SpacePrice      uint64 `gorm:"not null;default:100"` // centavos (R$ 1.00)
-	GameplayRewards uint64 `gorm:"not null;default:0"` // SPACE expected from gameplay
+	GameplayRewards uint64 `gorm:"not null;default:0"`   // SPACE expected from gameplay
 
 	// Outputs (calculated)
 	EmissionLimit     uint64 `gorm:"not null;default:0"` // (PixRevenue × 0.30) / SpacePrice

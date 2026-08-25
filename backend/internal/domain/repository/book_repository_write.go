@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"github.com/pkg/errors"
+	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"gorm.io/gorm"
 )
 

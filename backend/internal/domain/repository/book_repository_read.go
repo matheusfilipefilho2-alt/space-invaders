@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/braiphub/go-core/braipfilter"
+	"github.com/pkg/errors"
 	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"github.com/yourusername/space-invaders/internal/domain/model"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

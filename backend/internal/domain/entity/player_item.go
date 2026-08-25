@@ -17,7 +17,7 @@ type PlayerItem struct {
 
 	// NFT tracking (optional)
 	NFTMintAddress *string
-	IsOnChain      bool       `gorm:"default:false"`
+	IsOnChain      bool `gorm:"default:false"`
 	MintedAt       *time.Time
 	BurnedAt       *time.Time
 }

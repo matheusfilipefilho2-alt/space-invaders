@@ -3,11 +3,11 @@ package controller
 import (
 	"net/http"
 
-	"github.com/yourusername/space-invaders/internal/domain/service"
-	"github.com/yourusername/space-invaders/internal/infra/anticorruption/frontend"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/yourusername/space-invaders/internal/domain/service"
+	"github.com/yourusername/space-invaders/internal/infra/anticorruption/frontend"
 )
 
 type ChapterController struct {

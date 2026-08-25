@@ -49,25 +49,25 @@ func main() {
 	fmt.Println("\n" + strings.Repeat("=", 60))
 	fmt.Println("PHASE 1: EXTRACT DATA FROM SUPABASE")
 	fmt.Println(strings.Repeat("=", 60))
-	
+
 	client := NewSupabaseClient(supabaseURL, supabaseKey)
 	extractedData, err := ExtractAllData(client)
 	if err != nil {
 		log.Fatalf("Extraction failed: %v", err)
 	}
-	
+
 	PrintExtractionSummary(extractedData)
 
 	// Phase 2: Transform data
 	fmt.Println("\n" + strings.Repeat("=", 60))
 	fmt.Println("PHASE 2: TRANSFORM DATA")
 	fmt.Println(strings.Repeat("=", 60))
-	
+
 	transformedData, err := TransformData(extractedData)
 	if err != nil {
 		log.Fatalf("Transformation failed: %v", err)
 	}
-	
+
 	PrintTransformationSummary(transformedData)
 
 	// If dry-run, stop here
@@ -105,7 +105,7 @@ func main() {
 	fmt.Println("\n" + strings.Repeat("=", 60))
 	fmt.Println("PHASE 4: VALIDATE MIGRATION")
 	fmt.Println(strings.Repeat("=", 60))
-	
+
 	validationReports := ValidateMigration(ctx, db, transformedData)
 	PrintValidationReport(validationReports)
 

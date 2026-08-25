@@ -12,8 +12,8 @@ const (
 )
 
 type Achievement struct {
-	ID               string            `gorm:"primaryKey"` // e.g., "first_kill"
-	Name             string            `gorm:"not null"`
+	ID               string `gorm:"primaryKey"` // e.g., "first_kill"
+	Name             string `gorm:"not null"`
 	Description      string
 	Icon             string
 	Rarity           AchievementRarity `gorm:"not null;default:COMMON"`

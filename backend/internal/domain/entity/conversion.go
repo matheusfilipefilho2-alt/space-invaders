@@ -23,10 +23,10 @@ type GoldSpaceConversion struct {
 	PlayerID uint `gorm:"index;not null"`
 	Player   *Player
 
-	Type         ConversionType   `gorm:"not null"`
-	GoldAmount   uint64           `gorm:"not null"`
-	SpaceAmount  uint64           `gorm:"not null"`
-	ExchangeRate uint             `gorm:"not null;default:100"` // Gold per SPACE
+	Type         ConversionType `gorm:"not null"`
+	GoldAmount   uint64         `gorm:"not null"`
+	SpaceAmount  uint64         `gorm:"not null"`
+	ExchangeRate uint           `gorm:"not null;default:100"` // Gold per SPACE
 
 	TxSignature *string          `gorm:"uniqueIndex"` // Solana transaction
 	Status      ConversionStatus `gorm:"not null;default:PENDING"`

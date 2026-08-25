@@ -5,10 +5,10 @@ import (
 	"github.com/braiphub/go-core/eventbus"
 
 	"github.com/braiphub/go-core/log"
+	"github.com/pkg/errors"
 	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"github.com/yourusername/space-invaders/internal/domain/model"
 	"github.com/yourusername/space-invaders/internal/events/event"
-	"github.com/pkg/errors"
 )
 
 type BookRepositoryWrite interface {

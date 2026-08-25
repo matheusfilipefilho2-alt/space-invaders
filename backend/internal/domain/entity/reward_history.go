@@ -7,12 +7,12 @@ import (
 type RewardType string
 
 const (
-	RewardTypeGoldEarned    RewardType = "GOLD_EARNED"
-	RewardTypeAchievement   RewardType = "ACHIEVEMENT"
-	RewardTypeLevelUp       RewardType = "LEVEL_UP"
-	RewardTypeBattlePass    RewardType = "BATTLE_PASS"
-	RewardTypeTournament    RewardType = "TOURNAMENT"
-	RewardTypeGuildBonus    RewardType = "GUILD_BONUS"
+	RewardTypeGoldEarned  RewardType = "GOLD_EARNED"
+	RewardTypeAchievement RewardType = "ACHIEVEMENT"
+	RewardTypeLevelUp     RewardType = "LEVEL_UP"
+	RewardTypeBattlePass  RewardType = "BATTLE_PASS"
+	RewardTypeTournament  RewardType = "TOURNAMENT"
+	RewardTypeGuildBonus  RewardType = "GUILD_BONUS"
 )
 
 type RewardHistory struct {

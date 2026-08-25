@@ -6,23 +6,23 @@ import (
 
 // SupabaseData holds all extracted data from Supabase
 type SupabaseData struct {
-	Players              []Player              `json:"players"`
-	Achievements         []Achievement         `json:"achievements"`
-	PlayerAchievements   []PlayerAchievement   `json:"player_achievements"`
-	Items                []Item                `json:"items"`
-	PlayerItems          []PlayerItem          `json:"player_items"`
-	GoldSpaceConversions []GoldSpaceConversion `json:"gold_space_conversions"`
-	DailyEmissions       []DailyEmission       `json:"daily_emissions"`
-	RewardHistory        []RewardHistory       `json:"reward_history"`
-	Orders               []Order               `json:"orders"`
-	Leagues              []League              `json:"leagues"`
-	Guilds               []Guild               `json:"guilds"`
-	GuildMembers         []GuildMember         `json:"guild_members"`
+	Players                []Player                `json:"players"`
+	Achievements           []Achievement           `json:"achievements"`
+	PlayerAchievements     []PlayerAchievement     `json:"player_achievements"`
+	Items                  []Item                  `json:"items"`
+	PlayerItems            []PlayerItem            `json:"player_items"`
+	GoldSpaceConversions   []GoldSpaceConversion   `json:"gold_space_conversions"`
+	DailyEmissions         []DailyEmission         `json:"daily_emissions"`
+	RewardHistory          []RewardHistory         `json:"reward_history"`
+	Orders                 []Order                 `json:"orders"`
+	Leagues                []League                `json:"leagues"`
+	Guilds                 []Guild                 `json:"guilds"`
+	GuildMembers           []GuildMember           `json:"guild_members"`
 	TournamentParticipants []TournamentParticipant `json:"tournament_participants"`
-	PvPMatches           []PvPMatch            `json:"pvp_matches"`
-	BattlePassSeasons    []BattlePassSeason    `json:"battle_pass_seasons"`
-	BattlePassProgress   []BattlePassProgress  `json:"battle_pass_progress"`
-	SpecialEvents        []SpecialEvent        `json:"special_events"`
+	PvPMatches             []PvPMatch              `json:"pvp_matches"`
+	BattlePassSeasons      []BattlePassSeason      `json:"battle_pass_seasons"`
+	BattlePassProgress     []BattlePassProgress    `json:"battle_pass_progress"`
+	SpecialEvents          []SpecialEvent          `json:"special_events"`
 }
 
 // Player represents a player from Supabase with merged wallet data
@@ -91,14 +91,14 @@ type PlayerItem struct {
 
 // GoldSpaceConversion represents a conversion from Supabase
 type GoldSpaceConversion struct {
-	ID           int       `json:"id"`
-	PlayerID     string    `json:"player_id"`
-	GoldAmount   int       `json:"gold_amount"`
-	SpaceAmount  float64   `json:"space_amount"`
-	ExchangeRate float64   `json:"exchange_rate"`
-	TxHash       *string   `json:"tx_hash"`
-	Status       string    `json:"status"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           int        `json:"id"`
+	PlayerID     string     `json:"player_id"`
+	GoldAmount   int        `json:"gold_amount"`
+	SpaceAmount  float64    `json:"space_amount"`
+	ExchangeRate float64    `json:"exchange_rate"`
+	TxHash       *string    `json:"tx_hash"`
+	Status       string     `json:"status"`
+	CreatedAt    time.Time  `json:"created_at"`
 	CompletedAt  *time.Time `json:"completed_at"`
 }
 
@@ -191,51 +191,51 @@ type TournamentParticipant struct {
 
 // PvPMatch represents a PvP match from Supabase
 type PvPMatch struct {
-	ID          int        `json:"id"`
-	Player1ID   string     `json:"player1_id"`
-	Player2ID   string     `json:"player2_id"`
-	WinnerID    *string    `json:"winner_id"`
-	Player1Score int       `json:"player1_score"`
-	Player2Score int       `json:"player2_score"`
-	MatchType   string     `json:"match_type"`
-	Status      string     `json:"status"`
-	StartedAt   time.Time  `json:"started_at"`
-	EndedAt     *time.Time `json:"ended_at"`
+	ID           int        `json:"id"`
+	Player1ID    string     `json:"player1_id"`
+	Player2ID    string     `json:"player2_id"`
+	WinnerID     *string    `json:"winner_id"`
+	Player1Score int        `json:"player1_score"`
+	Player2Score int        `json:"player2_score"`
+	MatchType    string     `json:"match_type"`
+	Status       string     `json:"status"`
+	StartedAt    time.Time  `json:"started_at"`
+	EndedAt      *time.Time `json:"ended_at"`
 }
 
 // BattlePassSeason represents a battle pass season from Supabase
 type BattlePassSeason struct {
-	ID          int        `json:"id"`
-	Name        string     `json:"name"`
-	SeasonNum   int        `json:"season_num"`
-	StartDate   time.Time  `json:"start_date"`
-	EndDate     time.Time  `json:"end_date"`
-	MaxTier     int        `json:"max_tier"`
-	IsActive    bool       `json:"is_active"`
-	Description *string    `json:"description"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	SeasonNum   int       `json:"season_num"`
+	StartDate   time.Time `json:"start_date"`
+	EndDate     time.Time `json:"end_date"`
+	MaxTier     int       `json:"max_tier"`
+	IsActive    bool      `json:"is_active"`
+	Description *string   `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // BattlePassProgress represents battle pass progress from Supabase
 type BattlePassProgress struct {
-	ID             int       `json:"id"`
-	PlayerID       string    `json:"player_id"`
-	SeasonID       int       `json:"season_id"`
-	CurrentTier    int       `json:"current_tier"`
-	Experience     int       `json:"experience"`
-	IsPremium      bool      `json:"is_premium"`
-	LastUpdated    time.Time `json:"last_updated"`
+	ID          int       `json:"id"`
+	PlayerID    string    `json:"player_id"`
+	SeasonID    int       `json:"season_id"`
+	CurrentTier int       `json:"current_tier"`
+	Experience  int       `json:"experience"`
+	IsPremium   bool      `json:"is_premium"`
+	LastUpdated time.Time `json:"last_updated"`
 }
 
 // SpecialEvent represents a special event from Supabase
 type SpecialEvent struct {
-	ID          int        `json:"id"`
-	Name        string     `json:"name"`
-	EventType   string     `json:"event_type"`
-	Description *string    `json:"description"`
-	StartDate   time.Time  `json:"start_date"`
-	EndDate     time.Time  `json:"end_date"`
-	Rewards     *string    `json:"rewards"`
-	IsActive    bool       `json:"is_active"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	EventType   string    `json:"event_type"`
+	Description *string   `json:"description"`
+	StartDate   time.Time `json:"start_date"`
+	EndDate     time.Time `json:"end_date"`
+	Rewards     *string   `json:"rewards"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
 }

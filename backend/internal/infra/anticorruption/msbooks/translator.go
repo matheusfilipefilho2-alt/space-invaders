@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/braiphub/go-core/queue"
+	"github.com/pkg/errors"
 	"github.com/yourusername/space-invaders/internal/domain/entity"
 	"github.com/yourusername/space-invaders/internal/domain/enum"
-	"github.com/pkg/errors"
 )
 
 func TranslateBooksCreatedMessageToDTO(msg queue.Message) (*BookCreatedDTO, error) {

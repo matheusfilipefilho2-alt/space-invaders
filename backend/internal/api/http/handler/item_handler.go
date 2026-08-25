@@ -42,7 +42,6 @@ type PlayerItemResponse struct {
 	IsOnChain      bool         `json:"isOnChain"`
 }
 
-
 // ListShopItems handles GET /api/v1/items
 // @Summary List all shop items
 // @Description Get a list of all items available in the shop

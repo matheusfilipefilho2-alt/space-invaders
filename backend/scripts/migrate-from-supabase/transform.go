@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/yourusername/space-invaders/internal/domain/entity"
@@ -57,44 +56,44 @@ func uuidToUint(uuid string) uint {
 
 func transformPlayers(supaPlayers []Player) []entity.Player {
 	players := make([]entity.Player, 0, len(supaPlayers))
-	
+
 	for _, sp := range supaPlayers {
 		player := entity.Player{
 			Username:      sp.Username,
 			Email:         stringValue(sp.Email),
 			EmailVerified: false, // Will be set based on verification status
-			PasswordHash:  "", // Will need to be set from auth data
+			PasswordHash:  "",    // Will need to be set from auth data
 			WalletAddress: sp.WalletAddress,
-			
+
 			// Stats
 			HighScore:  uint64(sp.HighScore),
 			TotalGames: uint(0), // Not in Supabase schema
 			LastPlayed: sp.LastLogin,
-			
+
 			// Economy - Important field mappings!
 			GoldBalance:  uint64(sp.Coins), // Supabase "coins" → Go "GoldBalance"
-			SpaceBalance: 0,                 // Start with 0, will be compensated in Task 10
-			
+			SpaceBalance: 0,                // Start with 0, will be compensated in Task 10
+
 			// Progression
-			LeagueID:   1, // Default to Bronze, will be updated based on rank_points
+			LeagueID:   1,       // Default to Bronze, will be updated based on rank_points
 			RankPoints: uint(0), // Not in current Supabase Player schema
-			
+
 			// Notifications - defaults
 			NotifyOffers:       true,
 			NotifyAchievements: true,
 			NotifyShop:         false,
 		}
-		
+
 		// Set timestamps from gorm.Model
 		player.CreatedAt = sp.CreatedAt
 		player.UpdatedAt = sp.UpdatedAt
-		
+
 		// Store UUID mapping for foreign keys
 		uuidToUint(sp.ID)
-		
+
 		players = append(players, player)
 	}
-	
+
 	return players
 }
 
@@ -103,7 +102,7 @@ func transformLeagues(supaLeagues []League) []entity.League {
 		// Return seed data if no leagues in Supabase
 		return entity.SeedLeagues()
 	}
-	
+
 	leagues := make([]entity.League, 0, len(supaLeagues))
 	for _, sl := range supaLeagues {
 		league := entity.League{
@@ -121,23 +120,20 @@ func transformLeagues(supaLeagues []League) []entity.League {
 
 func transformPlayerItems(supaItems []PlayerItem) []entity.PlayerItem {
 	items := make([]entity.PlayerItem, 0, len(supaItems))
-	
+
 	for _, si := range supaItems {
 		item := entity.PlayerItem{
-			PlayerID:    uuidToUint(si.PlayerID),
-			ItemID:      strconv.Itoa(si.ItemID), // Convert int to string ID
-			ItemType:    entity.ItemType("cosmetic"), // Default, could be mapped from Item table
-			ItemName:    "",                     // Would need to join with items table
-			IsEquipped:  si.IsEquipped,
-			IsPermanent: true,
+			PlayerID: uuidToUint(si.PlayerID),
+			ItemID:   uint(si.ItemID), // Convert int to uint
+			Equipped: si.IsEquipped,
 		}
-		
+
 		item.CreatedAt = si.AcquiredAt
 		item.UpdatedAt = si.AcquiredAt
-		
+
 		items = append(items, item)
 	}
-	
+
 	return items
 }
 
@@ -146,15 +142,15 @@ func transformAchievements(supaAchievements []Achievement) []entity.Achievement 
 		// Return seed data if no achievements in Supabase
 		return entity.SeedAchievements()
 	}
-	
+
 	achievements := make([]entity.Achievement, 0, len(supaAchievements))
 	for _, sa := range supaAchievements {
 		// Convert ID to string format (e.g., "ach_1" → "first_kill")
 		achievementID := fmt.Sprintf("ach_%d", sa.ID)
-		
+
 		// Map Supabase difficulty to our rarity system
 		rarity := mapDifficultyToRarity(sa.Difficulty)
-		
+
 		achievement := entity.Achievement{
 			ID:          achievementID,
 			Name:        sa.Name,
@@ -163,10 +159,10 @@ func transformAchievements(supaAchievements []Achievement) []entity.Achievement 
 			Rarity:      rarity,
 			RewardGold:  uint(sa.Points), // Use points as gold reward
 		}
-		
+
 		achievement.CreatedAt = sa.CreatedAt
 		achievement.UpdatedAt = sa.CreatedAt
-		
+
 		achievements = append(achievements, achievement)
 	}
 	return achievements
@@ -174,7 +170,7 @@ func transformAchievements(supaAchievements []Achievement) []entity.Achievement 
 
 func transformPlayerAchievements(supaPlayerAchievements []PlayerAchievement) []entity.PlayerAchievement {
 	playerAchievements := make([]entity.PlayerAchievement, 0, len(supaPlayerAchievements))
-	
+
 	for _, spa := range supaPlayerAchievements {
 		playerAchievement := entity.PlayerAchievement{
 			PlayerID:      uuidToUint(spa.PlayerID),
@@ -182,26 +178,26 @@ func transformPlayerAchievements(supaPlayerAchievements []PlayerAchievement) []e
 			UnlockedAt:    spa.UnlockedAt,
 			Notified:      true, // Assume already notified
 		}
-		
+
 		playerAchievement.CreatedAt = spa.UnlockedAt
 		playerAchievement.UpdatedAt = spa.UnlockedAt
-		
+
 		playerAchievements = append(playerAchievements, playerAchievement)
 	}
-	
+
 	return playerAchievements
 }
 
 func transformConversions(supaConversions []GoldSpaceConversion) []entity.GoldSpaceConversion {
 	conversions := make([]entity.GoldSpaceConversion, 0, len(supaConversions))
-	
+
 	for _, sc := range supaConversions {
 		// Determine conversion type based on context (default to GOLD_TO_SPACE)
 		convType := entity.ConversionTypeGoldToSpace
-		
+
 		// Map status
 		status := mapConversionStatus(sc.Status)
-		
+
 		conversion := entity.GoldSpaceConversion{
 			PlayerID:     uuidToUint(sc.PlayerID),
 			Type:         convType,
@@ -212,49 +208,49 @@ func transformConversions(supaConversions []GoldSpaceConversion) []entity.GoldSp
 			Status:       status,
 			CompletedAt:  sc.CompletedAt,
 		}
-		
+
 		conversion.CreatedAt = sc.CreatedAt
 		conversion.UpdatedAt = sc.CreatedAt
 		if sc.CompletedAt != nil {
 			conversion.UpdatedAt = *sc.CompletedAt
 		}
-		
+
 		conversions = append(conversions, conversion)
 	}
-	
+
 	return conversions
 }
 
 func transformDailyEmissions(supaEmissions []DailyEmission) []entity.DailyEmission {
 	emissions := make([]entity.DailyEmission, 0, len(supaEmissions))
-	
+
 	for _, se := range supaEmissions {
 		emission := entity.DailyEmission{
 			Date:              se.Date,
-			PixRevenue24h:     0, // Not in Supabase schema
+			PixRevenue24h:     0,   // Not in Supabase schema
 			SpacePrice:        100, // Default R$ 1.00
 			GameplayRewards:   uint64(se.TotalSpaceEmitted),
 			EmissionLimit:     uint64(se.TotalSpaceEmitted), // Approximate
 			EmissionUsed:      uint64(se.TotalSpaceEmitted),
 			EmissionAvailable: 0,
 		}
-		
+
 		emission.CreatedAt = se.CreatedAt
 		emission.UpdatedAt = se.CreatedAt
-		
+
 		emissions = append(emissions, emission)
 	}
-	
+
 	return emissions
 }
 
 func transformRewardHistory(supaRewards []RewardHistory) []entity.RewardHistory {
 	rewards := make([]entity.RewardHistory, 0, len(supaRewards))
-	
+
 	for _, sr := range supaRewards {
 		// Map reward type
 		rewardType := mapRewardType(sr.RewardType)
-		
+
 		reward := entity.RewardHistory{
 			PlayerID:          uuidToUint(sr.PlayerID),
 			RewardType:        rewardType,
@@ -264,26 +260,26 @@ func transformRewardHistory(supaRewards []RewardHistory) []entity.RewardHistory 
 			GameScore:         0, // Not in Supabase schema
 			PreviousHighScore: 0, // Not in Supabase schema
 		}
-		
+
 		reward.CreatedAt = sr.CreatedAt
 		reward.UpdatedAt = sr.CreatedAt
-		
+
 		rewards = append(rewards, reward)
 	}
-	
+
 	return rewards
 }
 
 func transformOrders(supaOrders []Order) []entity.Order {
 	orders := make([]entity.Order, 0, len(supaOrders))
-	
+
 	for _, so := range supaOrders {
 		// Map status
 		status := mapOrderStatus(so.Status)
-		
+
 		// Calculate gold amount from order amount (would need package info)
 		goldAmount := uint64(so.Amount) // Placeholder
-		
+
 		order := entity.Order{
 			PlayerID:    uuidToUint(so.PlayerID),
 			PackageID:   so.OrderType,
@@ -291,22 +287,22 @@ func transformOrders(supaOrders []Order) []entity.Order {
 			GoldAmount:  goldAmount,
 			Status:      status,
 			ExternalID:  stringValue(so.ExternalID),
-			PixCode:     "",     // Not in Supabase schema
-			QRCodeURL:   "",     // Not in Supabase schema
-			PaymentURL:  "",     // Not in Supabase schema
-			ExpiresAt:   nil,    // Not in Supabase schema
+			PixCode:     "",  // Not in Supabase schema
+			QRCodeURL:   "",  // Not in Supabase schema
+			PaymentURL:  "",  // Not in Supabase schema
+			ExpiresAt:   nil, // Not in Supabase schema
 			CompletedAt: so.CompletedAt,
 		}
-		
+
 		order.CreatedAt = so.CreatedAt
 		order.UpdatedAt = so.CreatedAt
 		if so.CompletedAt != nil {
 			order.UpdatedAt = *so.CompletedAt
 		}
-		
+
 		orders = append(orders, order)
 	}
-	
+
 	return orders
 }
 
