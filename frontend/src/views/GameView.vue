@@ -1,22 +1,37 @@
 <template>
-  <div class="game-container">
-    <div class="game-header">
-      <h1>Space Invaders</h1>
+  <div class="game-view">
+    <div class="score-ui">
       <div class="game-stats">
-        <p>Score: {{ score }}</p>
-        <p>Gold: {{ authStore.user?.gold_balance || 0 }}</p>
-        <button @click="authStore.logout(); router.push('/login')" class="logout-btn">
-          Logout
-        </button>
+        <div class="score-item">
+          <span class="score-label">SCORE</span>
+          <span class="score-value">{{ score }}</span>
+        </div>
+        <div class="score-item">
+          <span class="score-label">GOLD</span>
+          <span class="score-value" style="color: #FFD700;">{{ authStore.user?.gold_balance || 0 }}</span>
+        </div>
+        <div class="score-item">
+          <span class="score-label">PLAYER</span>
+          <span class="score-value" style="color: #4ECDC4;">{{ authStore.user?.username || 'Guest' }}</span>
+        </div>
       </div>
     </div>
+
     <div id="game-canvas" ref="gameCanvas"></div>
-    <div class="game-controls">
-      <button @click="startGame" :disabled="gameStarted">Start Game</button>
-      <button @click="endGame" :disabled="!gameStarted">End Game</button>
-      <router-link to="/profile" class="nav-button">Profile</router-link>
-      <router-link to="/shop" class="nav-button">Shop</router-link>
-      <router-link to="/leaderboard" class="nav-button">Leaderboard</router-link>
+
+    <div class="menu-buttons">
+      <button @click="startGame" :disabled="gameStarted" class="button-play">
+        {{ gameStarted ? 'JOGO INICIADO' : 'INICIAR JOGO' }}
+      </button>
+      <button @click="endGame" :disabled="!gameStarted" class="button-restart">
+        FINALIZAR JOGO
+      </button>
+      <router-link to="/profile" class="button-view-ranking">PERFIL</router-link>
+      <router-link to="/shop" class="button-pvp">LOJA</router-link>
+      <router-link to="/leaderboard" class="button-view-ranking">RANKING</router-link>
+      <button @click="authStore.logout(); router.push('/login')" class="button-restart">
+        SAIR
+      </button>
     </div>
   </div>
 </template>
@@ -79,84 +94,53 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.game-container {
+.game-view {
   min-height: 100vh;
-  background: #1a1a2e;
-  color: white;
-  padding: 2rem;
-}
-
-.game-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 2rem;
-}
-
-h1 {
-  font-size: 2.5rem;
-  margin: 0;
-}
-
-.game-stats {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-}
-
-.game-stats p {
-  font-size: 1.25rem;
-  margin: 0;
-}
-
-.logout-btn {
-  background: #e53e3e;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.logout-btn:hover {
-  background: #c53030;
+  padding: 20px;
+  padding-top: 100px;
 }
 
 #game-canvas {
-  background: #0f0f1e;
-  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #00ff88;
+  border-radius: 10px;
   min-height: 400px;
-  margin-bottom: 2rem;
-  border: 2px solid #667eea;
-}
-
-.game-controls {
+  width: 100%;
+  max-width: 800px;
+  margin: 20px 0;
   display: flex;
-  gap: 1rem;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  color: #888;
+  font-size: 14px;
 }
 
-button, .nav-button {
-  padding: 0.75rem 1.5rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-  text-decoration: none;
-  display: inline-block;
+.menu-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 30px auto;
+  width: 100%;
+  max-width: 800px;
+  padding: 0 10px;
 }
 
-button:hover:not(:disabled), .nav-button:hover {
-  background: #5568d3;
+.menu-buttons .button-play {
+  grid-column: 1 / -1;
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+@media (max-width: 768px) {
+  .menu-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-buttons {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -1,80 +1,87 @@
 <template>
-  <div class="profile-container">
-    <div class="profile-card">
-      <h1>Player Profile</h1>
+  <div class="profile-page">
+    <div class="game-container">
+      <h1 class="game-title">PERFIL</h1>
+      <p class="game-subtitle">SUAS ESTATÍSTICAS</p>
 
-      <div v-if="loading" class="loading">Loading...</div>
+      <div v-if="loading" class="loading">Carregando...</div>
 
       <div v-else-if="profile" class="profile-content">
-        <div class="profile-section">
-          <h2>Account Information</h2>
-          <div class="info-row">
-            <span class="label">Username:</span>
-            <span class="value">{{ profile.username }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">Email:</span>
-            <span class="value">{{ profile.email }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">League:</span>
-            <span class="value">{{ profile.league_name || 'No League' }}</span>
+        <div class="user-info-card">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <h3>{{ profile.username }}</h3>
+            <p>{{ profile.email }}</p>
+            <p style="color: #FFD700;">🏆 {{ profile.league_name || 'Sem Liga' }}</p>
           </div>
         </div>
 
         <div class="profile-section">
-          <h2>Stats</h2>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-value">{{ profile.gold_balance || 0 }}</div>
-              <div class="stat-label">Gold</div>
+          <h2 class="section-title">ESTATÍSTICAS</h2>
+          <div class="game-stats" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; background: transparent; border: none; padding: 0; box-shadow: none;">
+            <div class="score-item" style="background: rgba(0, 0, 0, 0.6); border: 2px solid #FFD700; border-radius: 10px; padding: 20px; border-right: none;">
+              <span class="score-label">💰 GOLD</span>
+              <span class="score-value" style="color: #FFD700;">{{ profile.gold_balance || 0 }}</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-value">{{ profile.total_score || 0 }}</div>
-              <div class="stat-label">Total Score</div>
+            <div class="score-item" style="background: rgba(0, 0, 0, 0.6); border: 2px solid #ffa502; border-radius: 10px; padding: 20px; border-right: none;">
+              <span class="score-label">📊 PONTUAÇÃO TOTAL</span>
+              <span class="score-value" style="color: #ffa502;">{{ profile.total_score || 0 }}</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-value">{{ profile.games_played || 0 }}</div>
-              <div class="stat-label">Games Played</div>
+            <div class="score-item" style="background: rgba(0, 0, 0, 0.6); border: 2px solid #4ECDC4; border-radius: 10px; padding: 20px; border-right: none;">
+              <span class="score-label">🎮 JOGOS</span>
+              <span class="score-value" style="color: #4ECDC4;">{{ profile.games_played || 0 }}</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-value">{{ profile.highest_score || 0 }}</div>
-              <div class="stat-label">Highest Score</div>
+            <div class="score-item" style="background: rgba(0, 0, 0, 0.6); border: 2px solid #00ff88; border-radius: 10px; padding: 20px; border-right: none;">
+              <span class="score-label">⭐ RECORDE</span>
+              <span class="score-value" style="color: #00ff88;">{{ profile.highest_score || 0 }}</span>
             </div>
           </div>
         </div>
 
         <div class="profile-section">
-          <h2>Achievements</h2>
-          <div v-if="achievements.length === 0" class="no-data">
-            No achievements yet. Keep playing!
+          <h2 class="section-title">🏅 CONQUISTAS</h2>
+          <div v-if="achievements.length === 0" class="loading">
+            Nenhuma conquista ainda. Continue jogando!
           </div>
-          <div v-else class="achievements-list">
-            <div v-for="achievement in achievements" :key="achievement.id" class="achievement-card">
-              <h3>{{ achievement.name }}</h3>
-              <p>{{ achievement.description }}</p>
-              <span class="achievement-reward">+{{ achievement.gold_reward }} Gold</span>
+          <div v-else class="items-grid">
+            <div v-for="achievement in achievements" :key="achievement.id" class="shop-item legendary">
+              <div class="item-header">
+                <div class="item-icon">🏆</div>
+              </div>
+              <h3 class="item-name">{{ achievement.name }}</h3>
+              <p class="item-description">{{ achievement.description }}</p>
+              <div class="item-footer">
+                <div class="item-price">
+                  <span>💰 +{{ achievement.gold_reward }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="profile-section">
-          <h2>Equipped Items</h2>
-          <div v-if="equippedItems.length === 0" class="no-data">
-            No items equipped. Visit the shop!
+          <h2 class="section-title">⚔️ ITENS EQUIPADOS</h2>
+          <div v-if="equippedItems.length === 0" class="loading">
+            Nenhum item equipado. Visite a loja!
           </div>
-          <div v-else class="items-list">
-            <div v-for="item in equippedItems" :key="item.id" class="item-card">
-              <h3>{{ item.name }}</h3>
-              <p>{{ item.description }}</p>
-              <span class="item-type">{{ item.item_type }}</span>
+          <div v-else class="items-grid">
+            <div v-for="item in equippedItems" :key="item.id" :class="['shop-item', item.rarity?.toLowerCase() || 'common']">
+              <div class="item-header">
+                <div class="item-icon">{{ getItemIcon(item.item_type) }}</div>
+                <span class="item-rarity">{{ item.rarity || 'COMMON' }}</span>
+              </div>
+              <h3 class="item-name">{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <div class="item-footer">
+                <span class="owned-badge">✓ Equipado</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="profile-actions">
-          <router-link to="/game" class="button">Back to Game</router-link>
-          <router-link to="/shop" class="button">Visit Shop</router-link>
+        <div class="menu-buttons" style="margin-top: 40px;">
+          <router-link to="/game" class="button-play">VOLTAR AO JOGO</router-link>
+          <router-link to="/shop" class="button-view-ranking">VISITAR LOJA</router-link>
         </div>
       </div>
     </div>
@@ -110,158 +117,40 @@ async function loadProfile() {
   }
 }
 
+function getItemIcon(itemType: string): string {
+  const icons: Record<string, string> = {
+    weapon: '⚔️',
+    armor: '🛡️',
+    shield: '🛡️',
+    power: '⚡',
+    speed: '💨',
+    bonus: '✨',
+    special: '🌟',
+  }
+  return icons[itemType?.toLowerCase()] || '📦'
+}
+
 onMounted(() => {
   loadProfile()
 })
 </script>
 
 <style scoped>
-.profile-container {
+.profile-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
+  padding: 20px;
+  padding-top: 100px;
 }
 
-.profile-card {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.25rem;
+.game-container {
+  max-width: 1000px;
 }
 
 .profile-section {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: #f7fafc;
-  border-radius: 0.5rem;
+  margin: 30px 0;
 }
 
-h2 {
-  margin-bottom: 1rem;
-  color: #667eea;
-}
-
-.info-row {
-  display: flex;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.label {
-  font-weight: bold;
-  width: 150px;
-}
-
-.value {
-  color: #4a5568;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #667eea;
-}
-
-.stat-label {
-  color: #718096;
-  margin-top: 0.5rem;
-}
-
-.achievements-list, .items-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
-.achievement-card, .item-card {
-  background: white;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.achievement-card h3, .item-card h3 {
-  margin: 0 0 0.5rem 0;
-  color: #2d3748;
-}
-
-.achievement-card p, .item-card p {
-  margin: 0 0 0.5rem 0;
-  color: #718096;
-  font-size: 0.875rem;
-}
-
-.achievement-reward {
-  display: inline-block;
-  background: #ffd700;
-  color: #744210;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: bold;
-}
-
-.item-type {
-  display: inline-block;
-  background: #667eea;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.no-data {
-  text-align: center;
-  color: #a0aec0;
-  padding: 2rem;
-}
-
-.profile-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.button {
-  padding: 0.75rem 1.5rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.button:hover {
-  background: #5568d3;
+.profile-content {
+  width: 100%;
 }
 </style>

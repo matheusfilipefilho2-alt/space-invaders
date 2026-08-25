@@ -1,118 +1,121 @@
 <template>
-  <div class="shop-container">
-    <div class="shop-card">
-      <h1>Item Shop</h1>
-
-      <div class="player-gold">
-        <span>Your Gold:</span>
-        <span class="gold-amount">{{ authStore.user?.gold_balance || 0 }}</span>
+  <div class="shop-page">
+    <div class="shop-container">
+      <div class="shop-header">
+        <h1 class="shop-title">LOJA DE ITENS</h1>
+        <div class="user-coins">
+          <span>💰 {{ authStore.user?.gold_balance || 0 }} GOLD</span>
+        </div>
       </div>
 
-      <div v-if="loading" class="loading">Loading items...</div>
+      <div v-if="loading" class="loading">Carregando itens...</div>
 
       <div v-else class="shop-content">
-        <div class="shop-tabs">
+        <div class="shop-categories">
           <button
             @click="activeTab = 'available'"
-            :class="{ active: activeTab === 'available' }"
+            :class="['category-btn', { active: activeTab === 'available' }]"
           >
-            Available Items
+            📦 Itens Disponíveis
           </button>
           <button
             @click="activeTab = 'owned'"
-            :class="{ active: activeTab === 'owned' }"
+            :class="['category-btn', { active: activeTab === 'owned' }]"
           >
-            Your Items
+            🎒 Seus Itens
           </button>
         </div>
 
         <div v-if="activeTab === 'available'" class="items-grid">
-          <div v-if="availableItems.length === 0" class="no-data">
-            No items available for purchase
+          <div v-if="availableItems.length === 0" class="loading">
+            Nenhum item disponível
           </div>
           <div
             v-for="item in availableItems"
             :key="item.id"
-            class="item-card"
+            :class="['shop-item', item.rarity?.toLowerCase() || 'common']"
           >
-            <h3>{{ item.name }}</h3>
-            <p class="item-description">{{ item.description }}</p>
-            <div class="item-stats">
-              <span class="item-type">{{ item.item_type }}</span>
-              <span class="item-rarity">{{ item.rarity }}</span>
+            <div class="item-header">
+              <div class="item-icon">{{ getItemIcon(item.item_type) }}</div>
+              <span class="item-rarity">{{ item.rarity || 'COMMON' }}</span>
             </div>
+            <h3 class="item-name">{{ item.name }}</h3>
+            <p class="item-description">{{ item.description }}</p>
             <div v-if="item.attack_bonus" class="bonus">
-              Attack: +{{ item.attack_bonus }}
+              ⚔️ Ataque: +{{ item.attack_bonus }}
             </div>
             <div v-if="item.defense_bonus" class="bonus">
-              Defense: +{{ item.defense_bonus }}
+              🛡️ Defesa: +{{ item.defense_bonus }}
             </div>
             <div v-if="item.speed_bonus" class="bonus">
-              Speed: +{{ item.speed_bonus }}
+              ⚡ Velocidade: +{{ item.speed_bonus }}
             </div>
             <div class="item-footer">
-              <span class="price">{{ item.gold_cost }} Gold</span>
+              <div class="item-price">
+                <span>💰 {{ item.gold_cost }}</span>
+              </div>
               <button
                 @click="purchaseItem(item.id, item.gold_cost)"
                 :disabled="purchasing || (authStore.user?.gold_balance || 0) < item.gold_cost"
-                class="purchase-btn"
+                class="buy-btn"
               >
-                {{ purchasing ? 'Buying...' : 'Purchase' }}
+                {{ purchasing ? 'Comprando...' : 'Comprar' }}
               </button>
             </div>
           </div>
         </div>
 
         <div v-else class="items-grid">
-          <div v-if="ownedItems.length === 0" class="no-data">
-            You don't own any items yet
+          <div v-if="ownedItems.length === 0" class="loading">
+            Você não possui itens ainda
           </div>
           <div
             v-for="item in ownedItems"
             :key="item.id"
-            class="item-card owned"
+            :class="['shop-item', item.rarity?.toLowerCase() || 'common']"
           >
-            <h3>{{ item.name }}</h3>
-            <p class="item-description">{{ item.description }}</p>
-            <div class="item-stats">
-              <span class="item-type">{{ item.item_type }}</span>
-              <span class="item-rarity">{{ item.rarity }}</span>
+            <div class="item-header">
+              <div class="item-icon">{{ getItemIcon(item.item_type) }}</div>
+              <span class="item-rarity">{{ item.rarity || 'COMMON' }}</span>
             </div>
+            <h3 class="item-name">{{ item.name }}</h3>
+            <p class="item-description">{{ item.description }}</p>
             <div v-if="item.attack_bonus" class="bonus">
-              Attack: +{{ item.attack_bonus }}
+              ⚔️ Ataque: +{{ item.attack_bonus }}
             </div>
             <div v-if="item.defense_bonus" class="bonus">
-              Defense: +{{ item.defense_bonus }}
+              🛡️ Defesa: +{{ item.defense_bonus }}
             </div>
             <div v-if="item.speed_bonus" class="bonus">
-              Speed: +{{ item.speed_bonus }}
+              ⚡ Velocidade: +{{ item.speed_bonus }}
             </div>
             <div class="item-footer">
-              <span v-if="item.is_equipped" class="equipped-badge">Equipped</span>
+              <span v-if="item.is_equipped" class="owned-badge">✓ Equipado</span>
               <button
                 v-if="!item.is_equipped"
                 @click="equipItem(item.id)"
                 :disabled="equipping"
-                class="equip-btn"
+                class="buy-btn"
               >
-                {{ equipping ? 'Equipping...' : 'Equip' }}
+                {{ equipping ? 'Equipando...' : 'Equipar' }}
               </button>
               <button
                 v-else
                 @click="unequipItem(item.id)"
                 :disabled="equipping"
-                class="unequip-btn"
+                class="buy-btn"
+                style="background: #ff4757;"
               >
-                {{ equipping ? 'Unequipping...' : 'Unequip' }}
+                {{ equipping ? 'Desequipando...' : 'Desequipar' }}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="shop-actions">
-        <router-link to="/game" class="button">Back to Game</router-link>
-        <router-link to="/profile" class="button">View Profile</router-link>
+      <div class="menu-buttons" style="margin-top: 40px;">
+        <router-link to="/game" class="button-play">VOLTAR AO JOGO</router-link>
+        <router-link to="/profile" class="button-view-ranking">VER PERFIL</router-link>
       </div>
     </div>
   </div>
@@ -206,226 +209,34 @@ async function unequipItem(itemId: number) {
   }
 }
 
+function getItemIcon(itemType: string): string {
+  const icons: Record<string, string> = {
+    weapon: '⚔️',
+    armor: '🛡️',
+    shield: '🛡️',
+    power: '⚡',
+    speed: '💨',
+    bonus: '✨',
+    special: '🌟',
+  }
+  return icons[itemType?.toLowerCase()] || '📦'
+}
+
 onMounted(() => {
   loadItems()
 })
 </script>
 
 <style scoped>
-.shop-container {
+.shop-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
-}
-
-.shop-card {
-  max-width: 1400px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.player-gold {
-  text-align: center;
-  margin-bottom: 2rem;
-  font-size: 1.5rem;
-}
-
-.gold-amount {
-  font-weight: bold;
-  color: #ffd700;
-  margin-left: 0.5rem;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.25rem;
-}
-
-.shop-tabs {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  justify-content: center;
-}
-
-.shop-tabs button {
-  padding: 0.75rem 1.5rem;
-  background: #e2e8f0;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.3s;
-}
-
-.shop-tabs button.active {
-  background: #667eea;
-  color: white;
-}
-
-.items-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.item-card {
-  background: #f7fafc;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
-}
-
-.item-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.item-card.owned {
-  border: 2px solid #667eea;
-}
-
-.item-card h3 {
-  margin: 0 0 0.5rem 0;
-  color: #2d3748;
-}
-
-.item-description {
-  color: #718096;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-  min-height: 40px;
-}
-
-.item-stats {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.item-type {
-  background: #667eea;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-}
-
-.item-rarity {
-  background: #48bb78;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
+  padding: 20px;
+  padding-top: 100px;
 }
 
 .bonus {
-  font-size: 0.875rem;
-  color: #2d3748;
-  margin-bottom: 0.25rem;
-}
-
-.item-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
-}
-
-.price {
-  font-weight: bold;
-  color: #ffd700;
-}
-
-.purchase-btn, .equip-btn, .unequip-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: opacity 0.3s;
-}
-
-.purchase-btn {
-  background: #48bb78;
-  color: white;
-}
-
-.purchase-btn:hover:not(:disabled) {
-  background: #38a169;
-}
-
-.purchase-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.equip-btn {
-  background: #667eea;
-  color: white;
-}
-
-.equip-btn:hover:not(:disabled) {
-  background: #5568d3;
-}
-
-.unequip-btn {
-  background: #e53e3e;
-  color: white;
-}
-
-.unequip-btn:hover:not(:disabled) {
-  background: #c53030;
-}
-
-.equipped-badge {
-  background: #ffd700;
-  color: #744210;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: bold;
-}
-
-.no-data {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: #a0aec0;
-  padding: 2rem;
-}
-
-.shop-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.button {
-  padding: 0.75rem 1.5rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.button:hover {
-  background: #5568d3;
+  font-size: 10px;
+  color: #4ECDC4;
+  margin: 5px 0;
 }
 </style>

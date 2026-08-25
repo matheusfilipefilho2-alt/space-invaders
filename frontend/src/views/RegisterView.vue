@@ -1,31 +1,44 @@
 <template>
-  <div class="register-container">
-    <div class="register-card">
-      <h1>Register</h1>
-      <form @submit.prevent="handleRegister">
-        <div class="form-group">
-          <label>Username</label>
-          <input v-model="username" type="text" required />
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input v-model="email" type="email" required />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input v-model="password" type="password" required />
-        </div>
-        <div v-if="authStore.error" class="error">
+  <div class="start-screen">
+    <div class="game-container">
+      <h1 class="game-title">REGISTRO</h1>
+      <p class="game-subtitle">CRIE SUA CONTA</p>
+
+      <form @submit.prevent="handleRegister" class="form-container">
+        <input
+          v-model="username"
+          type="text"
+          class="game-input"
+          placeholder="USERNAME"
+          required
+        />
+        <input
+          v-model="email"
+          type="email"
+          class="game-input"
+          placeholder="EMAIL"
+          required
+        />
+        <input
+          v-model="password"
+          type="password"
+          class="game-input"
+          placeholder="PASSWORD"
+          required
+        />
+
+        <div v-if="authStore.error" class="error-message">
           {{ authStore.error }}
         </div>
-        <button type="submit" :disabled="authStore.loading">
-          {{ authStore.loading ? 'Loading...' : 'Register' }}
+
+        <button type="submit" class="button-play" :disabled="authStore.loading">
+          {{ authStore.loading ? 'CARREGANDO...' : 'CRIAR CONTA' }}
         </button>
       </form>
-      <p>
-        Already have an account?
-        <router-link to="/login">Login</router-link>
-      </p>
+
+      <div class="auth-link">
+        <p>Já tem conta? <router-link to="/login" class="link">Faça login</router-link></p>
+      </div>
     </div>
   </div>
 </template>
@@ -51,82 +64,45 @@ async function handleRegister() {
 </script>
 
 <style scoped>
-.register-container {
+.form-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 15px;
   align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.register-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+.error-message {
+  background: rgba(255, 71, 87, 0.2);
+  border: 2px solid #ff4757;
+  border-radius: 8px;
+  padding: 12px 20px;
+  color: #ff4757;
+  font-size: 10px;
+  text-align: center;
   width: 100%;
-  max-width: 400px;
+  max-width: 300px;
+  animation: pulse 2s infinite;
 }
 
-.form-group {
-  margin-bottom: 1rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
-}
-
-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
-
-button {
-  width: 100%;
-  padding: 0.75rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-button:hover:not(:disabled) {
-  background: #5568d3;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error {
-  color: #e53e3e;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  background: #fed7d7;
-  border-radius: 0.25rem;
-}
-
-p {
-  margin-top: 1rem;
+.auth-link {
+  margin-top: 20px;
   text-align: center;
 }
 
-a {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: bold;
+.auth-link p {
+  color: #ffa502;
+  font-size: 12px;
 }
 
-a:hover {
-  text-decoration: underline;
+.link {
+  color: #00ff88;
+  text-decoration: none;
+  font-weight: bold;
+  text-shadow: 0 0 10px #00ff88;
+  transition: all 0.3s ease;
+}
+
+.link:hover {
+  text-shadow: 0 0 20px #00ff88;
 }
 </style>
