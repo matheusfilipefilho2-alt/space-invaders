@@ -193,6 +193,9 @@ const handleLogout = () => {
   grid-template-columns: 1fr !important;
   display: flex !important;
   flex-direction: column !important;
+  max-width: 400px !important;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .button-with-badge {
@@ -204,6 +207,18 @@ const handleLogout = () => {
 .button-with-badge button {
   width: 100%;
   display: block;
+}
+
+/* Ajustar largura dos botões */
+.button-play {
+  max-width: 300px !important;
+  margin: 0 auto;
+}
+
+.button-view-ranking,
+.secondary-action {
+  max-width: 250px !important;
+  margin: 0 auto;
 }
 
 /* Wallet Button Styles */
