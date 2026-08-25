@@ -49,6 +49,14 @@
           </router-link>
         </div>
 
+        <!-- Botão PvP Arena -->
+        <div class="button-with-badge">
+          <router-link to="/pvp" class="button-pvp pvp-action">
+            <span class="button-icon">⚔️</span>
+            PVP ARENA
+          </router-link>
+        </div>
+
         <!-- Botão Perfil -->
         <div class="button-with-badge">
           <router-link to="/profile" class="button-view-ranking secondary-action">
@@ -86,6 +94,14 @@
           <router-link to="/login" class="button-play primary-action">
             <span class="button-icon">🚀</span>
             START GAME
+          </router-link>
+        </div>
+
+        <!-- Botão PvP Arena -->
+        <div class="button-with-badge">
+          <router-link to="/pvp" class="button-pvp pvp-action">
+            <span class="button-icon">⚔️</span>
+            PVP ARENA
           </router-link>
         </div>
 
@@ -219,6 +235,25 @@ const handleLogout = () => {
 .secondary-action {
   max-width: 250px !important;
   margin: 0 auto;
+}
+
+/* Botão PvP Arena - Rosa/Magenta */
+.button-pvp,
+.pvp-action {
+  background: transparent !important;
+  border-color: #ff4081 !important;
+  color: #ff4081 !important;
+  text-shadow: 0 0 10px #ff4081 !important;
+  box-shadow: 0 0 15px rgba(255, 64, 129, 0.3) !important;
+  max-width: 280px !important;
+  margin: 0 auto;
+}
+
+.button-pvp:hover,
+.pvp-action:hover {
+  background: rgba(255, 64, 129, 0.1) !important;
+  box-shadow: 0 0 25px rgba(255, 64, 129, 0.6) !important;
+  transform: translateY(-2px);
 }
 
 /* Wallet Button Styles */
