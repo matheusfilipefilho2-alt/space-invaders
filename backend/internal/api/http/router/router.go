@@ -17,6 +17,7 @@ type Router struct {
 	leaderboardHandler *handler.LeaderboardHandler
 	conversionHandler  *handler.ConversionHandler
 	shopHandler        *handler.ShopHandler
+	treasuryHandler    *handler.TreasuryHandler
 	jwtSecret          string
 }
 
@@ -29,6 +30,7 @@ func NewRouter(
 	leaderboardHandler *handler.LeaderboardHandler,
 	conversionHandler *handler.ConversionHandler,
 	shopHandler *handler.ShopHandler,
+	treasuryHandler *handler.TreasuryHandler,
 	jwtSecret string,
 ) *Router {
 	return &Router{
@@ -41,6 +43,7 @@ func NewRouter(
 		leaderboardHandler: leaderboardHandler,
 		conversionHandler:  conversionHandler,
 		shopHandler:        shopHandler,
+		treasuryHandler:    treasuryHandler,
 		jwtSecret:          jwtSecret,
 	}
 }
@@ -168,6 +171,20 @@ func (r *Router) Setup() *gin.Engine {
 			shopProtected.POST("/orders", r.shopHandler.CreateOrder)
 			shopProtected.GET("/orders", r.shopHandler.GetPlayerOrders)
 			shopProtected.GET("/orders/:id", r.shopHandler.GetOrder)
+		}
+
+		// Admin routes (protected)
+		// TODO: Add admin role middleware when role-based auth is implemented
+		admin := v1.Group("/admin")
+		admin.Use(middleware.AuthMiddleware(r.jwtSecret))
+		{
+			// Treasury admin endpoints
+			treasury := admin.Group("/treasury")
+			{
+				treasury.GET("/config", r.treasuryHandler.GetConfig)
+				treasury.GET("/emissions", r.treasuryHandler.GetEmissionHistory)
+				treasury.POST("/manual-emission", r.treasuryHandler.TriggerManualEmission)
+			}
 		}
 	}
 

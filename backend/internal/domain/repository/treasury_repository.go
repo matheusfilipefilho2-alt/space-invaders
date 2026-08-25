@@ -21,6 +21,6 @@ type TreasuryRepository interface {
 	// CreateOrUpdateDailyEmission creates or updates a daily emission record
 	CreateOrUpdateDailyEmission(ctx context.Context, emission *entity.DailyEmission) error
 
-	// GetEmissionHistory returns emission records between two dates
-	GetEmissionHistory(ctx context.Context, startDate, endDate time.Time) ([]entity.DailyEmission, error)
+	// GetEmissionHistory returns emission records between two dates with optional limit
+	GetEmissionHistory(ctx context.Context, startDate, endDate time.Time, limit int) ([]entity.DailyEmission, error)
 }

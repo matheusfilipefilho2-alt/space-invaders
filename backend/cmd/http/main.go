@@ -8,6 +8,7 @@ import (
 	"github.com/yourusername/space-invaders/internal/api/http/handler"
 	"github.com/yourusername/space-invaders/internal/api/http/router"
 	"github.com/yourusername/space-invaders/internal/domain/service"
+	"github.com/yourusername/space-invaders/internal/infra/cache"
 	"github.com/yourusername/space-invaders/internal/infra/database"
 	"github.com/yourusername/space-invaders/internal/infra/external"
 
@@ -45,6 +46,17 @@ func main() {
 	abacatePayAPIKey := configs.GetAbacatePayAPIKey()
 	abacatePayClient := external.NewAbacatePayClient(abacatePayAPIKey, true) // true = sandbox mode
 
+	// Initialize Redis client for price caching
+	redisClient, err := cache.NewRedisClient()
+	if err != nil {
+		log.Fatal("Failed to connect to Redis:", err)
+	}
+	log.Println("✅ Redis client connected")
+
+	// Initialize price fetcher (with Redis cache)
+	priceFetcher := external.NewCachedPriceFetcher(redisClient)
+	log.Println("✅ Price fetcher initialized")
+
 	// Initialize services
 	authService := service.NewAuthService(playerRepo, jwtSecret)
 	playerService := service.NewPlayerService(playerRepo)
@@ -54,6 +66,7 @@ func main() {
 	leaderboardService := service.NewLeaderboardService(playerRepo)
 	conversionService := service.NewConversionService(playerRepo, treasuryRepo, conversionRepo, db)
 	shopService := service.NewShopService(orderRepo, playerRepo, abacatePayClient, db)
+	emissionService := service.NewEmissionCalculatorService(treasuryRepo, priceFetcher)
 	log.Println("✅ Services initialized")
 
 	// Initialize handlers
@@ -65,6 +78,7 @@ func main() {
 	leaderboardHandler := handler.NewLeaderboardHandler(leaderboardService)
 	conversionHandler := handler.NewConversionHandler(conversionService)
 	shopHandler := handler.NewShopHandler(shopService)
+	treasuryHandler := handler.NewTreasuryHandler(emissionService)
 	log.Println("✅ Handlers initialized")
 
 	// Setup router
@@ -77,6 +91,7 @@ func main() {
 		leaderboardHandler,
 		conversionHandler,
 		shopHandler,
+		treasuryHandler,
 		jwtSecret,
 	)
 	r.Setup()
@@ -111,6 +126,9 @@ func main() {
 	log.Println("   POST /api/v1/shop/orders (protected)")
 	log.Println("   GET  /api/v1/shop/orders (protected)")
 	log.Println("   GET  /api/v1/shop/orders/:id (protected)")
+	log.Println("   GET  /api/v1/admin/treasury/config (protected)")
+	log.Println("   GET  /api/v1/admin/treasury/emissions (protected)")
+	log.Println("   POST /api/v1/admin/treasury/manual-emission (protected)")
 	log.Println("   POST /webhooks/abacatepay")
 
 	if err := r.Run(addr); err != nil {

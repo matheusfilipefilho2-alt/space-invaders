@@ -105,7 +105,12 @@ func (s *EmissionCalculatorService) SaveDailyEmission(ctx context.Context, emiss
 	return s.treasuryRepo.CreateOrUpdateDailyEmission(ctx, emission)
 }
 
-// GetEmissionHistory retrieves emission history for a date range
-func (s *EmissionCalculatorService) GetEmissionHistory(ctx context.Context, startDate, endDate time.Time) ([]entity.DailyEmission, error) {
-	return s.treasuryRepo.GetEmissionHistory(ctx, startDate, endDate)
+// GetTreasuryConfig retrieves the treasury configuration
+func (s *EmissionCalculatorService) GetTreasuryConfig(ctx context.Context) (*entity.TreasuryConfig, error) {
+	return s.treasuryRepo.GetConfig(ctx)
+}
+
+// GetEmissionHistory retrieves emission history for a date range with optional limit
+func (s *EmissionCalculatorService) GetEmissionHistory(ctx context.Context, startDate, endDate time.Time, limit int) ([]entity.DailyEmission, error) {
+	return s.treasuryRepo.GetEmissionHistory(ctx, startDate, endDate, limit)
 }

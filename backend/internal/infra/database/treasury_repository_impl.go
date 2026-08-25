@@ -71,17 +71,22 @@ func (r *treasuryRepository) CreateOrUpdateDailyEmission(ctx context.Context, em
 	return r.db.WithContext(ctx).Save(emission).Error
 }
 
-func (r *treasuryRepository) GetEmissionHistory(ctx context.Context, startDate, endDate time.Time) ([]entity.DailyEmission, error) {
+func (r *treasuryRepository) GetEmissionHistory(ctx context.Context, startDate, endDate time.Time, limit int) ([]entity.DailyEmission, error) {
 	var emissions []entity.DailyEmission
 
 	// Normalize dates
 	startOfStartDate := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.UTC)
 	endOfEndDate := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, time.UTC)
 
-	err := r.db.WithContext(ctx).
+	query := r.db.WithContext(ctx).
 		Where("date >= ? AND date <= ?", startOfStartDate, endOfEndDate).
-		Order("date ASC").
-		Find(&emissions).Error
+		Order("date DESC")
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.Find(&emissions).Error
 
 	if err != nil {
 		return nil, err
