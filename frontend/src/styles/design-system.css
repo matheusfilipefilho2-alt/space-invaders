@@ -1,0 +1,84 @@
+:root {
+    /* ========== COLORS ========== */
+
+    /* Primary Colors */
+    --color-gold: #FFD700;
+    --color-gold-light: #FFA500;
+    --color-teal: #4ECDC4;
+    --color-teal-dark: #44A08D;
+
+    /* Background Colors */
+    --bg-primary: #050519;
+    --bg-secondary: #0a0a2e;
+    --bg-card: rgba(255, 255, 255, 0.05);
+    --bg-card-hover: rgba(255, 255, 255, 0.08);
+
+    /* Status Colors */
+    --color-success: #00ff88;
+    --color-error: #FF4757;
+    --color-warning: #FFA502;
+    --color-info: #4ECDC4;
+
+    /* Rarity Colors */
+    --rarity-common: #808080;
+    --rarity-uncommon: #00ff00;
+    --rarity-rare: #0070dd;
+    --rarity-epic: #a335ee;
+    --rarity-legendary: #ff8000;
+
+    /* ========== TYPOGRAPHY ========== */
+
+    --font-primary: "Press Start 2P", monospace;
+    --font-secondary: "Courier New", monospace;
+
+    /* Font Sizes Desktop */
+    --text-xs: 6px;
+    --text-sm: 8px;
+    --text-base: 10px;
+    --text-lg: 12px;
+    --text-xl: 14px;
+    --text-2xl: 18px;
+    --text-3xl: 24px;
+    --text-4xl: 32px;
+
+    /* ========== SPACING ========== */
+
+    --space-xs: 5px;
+    --space-sm: 10px;
+    --space-md: 15px;
+    --space-lg: 20px;
+    --space-xl: 30px;
+    --space-2xl: 40px;
+
+    /* ========== BORDERS & RADIUS ========== */
+
+    --border-width: 2px;
+    --border-radius-sm: 5px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 15px;
+
+    /* ========== SHADOWS & GLOWS ========== */
+
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+
+    --glow-gold: 0 0 20px rgba(255, 215, 0, 0.5);
+    --glow-teal: 0 0 20px rgba(76, 205, 196, 0.5);
+    --glow-green: 0 0 20px rgba(0, 255, 136, 0.5);
+
+    /* ========== ANIMATIONS ========== */
+
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
+    /* ========== Z-INDEX ========== */
+
+    --z-base: 1;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-modal-backdrop: 900;
+    --z-modal: 1000;
+    --z-toast: 1100;
+}

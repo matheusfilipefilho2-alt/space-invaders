@@ -56,41 +56,41 @@
             <span class="profile-meta-item">
               <span class="meta-icon">⭐</span>
               <span class="meta-label">Nível:</span>
-              <span class="meta-value">{{ player?.league?.name || '1' }}</span>
+              <span class="meta-value">{{ currentLevel }}</span>
             </span>
             <span class="profile-meta-item">
               <span class="meta-icon">⚡</span>
               <span class="meta-label">XP:</span>
-              <span class="meta-value">{{ player?.rank_points || 0 }}</span>
+              <span class="meta-value">{{ currentXP }}</span>
             </span>
           </div>
         </div>
       </div>
 
       <!-- Tabs Container -->
-      <div id="profile-tabs-container" class="ui-tabs">
+      <div class="ui-tabs">
         <div class="ui-tabs__header">
           <button
-            @click="activeTab = 'stats'"
             :class="['ui-tabs__button', { 'ui-tabs__button--active': activeTab === 'stats' }]"
+            @click="activeTab = 'stats'"
           >
             📊 ESTATÍSTICAS
           </button>
           <button
-            @click="activeTab = 'achievements'"
             :class="['ui-tabs__button', { 'ui-tabs__button--active': activeTab === 'achievements' }]"
+            @click="activeTab = 'achievements'"
           >
             🏆 CONQUISTAS
           </button>
           <button
-            @click="activeTab = 'inventory'"
             :class="['ui-tabs__button', { 'ui-tabs__button--active': activeTab === 'inventory' }]"
+            @click="activeTab = 'inventory'"
           >
             🎒 INVENTÁRIO
           </button>
           <button
-            @click="activeTab = 'settings'"
             :class="['ui-tabs__button', { 'ui-tabs__button--active': activeTab === 'settings' }]"
+            @click="activeTab = 'settings'"
           >
             ⚙️ CONFIGURAÇÕES
           </button>
@@ -100,7 +100,6 @@
         <div class="ui-tabs__content">
           <!-- Tab: Estatísticas -->
           <div
-            v-show="activeTab === 'stats'"
             :class="['ui-tabs__pane', { 'ui-tabs__pane--active': activeTab === 'stats' }]"
           >
             <div class="stats-grid">
@@ -116,7 +115,7 @@
                 <div class="stat-icon">🏅</div>
                 <div class="stat-content">
                   <div class="stat-label">Vitórias</div>
-                  <div class="stat-value">{{ player?.total_games || 0 }}</div>
+                  <div class="stat-value">0</div>
                 </div>
               </div>
 
@@ -124,7 +123,7 @@
                 <div class="stat-icon">⚔️</div>
                 <div class="stat-content">
                   <div class="stat-label">Taxa de Vitória</div>
-                  <div class="stat-value">100%</div>
+                  <div class="stat-value">0%</div>
                 </div>
               </div>
 
@@ -148,7 +147,7 @@
                 <div class="stat-icon">⏱️</div>
                 <div class="stat-content">
                   <div class="stat-label">Tempo Jogado</div>
-                  <div class="stat-value">{{ formatPlaytime(player?.total_games) }}</div>
+                  <div class="stat-value">0h</div>
                 </div>
               </div>
             </div>
@@ -159,9 +158,9 @@
                 <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
               </div>
               <div class="progress-info">
-                <span>{{ player?.rank_points || 0 }}</span>
+                <span>{{ currentXP }}</span>
                 <span>/</span>
-                <span>{{ nextLevelPoints }}</span>
+                <span>{{ nextLevelXP }}</span>
                 <span>XP</span>
               </div>
             </div>
@@ -169,22 +168,25 @@
 
           <!-- Tab: Conquistas -->
           <div
-            v-show="activeTab === 'achievements'"
             :class="['ui-tabs__pane', { 'ui-tabs__pane--active': activeTab === 'achievements' }]"
           >
             <div class="achievements-container">
-              <div class="achievements-grid" id="achievements-grid">
+              <div class="achievements-grid">
                 <div v-if="loadingAchievements" class="loading">Carregando conquistas...</div>
+                <div v-else-if="achievements.length === 0" class="loading">
+                  Nenhuma conquista desbloqueada ainda
+                </div>
                 <div
-                  v-else
                   v-for="achievement in achievements"
                   :key="achievement.id"
                   class="achievement-card"
                 >
-                  <div class="achievement-icon">{{ achievement.icon }}</div>
-                  <div class="achievement-name">{{ achievement.name }}</div>
-                  <div class="achievement-description">{{ achievement.description }}</div>
-                  <div class="achievement-reward">💰 {{ achievement.reward_gold }} Gold</div>
+                  <div class="achievement-icon">{{ achievement.icon || '🏆' }}</div>
+                  <div class="achievement-info">
+                    <h4 class="achievement-name">{{ achievement.name }}</h4>
+                    <p class="achievement-description">{{ achievement.description }}</p>
+                    <span class="achievement-rarity">{{ achievement.rarity }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -192,22 +194,25 @@
 
           <!-- Tab: Inventário -->
           <div
-            v-show="activeTab === 'inventory'"
             :class="['ui-tabs__pane', { 'ui-tabs__pane--active': activeTab === 'inventory' }]"
           >
             <div class="inventory-container">
-              <div class="inventory-grid" id="inventory-grid">
+              <div class="inventory-grid">
                 <div v-if="loadingInventory" class="loading">Carregando inventário...</div>
+                <div v-else-if="inventory.length === 0" class="loading">
+                  Seu inventário está vazio
+                </div>
                 <div
-                  v-else
                   v-for="item in inventory"
                   :key="item.id"
                   class="inventory-item"
                 >
                   <div class="item-icon">{{ getItemIcon(item.item?.category) }}</div>
-                  <div class="item-name">{{ item.item?.name }}</div>
-                  <div class="item-description">{{ item.item?.description }}</div>
-                  <div v-if="item.equipped" class="equipped-badge">✓ EQUIPADO</div>
+                  <div class="item-info">
+                    <h4 class="item-name">{{ item.item?.name }}</h4>
+                    <p class="item-description">{{ item.item?.description }}</p>
+                    <span v-if="item.equipped" class="item-equipped">✓ EQUIPADO</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -215,7 +220,6 @@
 
           <!-- Tab: Configurações -->
           <div
-            v-show="activeTab === 'settings'"
             :class="['ui-tabs__pane', { 'ui-tabs__pane--active': activeTab === 'settings' }]"
           >
             <div class="settings-container">
@@ -229,7 +233,7 @@
                     v-model="settings.musicVolume"
                     min="0"
                     max="100"
-                  />
+                  >
                 </div>
                 <div class="setting-item">
                   <label class="setting-label">Efeitos Sonoros</label>
@@ -239,7 +243,7 @@
                     v-model="settings.sfxVolume"
                     min="0"
                     max="100"
-                  />
+                  >
                 </div>
               </div>
 
@@ -259,7 +263,7 @@
                     id="fullscreen-toggle"
                     class="setting-checkbox"
                     v-model="settings.fullscreen"
-                  />
+                  >
                   <label class="setting-label" for="fullscreen-toggle">Modo Tela Cheia</label>
                 </div>
               </div>
@@ -272,7 +276,7 @@
                     id="public-profile-toggle"
                     class="setting-checkbox"
                     v-model="settings.publicProfile"
-                  />
+                  >
                   <label class="setting-label" for="public-profile-toggle">Perfil Público</label>
                 </div>
                 <div class="setting-item checkbox">
@@ -281,7 +285,7 @@
                     id="show-score-toggle"
                     class="setting-checkbox"
                     v-model="settings.showScore"
-                  />
+                  >
                   <label class="setting-label" for="show-score-toggle">Mostrar Score no Ranking</label>
                 </div>
               </div>
@@ -304,16 +308,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 import { playerAPI } from '@/services/api'
 
-const authStore = useAuthStore()
 const player = ref<any>(null)
 const achievements = ref<any[]>([])
 const inventory = ref<any[]>([])
 const loadingAchievements = ref(false)
 const loadingInventory = ref(false)
-const activeTab = ref('stats')
+const activeTab = ref<'stats' | 'achievements' | 'inventory' | 'settings'>('stats')
 
 // Wallet state
 const walletConnected = ref(false)
@@ -326,23 +328,32 @@ const settings = ref({
   difficulty: 'normal',
   fullscreen: false,
   publicProfile: true,
-  showScore: true,
+  showScore: true
+})
+
+// Computed properties
+const currentLevel = computed(() => {
+  if (!player.value?.high_score) return 1
+  return Math.floor(player.value.high_score / 1000) + 1
+})
+
+const currentXP = computed(() => {
+  if (!player.value?.high_score) return 0
+  return player.value.high_score % 1000
+})
+
+const nextLevelXP = computed(() => {
+  return currentLevel.value * 1000
 })
 
 const progressPercentage = computed(() => {
-  const current = player.value?.rank_points || 0
-  const next = nextLevelPoints.value
-  return Math.min((current / next) * 100, 100)
-})
-
-const nextLevelPoints = computed(() => {
-  const currentLevel = player.value?.league?.id || 1
-  return currentLevel * 1000
+  if (nextLevelXP.value === 0) return 0
+  return (currentXP.value / 1000) * 100
 })
 
 async function loadProfile() {
   try {
-    const response = await playerAPI.getMe()
+    const response = await playerAPI.getProfile()
     player.value = response.data.data
   } catch (err) {
     console.error('Failed to load profile:', err)
@@ -373,11 +384,6 @@ async function loadInventory() {
   }
 }
 
-function formatPlaytime(totalGames: number): string {
-  const hours = Math.floor((totalGames * 5) / 60)
-  return `${hours}h`
-}
-
 function getItemIcon(category: string): string {
   const icons: Record<string, string> = {
     ship: '🚀',
@@ -400,12 +406,13 @@ function resetSettings() {
     difficulty: 'normal',
     fullscreen: false,
     publicProfile: true,
-    showScore: true,
+    showScore: true
   }
   localStorage.removeItem('game_settings')
   alert('Configurações restauradas para os padrões!')
 }
 
+// Wallet functions
 const connectWallet = async () => {
   try {
     if ((window as any).solana && (window as any).solana.isPhantom) {
@@ -442,11 +449,13 @@ onMounted(() => {
   loadAchievements()
   loadInventory()
 
+  // Load settings from localStorage
   const savedSettings = localStorage.getItem('game_settings')
   if (savedSettings) {
     settings.value = JSON.parse(savedSettings)
   }
 
+  // Check if wallet was previously connected
   const savedWallet = localStorage.getItem('wallet_address')
   if (savedWallet) {
     walletAddress.value = savedWallet
@@ -455,7 +464,8 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style>
+/* Wallet styles */
 .wallet-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -515,14 +525,72 @@ onMounted(() => {
   transform: scale(1.1);
 }
 
-.equipped-badge {
-  background: #00ff88;
-  color: #000;
-  padding: 5px 10px;
-  border-radius: 5px;
+/* Achievement card styles */
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 215, 0, 0.15);
+  border-radius: 10px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.achievement-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #FFD700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+  transform: translateY(-3px);
+}
+
+.achievement-info {
+  width: 100%;
+}
+
+.achievement-rarity {
+  display: inline-block;
+  font-size: 9px;
+  color: #4ECDC4;
+  font-weight: bold;
+  margin-top: 5px;
+  text-transform: uppercase;
+}
+
+/* Item styles */
+.item-icon {
+  font-size: 36px;
+}
+
+.item-info {
+  width: 100%;
+}
+
+.item-name {
   font-size: 10px;
   font-weight: bold;
-  margin-top: 10px;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  margin-bottom: 5px;
+}
+
+.item-description {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Orbitron', monospace;
+}
+
+.item-equipped {
   display: inline-block;
+  background: #00ff88;
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: bold;
+  margin-top: 8px;
 }
 </style>
