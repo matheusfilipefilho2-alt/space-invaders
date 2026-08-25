@@ -65,6 +65,12 @@ const router = createRouter({
       name: 'battlePass',
       component: () => import('../views/BattlePassView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/nfts',
+      name: 'nfts',
+      component: () => import('../views/NFTGalleryView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
