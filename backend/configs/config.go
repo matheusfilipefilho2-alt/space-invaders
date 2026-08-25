@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"github.com/yourusername/space-invaders/pkg/config"
 )
 
 func init() {
@@ -48,12 +49,13 @@ func LoadConfig() error {
 }
 
 type Conf struct {
-	Env      string         `mapstructure:"env"`
-	APIPort  uint16         `mapstructure:"apiPort"`
-	Database DatabaseConfig `mapstructure:"database"`
-	RabbitMQ RabbitMQConfig `mapstructure:"rabbitmq"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	HashID   HashIDConfig   `mapstructure:"hashId"`
+	Env      string               `mapstructure:"env"`
+	APIPort  uint16               `mapstructure:"apiPort"`
+	Database DatabaseConfig       `mapstructure:"database"`
+	RabbitMQ RabbitMQConfig       `mapstructure:"rabbitmq"`
+	Redis    RedisConfig          `mapstructure:"redis"`
+	HashID   HashIDConfig         `mapstructure:"hashId"`
+	Solana   config.SolanaConfig `mapstructure:"solana"`
 }
 
 type DatabaseConfig struct {
@@ -155,4 +157,29 @@ func GetSupabaseURL() string {
 
 func GetSupabaseKey() string {
 	return os.Getenv("SUPABASE_KEY")
+}
+
+func GetSolanaConfig() config.SolanaConfig {
+	// Build from environment variables
+	return config.SolanaConfig{
+		RpcURL:          getEnvOrDefault("SOLANA_RPC_URL", "https://api.devnet.solana.com"),
+		TreasuryPrivKey: os.Getenv("SOLANA_TREASURY_PRIVKEY"),
+		TokenMintPubkey: os.Getenv("SOLANA_TOKEN_MINT"),
+		Network:         getEnvOrDefault("SOLANA_NETWORK", "devnet"),
+	}
+}
+
+func GetSolanaTreasuryPrivKey() string {
+	return os.Getenv("SOLANA_TREASURY_PRIVKEY")
+}
+
+func GetSolanaTokenMint() string {
+	return os.Getenv("SOLANA_TOKEN_MINT")
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
