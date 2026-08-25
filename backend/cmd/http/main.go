@@ -35,6 +35,8 @@ func main() {
 	playerAchievementRepo := database.NewPlayerAchievementRepository(db)
 	itemRepo := database.NewItemRepository(db)
 	playerItemRepo := database.NewPlayerItemRepository(db)
+	treasuryRepo := database.NewTreasuryRepository(db)
+	conversionRepo := database.NewConversionRepository(db)
 	log.Println("✅ Repositories initialized")
 
 	// Initialize services
@@ -44,6 +46,7 @@ func main() {
 	achievementService := service.NewAchievementService(achievementRepo, playerRepo, playerAchievementRepo)
 	itemService := service.NewItemService(itemRepo, playerItemRepo, playerRepo)
 	leaderboardService := service.NewLeaderboardService(playerRepo)
+	conversionService := service.NewConversionService(playerRepo, treasuryRepo, conversionRepo, db)
 	log.Println("✅ Services initialized")
 
 	// Initialize handlers
@@ -53,6 +56,7 @@ func main() {
 	achievementHandler := handler.NewAchievementHandler(achievementService)
 	itemHandler := handler.NewItemHandler(itemService)
 	leaderboardHandler := handler.NewLeaderboardHandler(leaderboardService)
+	conversionHandler := handler.NewConversionHandler(conversionService)
 	log.Println("✅ Handlers initialized")
 
 	// Setup router
@@ -63,6 +67,7 @@ func main() {
 		achievementHandler,
 		itemHandler,
 		leaderboardHandler,
+		conversionHandler,
 		jwtSecret,
 	)
 	r.Setup()
@@ -90,6 +95,9 @@ func main() {
 	log.Println("   GET  /api/v1/leaderboard/global")
 	log.Println("   GET  /api/v1/leaderboard/league/:id")
 	log.Println("   GET  /api/v1/leaderboard/friends (protected)")
+	log.Println("   POST /api/v1/conversions (protected)")
+	log.Println("   GET  /api/v1/conversions/history (protected)")
+	log.Println("   GET  /api/v1/conversions/:id (protected)")
 
 	if err := r.Run(addr); err != nil {
 		log.Fatal("Failed to start server:", err)

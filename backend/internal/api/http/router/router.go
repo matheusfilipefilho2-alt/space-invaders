@@ -15,6 +15,7 @@ type Router struct {
 	achievementHandler *handler.AchievementHandler
 	itemHandler        *handler.ItemHandler
 	leaderboardHandler *handler.LeaderboardHandler
+	conversionHandler  *handler.ConversionHandler
 	jwtSecret          string
 }
 
@@ -25,6 +26,7 @@ func NewRouter(
 	achievementHandler *handler.AchievementHandler,
 	itemHandler *handler.ItemHandler,
 	leaderboardHandler *handler.LeaderboardHandler,
+	conversionHandler *handler.ConversionHandler,
 	jwtSecret string,
 ) *Router {
 	return &Router{
@@ -35,6 +37,7 @@ func NewRouter(
 		achievementHandler: achievementHandler,
 		itemHandler:        itemHandler,
 		leaderboardHandler: leaderboardHandler,
+		conversionHandler:  conversionHandler,
 		jwtSecret:          jwtSecret,
 	}
 }
@@ -137,6 +140,15 @@ func (r *Router) Setup() *gin.Engine {
 		leaderboardProtected.Use(middleware.AuthMiddleware(r.jwtSecret))
 		{
 			leaderboardProtected.GET("/friends", r.leaderboardHandler.GetFriendLeaderboard)
+		}
+
+		// Conversions (Gold → SPACE) - all protected
+		conversions := v1.Group("/conversions")
+		conversions.Use(middleware.AuthMiddleware(r.jwtSecret))
+		{
+			conversions.POST("", r.conversionHandler.ConvertGoldToSpace)
+			conversions.GET("/history", r.conversionHandler.GetConversionHistory)
+			conversions.GET("/:id", r.conversionHandler.GetConversion)
 		}
 	}
 
