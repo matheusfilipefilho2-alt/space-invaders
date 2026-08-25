@@ -28,6 +28,7 @@ func NewPostgresConnection(dsn string) (*gorm.DB, error) {
 		// Core entities
 		&entity.Player{},
 		&entity.League{},
+		&entity.Item{},
 		&entity.PlayerItem{},
 		&entity.Achievement{},
 		&entity.PlayerAchievement{},
