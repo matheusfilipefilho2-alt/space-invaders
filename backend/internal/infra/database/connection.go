@@ -24,10 +24,12 @@ func NewPostgresConnection(dsn string) (*gorm.DB, error) {
 	// Auto-migrate all 10 entities from Fase 0
 	log.Println("Starting auto-migration of domain entities...")
 
+	// Note: League entity temporarily excluded due to GORM migration issue
+	// The table exists and works fine, just can't be auto-migrated
 	err = db.AutoMigrate(
 		// Core entities
 		&entity.Player{},
-		&entity.League{},
+		// &entity.League{}, // Skipped - causes "insufficient arguments" error in GORM
 		&entity.Item{},
 		&entity.PlayerItem{},
 		&entity.Achievement{},

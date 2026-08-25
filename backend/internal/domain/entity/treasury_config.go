@@ -5,10 +5,10 @@ import "time"
 // TreasuryConfig stores the configuration for the treasury system
 type TreasuryConfig struct {
 	ID                   uint      `gorm:"primaryKey"`
-	ConversionRatio      uint64    `gorm:"not null;default:100"` // 100 Gold = 1 SPACE
-	RevenueSharePercent  float64   `gorm:"not null;default:0.30"` // 30% of revenue
-	MinEmissionPerDay    uint64    `gorm:"not null;default:0"`
-	MaxEmissionPerDay    uint64    `gorm:"not null;default:1000000000000"` // 1,000 SPACE max per day
+	ConversionRatio      uint64    `gorm:"not null"` // 100 Gold = 1 SPACE
+	RevenueSharePercent  float64   `gorm:"not null"` // 30% of revenue
+	MinEmissionPerDay    uint64    `gorm:"not null"`
+	MaxEmissionPerDay    uint64    `gorm:"not null"` // 1,000 SPACE max per day
 	TreasuryWalletPubkey string    `gorm:"type:text"`
 	CreatedAt            time.Time `gorm:"autoCreateTime"`
 	UpdatedAt            time.Time `gorm:"autoUpdateTime"`

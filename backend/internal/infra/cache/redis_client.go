@@ -14,13 +14,18 @@ type RedisClient struct {
 }
 
 func NewRedisClient() (*RedisClient, error) {
-	cfg := configs.GetRedisConfig()
+	redisURL := configs.GetRedisURL()
+	if redisURL == "" {
+		redisURL = "redis://localhost:6379" // default
+	}
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		Password: cfg.Password,
-		DB:       0, // use default DB
-	})
+	// Parse Redis URL (e.g., "redis://localhost:6379")
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse Redis URL: %w", err)
+	}
+
+	client := redis.NewClient(opt)
 
 	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

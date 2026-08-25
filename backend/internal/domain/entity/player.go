@@ -10,30 +10,30 @@ type Player struct {
 	gorm.Model
 	Username      string  `gorm:"uniqueIndex;not null"`
 	Email         string  `gorm:"uniqueIndex"`
-	EmailVerified bool    `gorm:"default:false"`
+	EmailVerified bool
 	PasswordHash  string  `gorm:"not null"`
 	WalletAddress *string `gorm:"uniqueIndex"`
 
 	// Stats
-	HighScore  uint64 `gorm:"default:0"`
-	TotalGames uint   `gorm:"default:0"`
-	TotalKills uint   `gorm:"default:0"`
+	HighScore  uint64
+	TotalGames uint
+	TotalKills uint
 	LastPlayed *time.Time
 
 	// Economy
-	GoldBalance   uint64  `gorm:"default:0"`
-	SpaceBalance  uint64  `gorm:"default:0"`
-	SolanaWallet  *string `gorm:"index"` // Player's Solana wallet address for SPACE tokens
+	GoldBalance  uint64
+	SpaceBalance uint64
+	SolanaWallet *string `gorm:"index"` // Player's Solana wallet address for SPACE tokens
 
 	// Progression
-	LeagueID   uint `gorm:"default:1"`
-	RankPoints uint `gorm:"default:0"`
+	LeagueID   uint
+	RankPoints uint
 	League     *League
 
 	// Notifications
-	NotifyOffers       bool `gorm:"default:true"`
-	NotifyAchievements bool `gorm:"default:true"`
-	NotifyShop         bool `gorm:"default:false"`
+	NotifyOffers       bool
+	NotifyAchievements bool
+	NotifyShop         bool
 
 	// Relations
 	GuildID *uint
