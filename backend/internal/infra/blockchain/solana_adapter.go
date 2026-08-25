@@ -70,10 +70,10 @@ func (a *SolanaAdapter) MintTokens(ctx context.Context, recipientWallet string, 
 		[]solana.PublicKey{}, // No multisig
 	).Build()
 
-	// Get recent blockhash
-	recent, err := a.client.GetRecentBlockhash(ctx, rpc.CommitmentFinalized)
+	// Get latest blockhash
+	recent, err := a.client.GetLatestBlockhash(ctx, rpc.CommitmentFinalized)
 	if err != nil {
-		return "", fmt.Errorf("failed to get recent blockhash: %w", err)
+		return "", fmt.Errorf("failed to get latest blockhash: %w", err)
 	}
 
 	// Build transaction

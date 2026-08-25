@@ -20,6 +20,7 @@ type Router struct {
 	shopHandler        *handler.ShopHandler
 	treasuryHandler    *handler.TreasuryHandler
 	battlePassHandler  *handler.BattlePassHandler
+	nftHandler         *handler.NFTHandler
 	jwtSecret          string
 }
 
@@ -34,6 +35,7 @@ func NewRouter(
 	shopHandler *handler.ShopHandler,
 	treasuryHandler *handler.TreasuryHandler,
 	battlePassHandler *handler.BattlePassHandler,
+	nftHandler *handler.NFTHandler,
 	jwtSecret string,
 ) *Router {
 	return &Router{
@@ -48,6 +50,7 @@ func NewRouter(
 		shopHandler:        shopHandler,
 		treasuryHandler:    treasuryHandler,
 		battlePassHandler:  battlePassHandler,
+		nftHandler:         nftHandler,
 		jwtSecret:          jwtSecret,
 	}
 }
@@ -201,6 +204,15 @@ func (r *Router) Setup() *gin.Engine {
 			battlePassProtected.GET("/unclaimed", r.battlePassHandler.GetUnclaimedRewards)
 			battlePassProtected.POST("/claim", r.battlePassHandler.ClaimReward)
 			battlePassProtected.POST("/premium/purchase", r.battlePassHandler.PurchasePremium)
+		}
+
+		// NFTs (all protected)
+		nfts := v1.Group("/nfts")
+		nfts.Use(middleware.AuthMiddleware(r.jwtSecret))
+		{
+			nfts.GET("", r.nftHandler.GetPlayerNFTs)
+			nfts.GET("/:id", r.nftHandler.GetNFT)
+			nfts.POST("/mint", r.nftHandler.MintNFT)
 		}
 
 		// Admin routes (protected)

@@ -48,6 +48,7 @@ func main() {
 	conversionRepo := database.NewConversionRepository(db)
 	orderRepo := database.NewOrderRepository(db)
 	battlePassRepo := database.NewBattlePassRepository(db)
+	nftRepo := database.NewNFTRepository(db)
 	log.Println("✅ Repositories initialized")
 
 	// Initialize external clients
@@ -65,6 +66,17 @@ func main() {
 	priceFetcher := external.NewCachedPriceFetcher(redisClient)
 	log.Println("✅ Price fetcher initialized")
 
+	// Initialize IPFS client (Pinata)
+	// TODO: Add IPFS credentials to config
+	ipfsClient := external.NewIPFSClient("https://api.pinata.cloud", "", "")
+	log.Println("✅ IPFS client initialized")
+
+	// Initialize Metaplex adapter for NFT minting
+	// TODO: Initialize with actual Solana client and treasury key
+	// For now, using placeholder
+	log.Println("⚠️  Metaplex adapter: using placeholder (not configured)")
+
+
 	// Initialize services
 	authService := service.NewAuthService(playerRepo, jwtSecret)
 	playerService := service.NewPlayerService(playerRepo)
@@ -76,6 +88,7 @@ func main() {
 	shopService := service.NewShopService(orderRepo, playerRepo, abacatePayClient, db)
 	emissionService := service.NewEmissionCalculatorService(treasuryRepo, priceFetcher)
 	battlePassService := service.NewBattlePassService(battlePassRepo, playerRepo, itemRepo, db)
+	nftService := service.NewNFTService(nftRepo, playerRepo, ipfsClient, nil) // TODO: Add Metaplex adapter
 	log.Println("✅ Services initialized")
 
 	// Initialize handlers
@@ -89,6 +102,7 @@ func main() {
 	shopHandler := handler.NewShopHandler(shopService)
 	treasuryHandler := handler.NewTreasuryHandler(emissionService)
 	battlePassHandler := handler.NewBattlePassHandler(battlePassService)
+	nftHandler := handler.NewNFTHandler(nftService)
 	log.Println("✅ Handlers initialized")
 
 	// Setup router
@@ -103,6 +117,7 @@ func main() {
 		shopHandler,
 		treasuryHandler,
 		battlePassHandler,
+		nftHandler,
 		jwtSecret,
 	)
 	r.Setup()
@@ -150,6 +165,9 @@ func main() {
 	log.Println("   GET  /api/v1/battle-pass/unclaimed (protected)")
 	log.Println("   POST /api/v1/battle-pass/claim (protected)")
 	log.Println("   POST /api/v1/battle-pass/premium/purchase (protected)")
+	log.Println("   GET  /api/v1/nfts (protected)")
+	log.Println("   GET  /api/v1/nfts/:id (protected)")
+	log.Println("   POST /api/v1/nfts/mint (protected)")
 	log.Println("   GET  /api/v1/admin/treasury/config (protected)")
 	log.Println("   GET  /api/v1/admin/treasury/emissions (protected)")
 	log.Println("   POST /api/v1/admin/treasury/manual-emission (protected)")
