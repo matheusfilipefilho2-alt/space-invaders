@@ -8,7 +8,7 @@ type TreasuryConfig struct {
 	ConversionRatio      uint64    `gorm:"not null;default:100"` // 100 Gold = 1 SPACE
 	RevenueSharePercent  float64   `gorm:"not null;default:0.30"` // 30% of revenue
 	MinEmissionPerDay    uint64    `gorm:"not null;default:0"`
-	MaxEmissionPerDay    uint64    `gorm:"not null;default:1000000"` // 1M SPACE max per day
+	MaxEmissionPerDay    uint64    `gorm:"not null;default:1000000000000"` // 1,000 SPACE max per day
 	TreasuryWalletPubkey string    `gorm:"type:text"`
 	CreatedAt            time.Time `gorm:"autoCreateTime"`
 	UpdatedAt            time.Time `gorm:"autoUpdateTime"`
@@ -26,6 +26,6 @@ func GetDefaultConfig() *TreasuryConfig {
 		ConversionRatio:     100,
 		RevenueSharePercent: 0.30,
 		MinEmissionPerDay:   0,
-		MaxEmissionPerDay:   1000000,
+		MaxEmissionPerDay:   1_000_000_000_000, // 1,000 SPACE max per day
 	}
 }
