@@ -50,7 +50,7 @@ const password = ref('')
 async function handleLogin() {
   const success = await authStore.login(username.value, password.value)
   if (success) {
-    router.push('/game')
+    router.push('/')
   }
 }
 </script>

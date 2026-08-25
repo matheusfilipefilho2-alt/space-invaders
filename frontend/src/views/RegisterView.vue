@@ -58,7 +58,7 @@ const password = ref('')
 async function handleRegister() {
   const success = await authStore.register(username.value, email.value, password.value)
   if (success) {
-    router.push('/game')
+    router.push('/')
   }
 }
 </script>
