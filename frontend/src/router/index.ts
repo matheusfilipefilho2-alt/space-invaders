@@ -71,6 +71,12 @@ const router = createRouter({
       name: 'nfts',
       component: () => import('../views/NFTGalleryView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/achievements',
+      name: 'achievements',
+      component: () => import('../views/AchievementsView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
