@@ -59,6 +59,12 @@ const router = createRouter({
       path: '/leaderboard',
       name: 'leaderboard',
       component: () => import('../views/LeaderboardView.vue')
+    },
+    {
+      path: '/battle-pass',
+      name: 'battlePass',
+      component: () => import('../views/BattlePassView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
