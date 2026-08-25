@@ -16,6 +16,7 @@ type Router struct {
 	itemHandler        *handler.ItemHandler
 	leaderboardHandler *handler.LeaderboardHandler
 	conversionHandler  *handler.ConversionHandler
+	shopHandler        *handler.ShopHandler
 	jwtSecret          string
 }
 
@@ -27,6 +28,7 @@ func NewRouter(
 	itemHandler *handler.ItemHandler,
 	leaderboardHandler *handler.LeaderboardHandler,
 	conversionHandler *handler.ConversionHandler,
+	shopHandler *handler.ShopHandler,
 	jwtSecret string,
 ) *Router {
 	return &Router{
@@ -38,6 +40,7 @@ func NewRouter(
 		itemHandler:        itemHandler,
 		leaderboardHandler: leaderboardHandler,
 		conversionHandler:  conversionHandler,
+		shopHandler:        shopHandler,
 		jwtSecret:          jwtSecret,
 	}
 }
@@ -150,6 +153,28 @@ func (r *Router) Setup() *gin.Engine {
 			conversions.GET("/history", r.conversionHandler.GetConversionHistory)
 			conversions.GET("/:id", r.conversionHandler.GetConversion)
 		}
+
+		// Shop (Gold packages) - mixed public/protected
+		shop := v1.Group("/shop")
+		{
+			// Public - list packages
+			shop.GET("/packages", r.shopHandler.ListPackages)
+		}
+
+		// Shop orders (protected)
+		shopProtected := v1.Group("/shop")
+		shopProtected.Use(middleware.AuthMiddleware(r.jwtSecret))
+		{
+			shopProtected.POST("/orders", r.shopHandler.CreateOrder)
+			shopProtected.GET("/orders", r.shopHandler.GetPlayerOrders)
+			shopProtected.GET("/orders/:id", r.shopHandler.GetOrder)
+		}
+	}
+
+	// Webhooks (outside v1 group, no auth)
+	webhooks := r.engine.Group("/webhooks")
+	{
+		webhooks.POST("/abacatepay", r.shopHandler.AbacatePayWebhook)
 	}
 
 	return r.engine

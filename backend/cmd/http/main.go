@@ -9,6 +9,7 @@ import (
 	"github.com/yourusername/space-invaders/internal/api/http/router"
 	"github.com/yourusername/space-invaders/internal/domain/service"
 	"github.com/yourusername/space-invaders/internal/infra/database"
+	"github.com/yourusername/space-invaders/internal/infra/external"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -37,7 +38,12 @@ func main() {
 	playerItemRepo := database.NewPlayerItemRepository(db)
 	treasuryRepo := database.NewTreasuryRepository(db)
 	conversionRepo := database.NewConversionRepository(db)
+	orderRepo := database.NewOrderRepository(db)
 	log.Println("✅ Repositories initialized")
+
+	// Initialize external clients
+	abacatePayAPIKey := configs.GetAbacatePayAPIKey()
+	abacatePayClient := external.NewAbacatePayClient(abacatePayAPIKey, true) // true = sandbox mode
 
 	// Initialize services
 	authService := service.NewAuthService(playerRepo, jwtSecret)
@@ -47,6 +53,7 @@ func main() {
 	itemService := service.NewItemService(itemRepo, playerItemRepo, playerRepo)
 	leaderboardService := service.NewLeaderboardService(playerRepo)
 	conversionService := service.NewConversionService(playerRepo, treasuryRepo, conversionRepo, db)
+	shopService := service.NewShopService(orderRepo, playerRepo, abacatePayClient, db)
 	log.Println("✅ Services initialized")
 
 	// Initialize handlers
@@ -57,6 +64,7 @@ func main() {
 	itemHandler := handler.NewItemHandler(itemService)
 	leaderboardHandler := handler.NewLeaderboardHandler(leaderboardService)
 	conversionHandler := handler.NewConversionHandler(conversionService)
+	shopHandler := handler.NewShopHandler(shopService)
 	log.Println("✅ Handlers initialized")
 
 	// Setup router
@@ -68,6 +76,7 @@ func main() {
 		itemHandler,
 		leaderboardHandler,
 		conversionHandler,
+		shopHandler,
 		jwtSecret,
 	)
 	r.Setup()
@@ -98,6 +107,11 @@ func main() {
 	log.Println("   POST /api/v1/conversions (protected)")
 	log.Println("   GET  /api/v1/conversions/history (protected)")
 	log.Println("   GET  /api/v1/conversions/:id (protected)")
+	log.Println("   GET  /api/v1/shop/packages")
+	log.Println("   POST /api/v1/shop/orders (protected)")
+	log.Println("   GET  /api/v1/shop/orders (protected)")
+	log.Println("   GET  /api/v1/shop/orders/:id (protected)")
+	log.Println("   POST /webhooks/abacatepay")
 
 	if err := r.Run(addr); err != nil {
 		log.Fatal("Failed to start server:", err)
