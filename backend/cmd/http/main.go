@@ -33,9 +33,8 @@ func main() {
 	playerRepo := database.NewPlayerRepository(db)
 	achievementRepo := database.NewAchievementRepository(db)
 	playerAchievementRepo := database.NewPlayerAchievementRepository(db)
-	// TODO: Implement ItemRepository and PlayerItemRepository in Task 11/12
-	// itemRepo := database.NewItemRepository(db)
-	// playerItemRepo := database.NewPlayerItemRepository(db)
+	itemRepo := database.NewItemRepository(db)
+	playerItemRepo := database.NewPlayerItemRepository(db)
 	log.Println("✅ Repositories initialized")
 
 	// Initialize services
@@ -43,8 +42,7 @@ func main() {
 	playerService := service.NewPlayerService(playerRepo)
 	gameService := service.NewGameService(playerRepo)
 	achievementService := service.NewAchievementService(achievementRepo, playerRepo, playerAchievementRepo)
-	// TODO: Enable when ItemRepository and PlayerItemRepository are implemented
-	// itemService := service.NewItemService(itemRepo, playerItemRepo, playerRepo)
+	itemService := service.NewItemService(itemRepo, playerItemRepo, playerRepo)
 	leaderboardService := service.NewLeaderboardService(playerRepo)
 	log.Println("✅ Services initialized")
 
@@ -53,8 +51,7 @@ func main() {
 	playerHandler := handler.NewPlayerHandler(playerService)
 	gameHandler := handler.NewGameHandler(gameService)
 	achievementHandler := handler.NewAchievementHandler(achievementService)
-	// TODO: Enable when ItemService is ready
-	// itemHandler := handler.NewItemHandler(itemService)
+	itemHandler := handler.NewItemHandler(itemService)
 	leaderboardHandler := handler.NewLeaderboardHandler(leaderboardService)
 	log.Println("✅ Handlers initialized")
 
@@ -64,7 +61,7 @@ func main() {
 		playerHandler,
 		gameHandler,
 		achievementHandler,
-		nil, // itemHandler - TODO: Enable when ItemService is ready
+		itemHandler,
 		leaderboardHandler,
 		jwtSecret,
 	)
@@ -85,12 +82,11 @@ func main() {
 	log.Println("   GET  /api/v1/achievements")
 	log.Println("   GET  /api/v1/players/me/achievements (protected)")
 	log.Println("   POST /api/v1/achievements/check (protected)")
-	// TODO: Enable when ItemHandler is implemented
-	// log.Println("   GET  /api/v1/items")
-	// log.Println("   GET  /api/v1/players/me/items (protected)")
-	// log.Println("   POST /api/v1/items/:id/purchase (protected)")
-	// log.Println("   POST /api/v1/items/:id/equip (protected)")
-	// log.Println("   POST /api/v1/items/:id/unequip (protected)")
+	log.Println("   GET  /api/v1/items")
+	log.Println("   GET  /api/v1/players/me/items (protected)")
+	log.Println("   POST /api/v1/items/:id/purchase (protected)")
+	log.Println("   POST /api/v1/items/:id/equip (protected)")
+	log.Println("   POST /api/v1/items/:id/unequip (protected)")
 	log.Println("   GET  /api/v1/leaderboard/global")
 	log.Println("   GET  /api/v1/leaderboard/league/:id")
 	log.Println("   GET  /api/v1/leaderboard/friends (protected)")
