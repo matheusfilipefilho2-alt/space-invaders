@@ -130,5 +130,21 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-/* Remove todos os estilos customizados - usar apenas os estilos globais do style.css */
+/* Forçar layout vertical dos botões */
+.menu-buttons-enhanced {
+  grid-template-columns: 1fr !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.button-with-badge {
+  width: 100%;
+}
+
+/* Garantir que router-link ocupe 100% da largura */
+.button-with-badge a,
+.button-with-badge button {
+  width: 100%;
+  display: block;
+}
 </style>
