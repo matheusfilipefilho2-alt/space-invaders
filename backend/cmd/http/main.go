@@ -47,6 +47,7 @@ func main() {
 	treasuryRepo := database.NewTreasuryRepository(db)
 	conversionRepo := database.NewConversionRepository(db)
 	orderRepo := database.NewOrderRepository(db)
+	battlePassRepo := database.NewBattlePassRepository(db)
 	log.Println("✅ Repositories initialized")
 
 	// Initialize external clients
@@ -74,6 +75,7 @@ func main() {
 	conversionService := service.NewConversionService(playerRepo, treasuryRepo, conversionRepo, db)
 	shopService := service.NewShopService(orderRepo, playerRepo, abacatePayClient, db)
 	emissionService := service.NewEmissionCalculatorService(treasuryRepo, priceFetcher)
+	battlePassService := service.NewBattlePassService(battlePassRepo, playerRepo, itemRepo, db)
 	log.Println("✅ Services initialized")
 
 	// Initialize handlers
@@ -86,6 +88,7 @@ func main() {
 	conversionHandler := handler.NewConversionHandler(conversionService)
 	shopHandler := handler.NewShopHandler(shopService)
 	treasuryHandler := handler.NewTreasuryHandler(emissionService)
+	battlePassHandler := handler.NewBattlePassHandler(battlePassService)
 	log.Println("✅ Handlers initialized")
 
 	// Setup router
@@ -99,6 +102,7 @@ func main() {
 		conversionHandler,
 		shopHandler,
 		treasuryHandler,
+		battlePassHandler,
 		jwtSecret,
 	)
 	r.Setup()
@@ -138,6 +142,14 @@ func main() {
 	log.Println("   POST /api/v1/shop/orders (protected)")
 	log.Println("   GET  /api/v1/shop/orders (protected)")
 	log.Println("   GET  /api/v1/shop/orders/:id (protected)")
+	log.Println("   GET  /api/v1/battle-pass/season")
+	log.Println("   GET  /api/v1/battle-pass/rewards")
+	log.Println("   GET  /api/v1/battle-pass/leaderboard")
+	log.Println("   GET  /api/v1/battle-pass/progress (protected)")
+	log.Println("   GET  /api/v1/battle-pass/summary (protected)")
+	log.Println("   GET  /api/v1/battle-pass/unclaimed (protected)")
+	log.Println("   POST /api/v1/battle-pass/claim (protected)")
+	log.Println("   POST /api/v1/battle-pass/premium/purchase (protected)")
 	log.Println("   GET  /api/v1/admin/treasury/config (protected)")
 	log.Println("   GET  /api/v1/admin/treasury/emissions (protected)")
 	log.Println("   POST /api/v1/admin/treasury/manual-emission (protected)")

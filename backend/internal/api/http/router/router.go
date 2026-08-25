@@ -19,6 +19,7 @@ type Router struct {
 	conversionHandler  *handler.ConversionHandler
 	shopHandler        *handler.ShopHandler
 	treasuryHandler    *handler.TreasuryHandler
+	battlePassHandler  *handler.BattlePassHandler
 	jwtSecret          string
 }
 
@@ -32,6 +33,7 @@ func NewRouter(
 	conversionHandler *handler.ConversionHandler,
 	shopHandler *handler.ShopHandler,
 	treasuryHandler *handler.TreasuryHandler,
+	battlePassHandler *handler.BattlePassHandler,
 	jwtSecret string,
 ) *Router {
 	return &Router{
@@ -45,6 +47,7 @@ func NewRouter(
 		conversionHandler:  conversionHandler,
 		shopHandler:        shopHandler,
 		treasuryHandler:    treasuryHandler,
+		battlePassHandler:  battlePassHandler,
 		jwtSecret:          jwtSecret,
 	}
 }
@@ -178,6 +181,26 @@ func (r *Router) Setup() *gin.Engine {
 			shopProtected.POST("/orders", r.shopHandler.CreateOrder)
 			shopProtected.GET("/orders", r.shopHandler.GetPlayerOrders)
 			shopProtected.GET("/orders/:id", r.shopHandler.GetOrder)
+		}
+
+		// Battle Pass (mixed public/protected)
+		battlePass := v1.Group("/battle-pass")
+		{
+			// Public routes
+			battlePass.GET("/season", r.battlePassHandler.GetCurrentSeason)
+			battlePass.GET("/rewards", r.battlePassHandler.GetSeasonRewards)
+			battlePass.GET("/leaderboard", r.battlePassHandler.GetLeaderboard)
+		}
+
+		// Battle Pass protected routes
+		battlePassProtected := v1.Group("/battle-pass")
+		battlePassProtected.Use(middleware.AuthMiddleware(r.jwtSecret))
+		{
+			battlePassProtected.GET("/progress", r.battlePassHandler.GetMyProgress)
+			battlePassProtected.GET("/summary", r.battlePassHandler.GetProgressSummary)
+			battlePassProtected.GET("/unclaimed", r.battlePassHandler.GetUnclaimedRewards)
+			battlePassProtected.POST("/claim", r.battlePassHandler.ClaimReward)
+			battlePassProtected.POST("/premium/purchase", r.battlePassHandler.PurchasePremium)
 		}
 
 		// Admin routes (protected)
