@@ -17,6 +17,7 @@ type Player struct {
 	// Stats
 	HighScore  uint64     `gorm:"default:0"`
 	TotalGames uint       `gorm:"default:0"`
+	TotalKills uint       `gorm:"default:0"`
 	LastPlayed *time.Time
 
 	// Economy
