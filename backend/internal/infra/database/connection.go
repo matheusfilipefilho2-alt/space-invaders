@@ -40,6 +40,12 @@ func NewPostgresConnection(dsn string) (*gorm.DB, error) {
 		&entity.RewardHistory{},
 		&entity.Order{},
 
+		// Battle Pass entities (Fase 3)
+		&entity.BattlePassSeason{},
+		&entity.BattlePassProgress{},
+		&entity.BattlePassReward{},
+		&entity.BattlePassPurchase{},
+
 		// Migration support
 		&entity.UUIDMapping{},
 	)
