@@ -1,5 +1,17 @@
 <template>
   <div class="start-screen screen">
+    <!-- Wallet UI Container -->
+    <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+      <button v-if="!walletConnected" @click="connectWallet" class="wallet-btn">
+        <span>🔗</span> CONECTAR WALLET
+      </button>
+      <div v-else class="wallet-display">
+        <span class="wallet-icon">👛</span>
+        <span class="wallet-address">{{ shortenAddress(walletAddress) }}</span>
+        <button @click="disconnectWallet" class="wallet-disconnect-btn">❌</button>
+      </div>
+    </div>
+
     <div class="game-container">
       <!-- Título com efeito neon -->
       <div class="title-container">
@@ -109,19 +121,65 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
+// Wallet state
+const walletConnected = ref(false)
+const walletAddress = ref('')
+
 onMounted(() => {
   // If user is authenticated, fetch their profile
   if (authStore.isAuthenticated && !authStore.user) {
     authStore.fetchProfile()
   }
+
+  // Check if wallet was previously connected
+  const savedWallet = localStorage.getItem('wallet_address')
+  if (savedWallet) {
+    walletAddress.value = savedWallet
+    walletConnected.value = true
+  }
 })
+
+const connectWallet = async () => {
+  try {
+    // TODO: Implement Solana wallet connection
+    // For now, just simulate connection
+    if ((window as any).solana && (window as any).solana.isPhantom) {
+      const response = await (window as any).solana.connect()
+      walletAddress.value = response.publicKey.toString()
+      walletConnected.value = true
+      localStorage.setItem('wallet_address', walletAddress.value)
+      console.log('Wallet connected:', walletAddress.value)
+    } else {
+      alert('Por favor, instale a Phantom Wallet para conectar!')
+      window.open('https://phantom.app/', '_blank')
+    }
+  } catch (error) {
+    console.error('Erro ao conectar wallet:', error)
+    alert('Erro ao conectar wallet. Tente novamente.')
+  }
+}
+
+const disconnectWallet = () => {
+  walletConnected.value = false
+  walletAddress.value = ''
+  localStorage.removeItem('wallet_address')
+  if ((window as any).solana) {
+    (window as any).solana.disconnect()
+  }
+  console.log('Wallet desconectada')
+}
+
+const shortenAddress = (address: string) => {
+  if (!address) return ''
+  return `${address.slice(0, 4)}...${address.slice(-4)}`
+}
 
 const handleLogout = () => {
   authStore.logout()
@@ -146,5 +204,65 @@ const handleLogout = () => {
 .button-with-badge button {
   width: 100%;
   display: block;
+}
+
+/* Wallet Button Styles */
+.wallet-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.wallet-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.wallet-display {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #FFD700;
+  border-radius: 12px;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: white;
+}
+
+.wallet-icon {
+  font-size: 16px;
+}
+
+.wallet-address {
+  color: #FFD700;
+  font-size: 9px;
+}
+
+.wallet-disconnect-btn {
+  background: #FF4757;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.wallet-disconnect-btn:hover {
+  background: #ff6b7a;
+  transform: scale(1.1);
 }
 </style>
