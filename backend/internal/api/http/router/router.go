@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yourusername/space-invaders/internal/api/http/handler"
 	"github.com/yourusername/space-invaders/internal/api/http/middleware"
 )
@@ -58,6 +59,9 @@ func (r *Router) Setup() *gin.Engine {
 		AllowCredentials: true,
 	}))
 
+	// Metrics middleware (records HTTP request metrics)
+	r.engine.Use(middleware.MetricsMiddleware())
+
 	// Health check
 	r.engine.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -65,6 +69,9 @@ func (r *Router) Setup() *gin.Engine {
 			"service": "space-invaders-api",
 		})
 	})
+
+	// Prometheus metrics endpoint
+	r.engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// API v1 routes
 	v1 := r.engine.Group("/api/v1")

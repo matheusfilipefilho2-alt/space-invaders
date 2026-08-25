@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/yourusername/space-invaders/configs"
 	"github.com/yourusername/space-invaders/internal/api/http/handler"
@@ -11,6 +12,7 @@ import (
 	"github.com/yourusername/space-invaders/internal/infra/cache"
 	"github.com/yourusername/space-invaders/internal/infra/database"
 	"github.com/yourusername/space-invaders/internal/infra/external"
+	"github.com/yourusername/space-invaders/internal/infra/metrics"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -30,6 +32,11 @@ func main() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 	log.Println("✅ Database connected")
+
+	// Initialize metrics
+	log.Println("📊 Initializing Prometheus metrics...")
+	metrics.InitMetrics()
+	log.Println("✅ Metrics initialized")
 
 	// Initialize repositories
 	playerRepo := database.NewPlayerRepository(db)
@@ -96,6 +103,11 @@ func main() {
 	)
 	r.Setup()
 	log.Println("✅ Router configured")
+
+	// Start metrics collector (updates gauge metrics every 30 seconds)
+	collector := metrics.NewCollector(db, metrics.Metrics, 30*time.Second)
+	go collector.Start()
+	log.Println("✅ Metrics collector started")
 
 	// Start server
 	addr := fmt.Sprintf(":%s", port)
