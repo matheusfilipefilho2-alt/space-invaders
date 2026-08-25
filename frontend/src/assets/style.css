@@ -1,9 +1,6 @@
 /* Importação de fontes */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-/* Design System CSS Tokens */
-@import url('src/styles/design-system.css');
-
 /* Reset e configurações globais */
 * {
   margin: 0;

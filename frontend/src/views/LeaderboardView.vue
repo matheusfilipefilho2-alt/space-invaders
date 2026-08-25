@@ -38,7 +38,7 @@
             Nenhum ranking disponível
           </div>
           <div
-            v-for="(player, index) in rankings"
+            v-for="player in rankings"
             :key="player.player_id"
             :class="['ranking-item', { 'current-user': player.player_id === authStore.user?.id }]"
           >
