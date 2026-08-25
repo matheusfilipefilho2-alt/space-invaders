@@ -19,6 +19,10 @@ type DailyEmission struct {
 	EmissionLimit     uint64 `gorm:"not null;default:0"` // (PixRevenue × 0.30) / SpacePrice
 	EmissionUsed      uint64 `gorm:"not null;default:0"` // Total already emitted today
 	EmissionAvailable uint64 `gorm:"not null;default:0"` // Limit - Used
+
+	// Execution tracking
+	Executed bool   `gorm:"default:false"` // Whether emission was executed on-chain
+	TxHash   string `gorm:"index"`         // Solana transaction hash
 }
 
 func (DailyEmission) TableName() string {
