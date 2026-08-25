@@ -21,8 +21,9 @@ type Player struct {
 	LastPlayed *time.Time
 
 	// Economy
-	GoldBalance  uint64 `gorm:"default:0"`
-	SpaceBalance uint64 `gorm:"default:0"`
+	GoldBalance   uint64  `gorm:"default:0"`
+	SpaceBalance  uint64  `gorm:"default:0"`
+	SolanaWallet  *string `gorm:"index"` // Player's Solana wallet address for SPACE tokens
 
 	// Progression
 	LeagueID   uint `gorm:"default:1"`
