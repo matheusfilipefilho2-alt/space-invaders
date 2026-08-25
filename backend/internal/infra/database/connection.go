@@ -46,6 +46,9 @@ func NewPostgresConnection(dsn string) (*gorm.DB, error) {
 		&entity.BattlePassReward{},
 		&entity.BattlePassPurchase{},
 
+		// NFT entities (Fase 3)
+		&entity.NFT{},
+
 		// Migration support
 		&entity.UUIDMapping{},
 	)
