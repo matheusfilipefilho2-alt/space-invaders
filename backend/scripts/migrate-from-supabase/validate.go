@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -19,7 +18,7 @@ type ValidationReport struct {
 
 // ValidateMigration validates that all data was migrated correctly
 // by comparing record counts between extracted data and PostgreSQL
-func ValidateMigration(ctx context.Context, db *gorm.DB, data *TransformedData) []ValidationReport {
+func ValidateMigration(db *gorm.DB, data *TransformedData) []ValidationReport {
 	reports := []ValidationReport{}
 
 	// Validate Players

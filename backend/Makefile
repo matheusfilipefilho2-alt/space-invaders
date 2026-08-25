@@ -20,7 +20,7 @@ test:
 
 
 lint:
-	@docker run -t --rm -v .:/app -w /app golangci/golangci-lint:v2.1.5 golangci-lint run -v -c dev/golangci.yml ./...
+	@docker run -t --rm -v .:/app -w /app golangci/golangci-lint:v2.13-alpine golangci-lint run -v -c dev/golangci.yml ./...
 
 
 migrate-create:

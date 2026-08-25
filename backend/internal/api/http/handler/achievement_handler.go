@@ -171,17 +171,3 @@ func (h *AchievementHandler) CheckAchievements(c *gin.Context) {
 
 	response.OK(c, responseData)
 }
-
-// Helper function to convert entity.Achievement to AchievementResponse
-func toAchievementResponse(achievement *entity.Achievement) AchievementResponse {
-	return AchievementResponse{
-		ID:               achievement.ID,
-		Name:             achievement.Name,
-		Description:      achievement.Description,
-		Rarity:           string(achievement.Rarity),
-		RewardGold:       achievement.RewardGold,
-		RequirementType:  achievement.RequirementType,
-		RequirementValue: achievement.RequirementValue,
-		Icon:             achievement.Icon,
-	}
-}

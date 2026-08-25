@@ -106,7 +106,7 @@ func main() {
 	fmt.Println("PHASE 4: VALIDATE MIGRATION")
 	fmt.Println(strings.Repeat("=", 60))
 
-	validationReports := ValidateMigration(ctx, db, transformedData)
+	validationReports := ValidateMigration(db, transformedData)
 	PrintValidationReport(validationReports)
 
 	// Check if all validations passed

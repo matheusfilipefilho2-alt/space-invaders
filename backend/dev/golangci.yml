@@ -1,6 +1,6 @@
 version: "2"
 run:
-  go: "1.24"
+  go: "1.27"
   modules-download-mode: readonly
   tests: false
 linters:
@@ -9,6 +9,32 @@ linters:
     - depguard
     - prealloc
     - wsl
+    - wsl_v5           # Whitespace muito rigoroso
+    - exhaustruct      # Structs não precisam inicializar todos campos
+    - exhaustruct_v5   # Versão 5 do exhaustruct
+    - mnd              # Magic numbers são ok em contexto
+    - godox            # TODOs são permitidos
+    - varnamelen       # Nomes curtos são ok (i, j, db, etc)
+    - nilerr           # Muito rigoroso para error handling
+    - nlreturn         # Newline antes de return muito rigoroso
+    - wrapcheck        # Error wrapping muito rigoroso
+    - ireturn          # Interface returns são ok
+    - tagliatelle      # Tag naming muito rigoroso
+    - gochecknoglobals # Globais são ok em alguns casos
+    - forbidigo        # Permite fmt.Println para debug
+    - funlen           # Funções longas são ok às vezes
+    - cyclop           # Complexidade ciclomática muito rigorosa
+    - nestif           # Nesting muito rigoroso
+    - gocognit         # Complexidade cognitiva muito rigorosa
+    - tagalign         # Alinhamento de tags muito rigoroso
+    - lll              # Line length muito rigoroso
+    - err113           # Error wrapping muito rigoroso
+    - godot            # Comentários com ponto final muito rigoroso
+    - nonamedreturns   # Named returns são úteis
+    - noinlineerr      # Inline errors são ok
+    - modernize        # Modernização muito rigorosa
+    - perfsprint       # Performance de sprint muito rigoroso
+    - embeddedstructfieldcheck # Embedded structs são ok
   settings:
     wrapcheck:
       ignore-package-globs:
