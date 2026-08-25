@@ -1,11 +1,19 @@
 <template>
-  <div class="start-screen">
+  <div class="start-screen screen">
     <div class="game-container">
       <!-- Título com efeito neon -->
       <div class="title-container">
         <h1 class="main-title">
-          <span class="title-word space-word" data-text="SPACE">SPACE</span>
-          <span class="title-word invaders-word" data-text="INVADERS">INVADERS</span>
+          <span
+            class="title-word space-word"
+            data-text="SPACE"
+            style="font-size: 100px; display: block; margin-bottom: 20px"
+          >SPACE</span>
+          <span
+            class="title-word invaders-word"
+            data-text="INVADERS"
+            style="font-size: 100px; display: block"
+          >INVADERS</span>
         </h1>
         <div class="title-scanlines"></div>
         <div class="title-glow"></div>
@@ -14,10 +22,14 @@
       <!-- Subtítulo -->
       <p class="game-subtitle">DEFEND EARTH FROM ALIEN INVASION</p>
 
-      <!-- Menu de botões para usuários autenticados -->
-      <div v-if="authStore.isAuthenticated" class="menu-buttons action-buttons menu-buttons-enhanced">
-        <p class="welcome-message">WELCOME BACK, {{ authStore.user?.username?.toUpperCase() }}!</p>
+      <!-- Menu de botões AUTENTICADO -->
+      <div v-if="authStore.isAuthenticated" class="menu-buttons action-buttons menu-buttons-enhanced" id="main-menu-buttons">
+        <!-- Mensagem de boas-vindas -->
+        <p style="color: #FFD700; font-size: 14px; margin-bottom: 20px; text-shadow: 0 0 10px #FFD700;">
+          WELCOME BACK, {{ authStore.user?.username?.toUpperCase() }}!
+        </p>
 
+        <!-- Botão Jogar -->
         <div class="button-with-badge">
           <router-link to="/game" class="button-play primary-action">
             <span class="button-icon">🚀</span>
@@ -25,6 +37,7 @@
           </router-link>
         </div>
 
+        <!-- Botão Perfil -->
         <div class="button-with-badge">
           <router-link to="/profile" class="button-view-ranking secondary-action">
             <span class="button-icon">👤</span>
@@ -32,28 +45,31 @@
           </router-link>
         </div>
 
-        <div class="button-with-badge">
-          <router-link to="/shop" class="button-view-ranking secondary-action">
-            <span class="button-icon">🛍️</span>
-            SHOP
-          </router-link>
-        </div>
-
+        <!-- Menu secundário -->
         <div class="button-with-badge">
           <router-link to="/leaderboard" class="button-view-ranking secondary-action">
             <span class="button-icon">🏆</span>
-            LEADERBOARD
+            RANKING
           </router-link>
         </div>
 
-        <button @click="handleLogout" class="button-view-ranking secondary-action logout-btn">
+        <div class="button-with-badge">
+          <router-link to="/shop" class="button-view-ranking secondary-action">
+            <span class="button-icon">🛍️</span>
+            LOJA
+          </router-link>
+        </div>
+
+        <!-- Botão Logout -->
+        <button @click="handleLogout" class="button-view-ranking secondary-action" style="background: #FF4757; border-color: #FF4757;">
           <span class="button-icon">🚪</span>
           LOGOUT
         </button>
       </div>
 
-      <!-- Menu de botões para usuários não autenticados -->
-      <div v-else class="menu-buttons action-buttons menu-buttons-enhanced">
+      <!-- Menu de botões NÃO AUTENTICADO -->
+      <div v-else class="menu-buttons action-buttons menu-buttons-enhanced" id="main-menu-buttons">
+        <!-- Botão Jogar -->
         <div class="button-with-badge">
           <router-link to="/login" class="button-play primary-action">
             <span class="button-icon">🚀</span>
@@ -61,6 +77,7 @@
           </router-link>
         </div>
 
+        <!-- Botão Login/Perfil -->
         <div class="button-with-badge">
           <router-link to="/login" class="button-view-ranking secondary-action">
             <span class="button-icon">👤</span>
@@ -68,17 +85,11 @@
           </router-link>
         </div>
 
+        <!-- Botão Registro -->
         <div class="button-with-badge">
           <router-link to="/register" class="button-view-ranking secondary-action">
             <span class="button-icon">✨</span>
             REGISTER
-          </router-link>
-        </div>
-
-        <div class="button-with-badge">
-          <router-link to="/leaderboard" class="button-view-ranking secondary-action">
-            <span class="button-icon">🏆</span>
-            LEADERBOARD
           </router-link>
         </div>
       </div>
@@ -119,143 +130,5 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.start-screen {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.game-container {
-  text-align: center;
-  z-index: 1;
-  max-width: 800px;
-  padding: 2rem;
-}
-
-.title-container {
-  position: relative;
-  margin-bottom: 2rem;
-}
-
-.main-title {
-  margin: 0;
-  padding: 0;
-}
-
-.title-word {
-  display: block;
-  font-size: 80px;
-  line-height: 1.2;
-  margin: 10px 0;
-}
-
-.space-word {
-  color: #00ff88;
-  text-shadow:
-    0 0 10px #00ff88,
-    0 0 20px #00ff88,
-    0 0 30px #00ff88;
-}
-
-.invaders-word {
-  color: #ffa502;
-  text-shadow:
-    0 0 10px #ffa502,
-    0 0 20px #ffa502,
-    0 0 30px #ffa502;
-}
-
-.game-subtitle {
-  font-size: 14px;
-  color: #4ECDC4;
-  letter-spacing: 4px;
-  margin-bottom: 3rem;
-  text-shadow: 0 0 10px #4ECDC4;
-}
-
-.welcome-message {
-  font-size: 16px;
-  color: #FFD700;
-  margin-bottom: 2rem;
-  text-shadow: 0 0 10px #FFD700;
-  letter-spacing: 2px;
-}
-
-.menu-buttons-enhanced {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin: 30px 0;
-  align-items: center;
-  width: 100%;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.button-with-badge {
-  width: 100%;
-  position: relative;
-  display: inline-block;
-}
-
-.logout-btn {
-  margin-top: 1rem;
-  background: #FF4757 !important;
-  border-color: #FF4757 !important;
-}
-
-.logout-btn:hover {
-  background: #ff6b7a !important;
-  box-shadow: 0 0 20px #FF4757 !important;
-}
-
-.footer-container {
-  position: fixed;
-  bottom: 20px;
-  text-align: center;
-  z-index: 1;
-}
-
-.footer-line {
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #4ECDC4, transparent);
-  margin: 0 auto 10px;
-}
-
-.footer-text {
-  font-size: 10px;
-  color: #4ECDC4;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px #4ECDC4;
-}
-
-.footer-stars {
-  margin-top: 5px;
-  color: #4ECDC4;
-  font-size: 12px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-@media (max-width: 768px) {
-  .title-word {
-    font-size: 50px;
-  }
-
-  .game-subtitle {
-    font-size: 10px;
-    letter-spacing: 2px;
-  }
-
-  .menu-buttons-enhanced {
-    max-width: 300px;
-  }
-}
+/* Remove todos os estilos customizados - usar apenas os estilos globais do style.css */
 </style>
