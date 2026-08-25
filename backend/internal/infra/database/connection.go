@@ -34,6 +34,7 @@ func NewPostgresConnection(dsn string) (*gorm.DB, error) {
 		&entity.PlayerAchievement{},
 
 		// Economy entities
+		&entity.TreasuryConfig{},
 		&entity.GoldSpaceConversion{},
 		&entity.DailyEmission{},
 		&entity.RewardHistory{},
@@ -49,6 +50,19 @@ func NewPostgresConnection(dsn string) (*gorm.DB, error) {
 	}
 
 	log.Println("Auto-migration completed successfully")
+
+	// Seed Treasury Config if empty
+	var treasuryCount int64
+	db.Model(&entity.TreasuryConfig{}).Count(&treasuryCount)
+	if treasuryCount == 0 {
+		log.Println("Seeding treasury config...")
+		defaultConfig := entity.GetDefaultConfig()
+		if err := db.Create(defaultConfig).Error; err != nil {
+			log.Printf("Failed to seed treasury config: %v", err)
+			return nil, err
+		}
+		log.Println("Treasury config seeded successfully")
+	}
 
 	return db, nil
 }
