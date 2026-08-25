@@ -63,3 +63,22 @@ export const leaderboardAPI = {
   league: (leagueId: number, limit = 10, offset = 0) =>
     api.get(`/leaderboard/league/${leagueId}`, { params: { limit, offset } })
 }
+
+// Conversion endpoints (Gold → SPACE)
+export const conversionAPI = {
+  convert: (goldAmount: number) =>
+    api.post('/conversions', { gold_amount: goldAmount }),
+  getHistory: (limit = 20, offset = 0) =>
+    api.get('/conversions/history', { params: { limit, offset } }),
+  getById: (id: number) => api.get(`/conversions/${id}`)
+}
+
+// Shop endpoints (Gold purchase via PIX)
+export const shopAPI = {
+  getPackages: () => api.get('/shop/packages'),
+  createOrder: (packageId: string) =>
+    api.post('/shop/orders', { package_id: packageId }),
+  getOrders: (limit = 10, offset = 0) =>
+    api.get('/shop/orders', { params: { limit, offset } }),
+  getOrder: (id: number) => api.get(`/shop/orders/${id}`)
+}
