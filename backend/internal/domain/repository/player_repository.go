@@ -24,4 +24,8 @@ type PlayerRepository interface {
 	UpdateHighScore(ctx context.Context, playerID uint, newScore uint64) error
 	IncrementTotalGames(ctx context.Context, playerID uint) error
 	UpdateLeague(ctx context.Context, playerID uint, leagueID uint) error
+
+	// Leaderboard queries
+	FindTopByScore(ctx context.Context, limit, offset int) ([]*entity.Player, error)
+	FindTopByScoreInLeague(ctx context.Context, leagueID uint, limit, offset int) ([]*entity.Player, error)
 }

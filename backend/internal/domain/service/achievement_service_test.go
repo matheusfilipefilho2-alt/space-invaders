@@ -131,6 +131,22 @@ func (m *MockPlayerRepository) UpdateLeague(ctx context.Context, playerID uint, 
 	return args.Error(0)
 }
 
+func (m *MockPlayerRepository) FindTopByScore(ctx context.Context, limit, offset int) ([]*entity.Player, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*entity.Player), args.Error(1)
+}
+
+func (m *MockPlayerRepository) FindTopByScoreInLeague(ctx context.Context, leagueID uint, limit, offset int) ([]*entity.Player, error) {
+	args := m.Called(ctx, leagueID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*entity.Player), args.Error(1)
+}
+
 type MockPlayerAchievementRepository struct {
 	mock.Mock
 }

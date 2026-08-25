@@ -124,3 +124,28 @@ func (r *playerRepository) UpdateLeague(ctx context.Context, playerID uint, leag
 		Where("id = ?", playerID).
 		Update("league_id", leagueID).Error
 }
+
+// FindTopByScore retrieves top players ordered by high score (global leaderboard)
+func (r *playerRepository) FindTopByScore(ctx context.Context, limit, offset int) ([]*entity.Player, error) {
+	var players []*entity.Player
+	err := r.db.WithContext(ctx).
+		Preload("League").
+		Order("high_score DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&players).Error
+	return players, err
+}
+
+// FindTopByScoreInLeague retrieves top players in a specific league
+func (r *playerRepository) FindTopByScoreInLeague(ctx context.Context, leagueID uint, limit, offset int) ([]*entity.Player, error) {
+	var players []*entity.Player
+	err := r.db.WithContext(ctx).
+		Preload("League").
+		Where("league_id = ?", leagueID).
+		Order("high_score DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&players).Error
+	return players, err
+}
