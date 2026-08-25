@@ -1,10 +1,11 @@
 <template>
   <div id="stars-background"></div>
+  <MainNav />
   <router-view />
 </template>
 
 <script setup lang="ts">
-// App component
+import MainNav from '@/components/MainNav.vue'
 </script>
 
 <style>
