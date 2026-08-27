@@ -247,9 +247,9 @@ export class GameEngine {
       // Player projectiles vs obstacles
       if (!playerProjectilesToRemove.has(pIndex)) {
         this.obstacles.forEach(obstacle => {
-          if (!obstacle.isDestroyed() && projectile.collidesWith(obstacle)) {
-            obstacle.hit()
+          if (obstacle.collidesWithProjectile(projectile)) {
             playerProjectilesToRemove.add(pIndex)
+            this.createExplosion(projectile.position.x, projectile.position.y, obstacle.color)
           }
         })
       }
@@ -272,9 +272,9 @@ export class GameEngine {
       // Enemy projectiles vs obstacles
       if (!enemyProjectilesToRemove.has(pIndex)) {
         this.obstacles.forEach(obstacle => {
-          if (!obstacle.isDestroyed() && projectile.collidesWith(obstacle)) {
-            obstacle.hit()
+          if (obstacle.collidesWithProjectile(projectile)) {
             enemyProjectilesToRemove.add(pIndex)
+            this.createExplosion(projectile.position.x, projectile.position.y, obstacle.color)
           }
         })
       }
@@ -298,9 +298,9 @@ export class GameEngine {
     this.playerProjectiles.push(projectile)
   }
 
-  private createExplosion(x: number, y: number): void {
+  private createExplosion(x: number, y: number, color: string = '#FFD700'): void {
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      this.particles.push(new Particle(x, y, '#FFD700'))
+      this.particles.push(new Particle(x, y, color))
     }
   }
 
