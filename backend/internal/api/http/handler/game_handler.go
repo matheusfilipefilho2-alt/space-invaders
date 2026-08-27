@@ -27,6 +27,8 @@ type EndGameRequest struct {
 // EndGameResponse represents the response after ending a game
 type EndGameResponse struct {
 	GoldEarned uint64 `json:"goldEarned"`
+	XPEarned   uint   `json:"xpEarned"`
+	NewTier    uint   `json:"newTier,omitempty"`
 	Message    string `json:"message"`
 }
 
@@ -86,7 +88,7 @@ func (h *GameHandler) EndGame(c *gin.Context) {
 		return
 	}
 
-	goldEarned, err := h.gameService.EndGame(c.Request.Context(), playerID, req.Score)
+	rewards, err := h.gameService.EndGame(c.Request.Context(), playerID, req.Score)
 	if err != nil {
 		if errors.Is(err, service.ErrPlayerNotFound) {
 			response.NotFound(c, "Player not found")
@@ -97,7 +99,9 @@ func (h *GameHandler) EndGame(c *gin.Context) {
 	}
 
 	response.OK(c, EndGameResponse{
-		GoldEarned: goldEarned,
+		GoldEarned: rewards.GoldEarned,
+		XPEarned:   rewards.XPEarned,
+		NewTier:    rewards.NewTier,
 		Message:    "Game ended successfully",
 	})
 }

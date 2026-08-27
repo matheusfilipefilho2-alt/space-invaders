@@ -89,6 +89,10 @@ func main() {
 	emissionService := service.NewEmissionCalculatorService(treasuryRepo, priceFetcher)
 	battlePassService := service.NewBattlePassService(battlePassRepo, playerRepo, itemRepo, db)
 	nftService := service.NewNFTService(nftRepo, playerRepo, ipfsClient, nil) // TODO: Add Metaplex adapter
+
+	// Set battle pass service on game service for XP rewards
+	gameService.SetBattlePassService(battlePassService)
+
 	log.Println("✅ Services initialized")
 
 	// Initialize handlers

@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: dev_password_change_in_prod
       POSTGRES_DB: spaceinvaders
     ports:
-      - "5432:5432"
+      - "5429:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

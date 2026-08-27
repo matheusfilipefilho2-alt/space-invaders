@@ -7,13 +7,20 @@ import (
 )
 
 type GameService struct {
-	playerRepo repository.PlayerRepository
+	playerRepo        repository.PlayerRepository
+	battlePassService *BattlePassService
 }
 
 func NewGameService(playerRepo repository.PlayerRepository) *GameService {
 	return &GameService{
-		playerRepo: playerRepo,
+		playerRepo:        playerRepo,
+		battlePassService: nil, // Will be set via SetBattlePassService to avoid circular dependency
 	}
+}
+
+// SetBattlePassService sets the battle pass service (to avoid circular dependency during initialization)
+func (s *GameService) SetBattlePassService(bps *BattlePassService) {
+	s.battlePassService = bps
 }
 
 // CalculateGoldReward calculates gold reward based on score and league
@@ -47,37 +54,68 @@ func (s *GameService) StartGame(ctx context.Context, playerID uint) error {
 	return err
 }
 
+// GameRewards holds the rewards earned from completing a game
+type GameRewards struct {
+	GoldEarned uint64
+	XPEarned   uint
+	NewTier    uint
+}
+
 // EndGame finalizes a game session and processes rewards
-// Returns the gold earned
-func (s *GameService) EndGame(ctx context.Context, playerID uint, score uint64) (goldEarned uint64, err error) {
+// Returns the gold and XP earned
+func (s *GameService) EndGame(ctx context.Context, playerID uint, score uint64) (*GameRewards, error) {
 	// Get player to check league and current stats
 	player, err := s.playerRepo.FindByID(ctx, playerID)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	// Calculate gold reward based on score and league
-	goldEarned = s.CalculateGoldReward(score, player.LeagueID)
+	goldEarned := s.CalculateGoldReward(score, player.LeagueID)
 
 	// Add gold to player balance
 	err = s.playerRepo.UpdateGoldBalance(ctx, playerID, int64(goldEarned))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	// Update high score if this score is higher
-	if score > player.HighScore {
+	// Check if this is a new high score
+	isHighScore := score > player.HighScore
+	if isHighScore {
 		err = s.playerRepo.UpdateHighScore(ctx, playerID, score)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 	}
 
 	// Increment total games played
 	err = s.playerRepo.IncrementTotalGames(ctx, playerID)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return goldEarned, nil
+	// Award Battle Pass XP if service is available
+	var xpEarned uint
+	var newTier uint
+	if s.battlePassService != nil {
+		// For now, we don't track win streaks, so pass 0
+		xpEarned, err = s.battlePassService.AwardXPForGame(ctx, playerID, int(score), isHighScore, 0)
+		if err != nil {
+			// Don't fail the entire game end if BP XP fails, just log it
+			// In production, you'd want proper logging here
+			xpEarned = 0
+		} else {
+			// Get updated progress to check new tier
+			progress, err := s.battlePassService.GetPlayerProgress(ctx, playerID)
+			if err == nil {
+				newTier = progress.CurrentTier
+			}
+		}
+	}
+
+	return &GameRewards{
+		GoldEarned: goldEarned,
+		XPEarned:   xpEarned,
+		NewTier:    newTier,
+	}, nil
 }
