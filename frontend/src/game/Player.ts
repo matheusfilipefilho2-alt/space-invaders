@@ -1,4 +1,5 @@
 import type { Position, Size } from './types'
+import { Projectile } from './Projectile'
 import {
   PLAYER_WIDTH,
   PLAYER_HEIGHT,
@@ -59,10 +60,12 @@ export class Player implements Size {
     )
   }
 
-  shoot(): any {
-    // Projectile class will be implemented in Task 3
-    // For now, return null to allow tests to pass
-    return null
+  shoot(): Projectile {
+    return new Projectile(
+      this.position.x + this.width / 2 - 2,
+      this.position.y,
+      true
+    )
   }
 
   hit(): void {
