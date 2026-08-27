@@ -120,27 +120,22 @@ async function handleGameOver(stats: GameStats) {
 }
 
 .score-ui {
-  width: 100%;
-  padding: 15px 0;
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .game-stats {
   display: flex;
   justify-content: center;
-  gap: 40px;
-  max-width: 800px;
-  background: rgba(0, 0, 0, 0.6);
+  gap: 30px;
+  background: rgba(0, 0, 0, 0.85);
   border: 2px solid #00ff88;
   border-radius: 8px;
-  padding: 15px 30px;
+  padding: 12px 25px;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
 }
 
 .score-item {
