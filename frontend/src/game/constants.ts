@@ -7,15 +7,15 @@ export const TARGET_FPS = 60
 // Player
 export const PLAYER_WIDTH = 96
 export const PLAYER_HEIGHT = 96
-export const PLAYER_VELOCITY = 8
-export const PLAYER_INITIAL_LIVES = 3
-export const PLAYER_MAX_LIVES = 5
+export const PLAYER_VELOCITY = 10
+export const PLAYER_INITIAL_LIVES = 1
+export const PLAYER_MAX_LIVES = 3
 
 // Projectile
-export const PROJECTILE_WIDTH = 4
-export const PROJECTILE_HEIGHT = 15
+export const PROJECTILE_WIDTH = 2
+export const PROJECTILE_HEIGHT = 20
 export const PROJECTILE_VELOCITY = 10
-export const PROJECTILE_COLOR = '#00FF00'
+export const PROJECTILE_COLOR = 'white'
 
 // Invaders
 export const INVADER_WIDTH = 48
