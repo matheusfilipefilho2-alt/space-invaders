@@ -223,12 +223,17 @@ export class GameEngine {
   private checkCollisions(): void {
     if (!this.player || !this.invaderGrid) return
 
+    const playerProjectilesToRemove = new Set<number>()
+    const enemyProjectilesToRemove = new Set<number>()
+
     // Player projectiles vs invaders
     this.playerProjectiles.forEach((projectile, pIndex) => {
+      if (playerProjectilesToRemove.has(pIndex)) return
+
       this.invaderGrid!.invaders.forEach(invader => {
         if (invader.alive && projectile.collidesWith(invader)) {
           invader.hit()
-          this.playerProjectiles.splice(pIndex, 1)
+          playerProjectilesToRemove.add(pIndex)
           this.addScore(INVADER_SCORE)
           this.stats.killCount++
           this.createExplosion(invader.position.x, invader.position.y)
@@ -236,19 +241,23 @@ export class GameEngine {
       })
 
       // Player projectiles vs obstacles
-      this.obstacles.forEach(obstacle => {
-        if (!obstacle.isDestroyed() && projectile.collidesWith(obstacle)) {
-          obstacle.hit()
-          this.playerProjectiles.splice(pIndex, 1)
-        }
-      })
+      if (!playerProjectilesToRemove.has(pIndex)) {
+        this.obstacles.forEach(obstacle => {
+          if (!obstacle.isDestroyed() && projectile.collidesWith(obstacle)) {
+            obstacle.hit()
+            playerProjectilesToRemove.add(pIndex)
+          }
+        })
+      }
     })
 
     // Enemy projectiles vs player
     this.enemyProjectiles.forEach((projectile, pIndex) => {
+      if (enemyProjectilesToRemove.has(pIndex)) return
+
       if (this.player && projectile.collidesWith(this.player)) {
         this.player.hit()
-        this.enemyProjectiles.splice(pIndex, 1)
+        enemyProjectilesToRemove.add(pIndex)
         this.emit('livesChange', this.player.lives)
 
         if (!this.player.alive) {
@@ -257,13 +266,19 @@ export class GameEngine {
       }
 
       // Enemy projectiles vs obstacles
-      this.obstacles.forEach(obstacle => {
-        if (!obstacle.isDestroyed() && projectile.collidesWith(obstacle)) {
-          obstacle.hit()
-          this.enemyProjectiles.splice(pIndex, 1)
-        }
-      })
+      if (!enemyProjectilesToRemove.has(pIndex)) {
+        this.obstacles.forEach(obstacle => {
+          if (!obstacle.isDestroyed() && projectile.collidesWith(obstacle)) {
+            obstacle.hit()
+            enemyProjectilesToRemove.add(pIndex)
+          }
+        })
+      }
     })
+
+    // Remove marked projectiles
+    this.playerProjectiles = this.playerProjectiles.filter((_, index) => !playerProjectilesToRemove.has(index))
+    this.enemyProjectiles = this.enemyProjectiles.filter((_, index) => !enemyProjectilesToRemove.has(index))
 
     // Invaders vs player (game over if they reach player)
     this.invaderGrid.invaders.forEach(invader => {
