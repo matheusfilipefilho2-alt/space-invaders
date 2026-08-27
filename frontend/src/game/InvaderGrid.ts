@@ -17,10 +17,15 @@ export class InvaderGrid {
   velocity: Velocity
   position: Position
 
-  constructor() {
+  constructor(canvasWidth: number = 800) {
     this.invaders = []
     this.velocity = { x: INVADER_VELOCITY_X, y: 0 }
-    this.position = { x: 50, y: 50 }
+
+    // Calculate grid width and center it
+    const gridWidth = INVADER_COLUMNS * (INVADER_WIDTH + INVADER_SPACING) - INVADER_SPACING
+    const startX = (canvasWidth - gridWidth) / 2
+
+    this.position = { x: startX, y: 50 }
 
     this.initializeGrid()
   }
@@ -92,10 +97,15 @@ export class InvaderGrid {
     return this.getAliveCount() === 0
   }
 
-  reset(): void {
+  reset(canvasWidth: number = 800): void {
     this.invaders = []
     this.velocity = { x: INVADER_VELOCITY_X, y: 0 }
-    this.position = { x: 50, y: 50 }
+
+    // Recalculate center position
+    const gridWidth = INVADER_COLUMNS * (INVADER_WIDTH + INVADER_SPACING) - INVADER_SPACING
+    const startX = (canvasWidth - gridWidth) / 2
+
+    this.position = { x: startX, y: 50 }
     this.initializeGrid()
   }
 }

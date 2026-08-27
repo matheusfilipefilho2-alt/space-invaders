@@ -6,11 +6,10 @@ import { Particle } from './Particle'
 import { Star } from './Star'
 import { GameState, type GameStats, type GameConfig } from './types'
 import {
-  CANVAS_WIDTH,
-  CANVAS_HEIGHT,
   CANVAS_BG_COLOR,
   TARGET_FPS,
   OBSTACLE_COUNT,
+  OBSTACLE_WIDTH,
   STAR_COUNT,
   INVADER_SCORE,
   PARTICLE_COUNT
@@ -66,8 +65,8 @@ export class GameEngine {
     }
 
     this.config = {
-      canvasWidth: CANVAS_WIDTH,
-      canvasHeight: CANVAS_HEIGHT,
+      canvasWidth: window.innerWidth,
+      canvasHeight: window.innerHeight,
       backgroundColor: CANVAS_BG_COLOR,
       fps: TARGET_FPS
     }
@@ -75,11 +74,25 @@ export class GameEngine {
     this.setupCanvas()
     this.setupEventListeners()
     this.initializeStars()
+    this.handleResize()
   }
 
   private setupCanvas(): void {
     this.canvas.width = this.config.canvasWidth
     this.canvas.height = this.config.canvasHeight
+    this.ctx.imageSmoothingEnabled = false
+  }
+
+  private handleResize(): void {
+    window.addEventListener('resize', () => {
+      this.config.canvasWidth = window.innerWidth
+      this.config.canvasHeight = window.innerHeight
+      this.setupCanvas()
+
+      // Reinitialize stars with new dimensions
+      this.stars = []
+      this.initializeStars()
+    })
   }
 
   private setupEventListeners(): void {
@@ -109,7 +122,7 @@ export class GameEngine {
 
     // Initialize game entities
     this.player = new Player(this.config.canvasWidth, this.config.canvasHeight)
-    this.invaderGrid = new InvaderGrid()
+    this.invaderGrid = new InvaderGrid(this.config.canvasWidth)
     this.playerProjectiles = []
     this.enemyProjectiles = []
     this.particles = []
@@ -120,7 +133,7 @@ export class GameEngine {
     for (let i = 0; i < OBSTACLE_COUNT; i++) {
       this.obstacles.push(
         new Obstacle(
-          spacing * (i + 1) - 40,
+          spacing * (i + 1) - (OBSTACLE_WIDTH / 2),
           this.config.canvasHeight - 200
         )
       )
@@ -284,7 +297,7 @@ export class GameEngine {
 
     // Reset for next level
     setTimeout(() => {
-      this.invaderGrid = new InvaderGrid()
+      this.invaderGrid = new InvaderGrid(this.config.canvasWidth)
       this.state = GameState.PLAYING
       this.gameLoop()
     }, 2000)
