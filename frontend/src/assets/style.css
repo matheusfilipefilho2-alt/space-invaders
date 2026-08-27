@@ -14,7 +14,6 @@ body {
   color: #fff;
   overflow-y: auto;
   user-select: none;
-  padding-top: 70px; /* Space for fixed navbar */
 }
 
 /* Canvas de fundo */
