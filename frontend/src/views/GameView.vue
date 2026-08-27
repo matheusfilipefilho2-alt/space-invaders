@@ -121,23 +121,26 @@ async function handleGameOver(stats: GameStats) {
 
 .score-ui {
   width: 100%;
-  padding: 10px 20px;
+  padding: 15px 0;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 10;
   background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .game-stats {
   display: flex;
-  justify-content: space-around;
-  max-width: 1200px;
-  margin: 0 auto;
+  justify-content: center;
+  gap: 40px;
+  max-width: 800px;
   background: rgba(0, 0, 0, 0.6);
   border: 2px solid #00ff88;
   border-radius: 8px;
-  padding: 10px;
+  padding: 15px 30px;
 }
 
 .score-item {
