@@ -1,7 +1,7 @@
 // Canvas
 export const CANVAS_WIDTH = 800
 export const CANVAS_HEIGHT = 600
-export const CANVAS_BG_COLOR = '#000000'
+export const CANVAS_BG_COLOR = '#050519'
 export const TARGET_FPS = 60
 
 // Player
@@ -40,10 +40,9 @@ export const PARTICLE_VELOCITY = 1.5
 export const PARTICLE_FADE_RATE = 0.02
 
 // Stars
-export const STAR_COUNT = 150
-export const STAR_MIN_RADIUS = 0.5
-export const STAR_MAX_RADIUS = 2
-export const STAR_VELOCITY = 1.5
+export const STAR_COUNT = 100
+export const STAR_MIN_RADIUS = 0.3
+export const STAR_MAX_RADIUS = 1.3
 
 // Scoring
 export const INVADER_SCORE = 100

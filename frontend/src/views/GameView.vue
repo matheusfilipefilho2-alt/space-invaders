@@ -116,7 +116,7 @@ async function handleGameOver(stats: GameStats) {
   flex-direction: column;
   align-items: center;
   padding: 0;
-  background: #000;
+  background: linear-gradient(135deg, #050519 0%, #0a0a2e 50%, #16213e 100%);
 }
 
 .score-ui {
