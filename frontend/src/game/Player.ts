@@ -7,7 +7,7 @@ import {
   PATH_PLAYER_IMAGE
 } from './constants'
 
-export class Player implements Position, Size {
+export class Player implements Size {
   position: Position
   width: number
   height: number

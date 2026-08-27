@@ -286,6 +286,7 @@ const handleLogout = () => {
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
   color: white;
+  z-index: 999;
 }
 
 .wallet-icon {
