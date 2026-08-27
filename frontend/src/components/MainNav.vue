@@ -2,12 +2,10 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useWalletStore } from '@/stores/wallet'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const walletStore = useWalletStore()
 
 const mobileMenuOpen = ref(false)
 
@@ -31,13 +29,6 @@ const closeMobileMenu = () => {
 
 const username = computed(() => {
   return authStore.user?.username || 'Player'
-})
-
-const walletButtonText = computed(() => {
-  if (walletStore.isConnected) {
-    return `👛 ${walletStore.shortAddress}`
-  }
-  return '👛 Wallet'
 })
 </script>
 
@@ -152,22 +143,6 @@ const walletButtonText = computed(() => {
           📊 Leaderboard
         </router-link>
 
-        <!-- Spacer to push wallet and user menu to the right -->
-        <div class="nav-spacer"></div>
-
-        <!-- Wallet Button -->
-        <router-link
-          to="/wallet"
-          class="nav-link wallet-btn"
-          :class="{
-            active: isActive('wallet'),
-            connected: walletStore.isConnected
-          }"
-          @click="closeMobileMenu"
-        >
-          {{ walletButtonText }}
-        </router-link>
-
         <!-- User Menu -->
         <div class="nav-dropdown user-menu">
           <span class="nav-link dropdown-trigger">
@@ -246,10 +221,7 @@ const walletButtonText = computed(() => {
   align-items: center;
   gap: 5px;
   flex: 1;
-}
-
-.nav-spacer {
-  flex-grow: 1;
+  justify-content: flex-end;
 }
 
 .nav-link {
@@ -261,27 +233,6 @@ const walletButtonText = computed(() => {
   transition: all 0.2s;
   cursor: pointer;
   white-space: nowrap;
-}
-
-.wallet-btn {
-  background: rgba(255, 215, 0, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-}
-
-.wallet-btn.connected {
-  background: rgba(76, 175, 80, 0.2);
-  border: 1px solid rgba(76, 175, 80, 0.4);
-  color: #4caf50;
-}
-
-.wallet-btn:hover {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: rgba(255, 215, 0, 0.5);
-}
-
-.wallet-btn.connected:hover {
-  background: rgba(76, 175, 80, 0.3);
-  border-color: rgba(76, 175, 80, 0.6);
 }
 
 .nav-link:hover {
@@ -382,10 +333,6 @@ const walletButtonText = computed(() => {
 @media (max-width: 968px) {
   .mobile-toggle {
     display: block;
-  }
-
-  .nav-spacer {
-    display: none;
   }
 
   .nav-links {
