@@ -56,6 +56,10 @@ func (r *battlePassRepository) CreateSeason(ctx context.Context, season *entity.
 	return r.db.WithContext(ctx).Create(season).Error
 }
 
+func (r *battlePassRepository) UpdateSeason(ctx context.Context, season *entity.BattlePassSeason) error {
+	return r.db.WithContext(ctx).Save(season).Error
+}
+
 // Player progress
 
 func (r *battlePassRepository) GetPlayerProgress(ctx context.Context, playerID, seasonID uint) (*entity.BattlePassProgress, error) {

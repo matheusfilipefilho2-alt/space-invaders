@@ -12,6 +12,7 @@ type BattlePassRepository interface {
 	GetSeasonByID(ctx context.Context, seasonID uint) (*entity.BattlePassSeason, error)
 	GetActiveSeasons(ctx context.Context) ([]entity.BattlePassSeason, error)
 	CreateSeason(ctx context.Context, season *entity.BattlePassSeason) error
+	UpdateSeason(ctx context.Context, season *entity.BattlePassSeason) error
 
 	// Player progress
 	GetPlayerProgress(ctx context.Context, playerID, seasonID uint) (*entity.BattlePassProgress, error)
