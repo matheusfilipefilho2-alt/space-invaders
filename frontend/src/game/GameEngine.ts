@@ -170,7 +170,10 @@ export class GameEngine {
       this.enemyProjectiles.push(enemyShot)
     }
 
-    // Update projectiles
+    // Update projectiles (with null check)
+    this.playerProjectiles = this.playerProjectiles.filter(p => p !== null && p !== undefined)
+    this.enemyProjectiles = this.enemyProjectiles.filter(p => p !== null && p !== undefined)
+
     this.playerProjectiles.forEach(p => p.update())
     this.enemyProjectiles.forEach(p => p.update())
 
@@ -182,7 +185,8 @@ export class GameEngine {
       p => !p.isOffScreen(this.config.canvasHeight)
     )
 
-    // Update particles
+    // Update particles (with null check)
+    this.particles = this.particles.filter(p => p !== null && p !== undefined)
     this.particles.forEach(p => p.update())
     this.particles = this.particles.filter(p => !p.isDead())
 
