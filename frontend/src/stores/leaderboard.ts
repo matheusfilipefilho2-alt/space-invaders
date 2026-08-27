@@ -73,13 +73,14 @@ export const useLeaderboardStore = defineStore('leaderboard', () => {
     error.value = null
     try {
       const response = await axios.get(`http://localhost:8080/api/v1/leaderboard/global?limit=${limit}`)
-      globalLeaderboard.value = response.data.map((player: any, index: number) => ({
-        rank: index + 1,
+      const players = response.data.data || response.data || []
+      globalLeaderboard.value = players.map((player: any, index: number) => ({
+        rank: player.rank || index + 1,
         username: player.username,
-        highScore: player.highScore || player.high_score,
-        totalGames: player.totalGames || player.total_games,
+        highScore: player.highScore || player.high_score || 0,
+        totalGames: player.totalGames || player.total_games || 0,
         leagueId: player.leagueId || player.league_id,
-        leagueName: getLeagueName(player.leagueId || player.league_id)
+        leagueName: player.leagueName || getLeagueName(player.leagueId || player.league_id)
       }))
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch global leaderboard'
@@ -94,11 +95,12 @@ export const useLeaderboardStore = defineStore('leaderboard', () => {
     error.value = null
     try {
       const response = await axios.get(`http://localhost:8080/api/v1/leaderboard/league/${leagueId}?limit=${limit}`)
-      leagueLeaderboard.value = response.data.map((player: any, index: number) => ({
-        rank: index + 1,
+      const players = response.data.data || response.data || []
+      leagueLeaderboard.value = players.map((player: any, index: number) => ({
+        rank: player.rank || index + 1,
         username: player.username,
-        highScore: player.highScore || player.high_score,
-        totalGames: player.totalGames || player.total_games,
+        highScore: player.highScore || player.high_score || 0,
+        totalGames: player.totalGames || player.total_games || 0,
         leagueId: leagueId
       }))
     } catch (err: any) {
