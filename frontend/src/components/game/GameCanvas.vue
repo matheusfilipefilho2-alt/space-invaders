@@ -83,32 +83,35 @@ defineExpose({
 
 <style scoped>
 .game-canvas-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
 }
 
 .game-canvas {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   background: #000;
-  border: 2px solid #00ff88;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
 }
 
 .game-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 0;
+  z-index: 100;
 }
 
 .overlay-content {

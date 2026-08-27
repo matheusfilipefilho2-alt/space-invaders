@@ -32,19 +32,11 @@
     <div v-if="gameStarted" class="game-controls">
       <p class="controls-hint">← → Move | SPACE Shoot</p>
     </div>
-
-    <div v-if="!gameStarted" class="menu-buttons">
-      <button @click="startNewGame" class="button-play">
-        START NEW GAME
-      </button>
-      <router-link to="/leaderboard" class="button-view-ranking">LEADERBOARD</router-link>
-      <router-link to="/profile" class="button-view-ranking">PROFILE</router-link>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { gameAPI } from '@/services/api'
 import GameCanvas from '@/components/game/GameCanvas.vue'
@@ -57,6 +49,11 @@ const score = ref(0)
 const level = ref(1)
 const lives = ref(3)
 const sessionStarted = ref(false)
+
+onMounted(() => {
+  // Auto-start the game when view is mounted
+  startNewGame()
+})
 
 async function startNewGame() {
   try {
@@ -118,22 +115,29 @@ async function handleGameOver(stats: GameStats) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: 0;
+  background: #000;
 }
 
 .score-ui {
   width: 100%;
-  max-width: 800px;
-  margin-bottom: 20px;
+  padding: 10px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .game-stats {
   display: flex;
   justify-content: space-around;
+  max-width: 1200px;
+  margin: 0 auto;
   background: rgba(0, 0, 0, 0.6);
   border: 2px solid #00ff88;
   border-radius: 8px;
-  padding: 15px;
+  padding: 10px;
 }
 
 .score-item {
@@ -155,52 +159,20 @@ async function handleGameOver(stats: GameStats) {
 }
 
 .game-controls {
-  margin-top: 20px;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
+  z-index: 10;
 }
 
 .controls-hint {
   color: #888;
   font-size: 0.9rem;
-}
-
-.menu-buttons {
-  display: flex;
-  gap: 15px;
-  margin-top: 30px;
-}
-
-.button-play,
-.button-view-ranking {
-  padding: 12px 24px;
-  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 8px 16px;
   border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-  transition: all 0.3s;
-}
-
-.button-play {
-  background: #00ff88;
-  color: #000;
-  font-weight: bold;
-}
-
-.button-view-ranking {
-  background: #667eea;
-  color: #fff;
-}
-
-.button-play:hover {
-  background: #00cc6a;
-  transform: scale(1.05);
-}
-
-.button-view-ranking:hover {
-  background: #5568d3;
-  transform: scale(1.05);
+  border: 1px solid #00ff88;
 }
 </style>
