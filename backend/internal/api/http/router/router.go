@@ -79,6 +79,9 @@ func (r *Router) Setup() *gin.Engine {
 	// Prometheus metrics endpoint
 	r.engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
+	// API routes (versionless)
+	api := r.engine.Group("/api")
+
 	// API v1 routes
 	v1 := r.engine.Group("/api/v1")
 	{
@@ -113,7 +116,15 @@ func (r *Router) Setup() *gin.Engine {
 			game.POST("/end", r.gameHandler.EndGame)
 		}
 
-		// Achievements (mixed public/protected)
+		// Achievements - new routes
+		achievementsV2 := api.Group("/achievements")
+		achievementsV2.Use(middleware.AuthMiddleware(r.jwtSecret))
+		{
+			achievementsV2.GET("", r.achievementHandler.GetAllAchievementsWithStatus)
+			achievementsV2.POST("/check-game-stats", r.achievementHandler.CheckAchievementsFromGameStats)
+		}
+
+		// Achievements (mixed public/protected) - legacy v1 routes
 		achievements := v1.Group("/achievements")
 		{
 			// Public

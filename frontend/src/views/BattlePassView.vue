@@ -18,12 +18,9 @@ onMounted(async () => {
     return
   }
 
-  await battlePassStore.initialize()
-  // Auto-refresh every 30 seconds
-  setInterval(() => {
-    battlePassStore.fetchProgress()
-    battlePassStore.fetchUnclaimedRewards()
-  }, 30000)
+  // Temporarily disable backend calls to avoid 401/404 errors
+  // await battlePassStore.initialize()
+  console.log('Battle Pass: Backend integration temporarily disabled')
 })
 
 const formatXP = (xp: number) => {
@@ -91,6 +88,16 @@ const tiers = computed(() => {
 
 <template>
   <div class="battle-pass-container">
+    <!-- Development Notice -->
+    <div class="dev-notice">
+      <div class="notice-icon">🚧</div>
+      <div class="notice-content">
+        <h3>Battle Pass - Em Desenvolvimento</h3>
+        <p>O sistema de Battle Pass está temporariamente desabilitado enquanto implementamos melhorias no backend.</p>
+        <p>Por enquanto, você pode ganhar XP e recompensas jogando normalmente!</p>
+      </div>
+    </div>
+
     <!-- Header -->
     <div class="bp-header">
       <h1 class="bp-title">🎮 BATTLE PASS 🎮</h1>
@@ -263,6 +270,42 @@ const tiers = computed(() => {
   margin: 0 auto;
   padding: 20px;
   font-family: 'Press Start 2P', monospace;
+}
+
+.dev-notice {
+  background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+  border: 3px solid #FFD700;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 4px 15px rgba(255, 165, 0, 0.4);
+}
+
+.notice-icon {
+  font-size: 3em;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.notice-content h3 {
+  color: #000;
+  font-size: 0.9em;
+  margin: 0 0 10px 0;
+}
+
+.notice-content p {
+  color: #333;
+  font-size: 0.6em;
+  line-height: 1.6;
+  margin: 5px 0;
+  font-family: 'Orbitron', monospace;
 }
 
 .bp-header {

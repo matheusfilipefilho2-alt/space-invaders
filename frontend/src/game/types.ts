@@ -30,6 +30,14 @@ export interface GameStats {
   killCount: number
   accuracy: number
   startTime: number
+  // Advanced stats
+  combo: number
+  maxCombo: number
+  rapidKills: number
+  shotsFired: number
+  shotsHit: number
+  lastKillTime: number
+  bossKills: number
 }
 
 export interface GameConfig {

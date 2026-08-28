@@ -2,6 +2,8 @@ package handler
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -166,6 +168,144 @@ func (h *AchievementHandler) CheckAchievements(c *gin.Context) {
 			RequirementType:  achievement.RequirementType,
 			RequirementValue: achievement.RequirementValue,
 			Icon:             achievement.Icon,
+		}
+	}
+
+	response.OK(c, responseData)
+}
+
+// CheckGameStatsRequest represents the request body for checking achievements from game stats
+type CheckGameStatsRequest struct {
+	Score     uint `json:"score"`
+	KillCount uint `json:"killCount"`
+	MaxCombo  uint `json:"maxCombo"`
+	Level     uint `json:"level"`
+	BossKills uint `json:"bossKills"`
+	Accuracy  uint `json:"accuracy"`
+}
+
+// CheckGameStatsResponse represents the response after checking game stats achievements
+type CheckGameStatsResponse struct {
+	NewlyUnlocked   []AchievementResponse `json:"newlyUnlocked"`
+	TotalGoldEarned int64                 `json:"totalGoldEarned"`
+}
+
+// CheckAchievementsFromGameStats handles POST /api/achievements/check-game-stats
+// @Summary Check and unlock achievements from game stats
+// @Description Check game statistics and unlock eligible achievements
+// @Tags achievements
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param stats body CheckGameStatsRequest true "Game Statistics"
+// @Success 200 {object} response.SuccessResponse{data=CheckGameStatsResponse}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /api/achievements/check-game-stats [post]
+func (h *AchievementHandler) CheckAchievementsFromGameStats(c *gin.Context) {
+	playerID, ok := middleware.GetPlayerID(c)
+	if !ok {
+		response.Unauthorized(c, "Player ID not found in context")
+		return
+	}
+
+	var req CheckGameStatsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Failed to bind request body: %v", err)
+		log.Printf("Raw request body: %v", c.Request.Body)
+		response.BadRequest(c, fmt.Sprintf("Invalid request body: %v", err))
+		return
+	}
+
+	log.Printf("Received game stats: %+v", req)
+
+	stats := service.GameStats{
+		Score:     req.Score,
+		KillCount: req.KillCount,
+		MaxCombo:  req.MaxCombo,
+		Level:     req.Level,
+		BossKills: req.BossKills,
+		Accuracy:  req.Accuracy,
+	}
+
+	unlockedAchievements, totalGold, err := h.achievementService.CheckAndUnlockFromGameStats(c.Request.Context(), playerID, stats)
+	if err != nil {
+		response.InternalServerError(c, "Failed to check achievements")
+		return
+	}
+
+	responseData := CheckGameStatsResponse{
+		NewlyUnlocked:   make([]AchievementResponse, len(unlockedAchievements)),
+		TotalGoldEarned: totalGold,
+	}
+
+	for i, achievement := range unlockedAchievements {
+		responseData.NewlyUnlocked[i] = AchievementResponse{
+			ID:               achievement.ID,
+			Name:             achievement.Name,
+			Description:      achievement.Description,
+			Rarity:           string(achievement.Rarity),
+			RewardGold:       achievement.RewardGold,
+			RequirementType:  achievement.RequirementType,
+			RequirementValue: achievement.RequirementValue,
+			Icon:             achievement.Icon,
+		}
+	}
+
+	response.OK(c, responseData)
+}
+
+// AchievementWithStatusResponse represents an achievement with unlock status
+type AchievementWithStatusResponse struct {
+	ID               string     `json:"id"`
+	Name             string     `json:"name"`
+	Description      string     `json:"description"`
+	Icon             string     `json:"icon"`
+	Rarity           string     `json:"rarity"`
+	RewardGold       uint       `json:"rewardGold"`
+	RequirementType  string     `json:"requirementType"`
+	RequirementValue uint       `json:"requirementValue"`
+	Unlocked         bool       `json:"unlocked"`
+	UnlockedAt       *time.Time `json:"unlockedAt,omitempty"`
+}
+
+// GetAllAchievementsWithStatus handles GET /api/achievements
+// @Summary Get all achievements with unlock status
+// @Description Get all available achievements with their unlock status for the authenticated player
+// @Tags achievements
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} response.SuccessResponse{data=[]AchievementWithStatusResponse}
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /api/achievements [get]
+func (h *AchievementHandler) GetAllAchievementsWithStatus(c *gin.Context) {
+	playerID, ok := middleware.GetPlayerID(c)
+	if !ok {
+		response.Unauthorized(c, "Player ID not found in context")
+		return
+	}
+
+	achievements, err := h.achievementService.GetAllAchievementsWithStatus(c.Request.Context(), playerID)
+	if err != nil {
+		response.InternalServerError(c, "Failed to get achievements")
+		return
+	}
+
+	responseData := make([]AchievementWithStatusResponse, len(achievements))
+	for i, a := range achievements {
+		responseData[i] = AchievementWithStatusResponse{
+			ID:               a.Achievement.ID,
+			Name:             a.Achievement.Name,
+			Description:      a.Achievement.Description,
+			Icon:             a.Achievement.Icon,
+			Rarity:           string(a.Achievement.Rarity),
+			RewardGold:       a.Achievement.RewardGold,
+			RequirementType:  a.Achievement.RequirementType,
+			RequirementValue: a.Achievement.RequirementValue,
+			Unlocked:         a.Unlocked,
+			UnlockedAt:       a.UnlockedAt,
 		}
 	}
 

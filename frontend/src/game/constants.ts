@@ -9,7 +9,7 @@ export const PLAYER_WIDTH = 96
 export const PLAYER_HEIGHT = 96
 export const PLAYER_VELOCITY = 10
 export const PLAYER_INITIAL_LIVES = 1
-export const PLAYER_MAX_LIVES = 3
+export const PLAYER_MAX_LIVES = 1
 
 // Projectile
 export const PROJECTILE_WIDTH = 2
@@ -52,6 +52,64 @@ export const MAX_GOLD_PER_GAME = 10
 
 // Asset Paths
 export const PATH_PLAYER_IMAGE = '/assets/images/spaceship.png'
-export const PATH_INVADER_IMAGE = '/assets/images/invader.png'
+export const PATH_ENGINE_IMAGE = '/assets/images/engine.png'
+export const PATH_ENGINE_SPRITES = '/assets/images/engine_sprites.png'
+export const PATH_INVADER_IMAGES = [
+  '/assets/images/invader.png',
+  '/assets/images/invader_blue.gif',
+  '/assets/images/invader_green.gif',
+  '/assets/images/invader_purple.gif',
+  '/assets/images/invader_red.gif'
+]
 export const PATH_EXPLOSION_SOUND = '/assets/sounds/explosion.mp3'
 export const PATH_SHOOT_SOUND = '/assets/sounds/shoot.mp3'
+export const PATH_HIT_SOUND = '/assets/sounds/hit.mp3'
+export const PATH_BONUS_SOUND = '/assets/sounds/bonus.mp3'
+export const PATH_NEXT_LEVEL_SOUND = '/assets/sounds/next_level.mp3'
+export const PATH_LEVEL_MUSIC = [
+  '/assets/sounds/music/musica_phase1_space_invaders.mp3',
+  '/assets/sounds/music/musica_phase2_space_invaders.mp3',
+  '/assets/sounds/music/musica_phase3_space_invaders.mp3'
+]
+export const PATH_MENU_MUSIC = '/assets/sounds/music/space_menu_full_mix.wav'
+
+// Animation
+export const INITIAL_FRAMES = 10
+
+// Difficulty Modifiers
+export const DIFFICULTY_MODIFIERS = {
+  easy: {
+    invaderSpeedMultiplier: 0.7,
+    shootProbabilityMultiplier: 0.5,
+    enemyProjectileSpeedMultiplier: 0.8
+  },
+  normal: {
+    invaderSpeedMultiplier: 1.0,
+    shootProbabilityMultiplier: 1.0,
+    enemyProjectileSpeedMultiplier: 1.0
+  },
+  hard: {
+    invaderSpeedMultiplier: 1.5,
+    shootProbabilityMultiplier: 2.0,
+    enemyProjectileSpeedMultiplier: 1.3
+  }
+} as const
+
+// Graphics Quality Settings
+export const GRAPHICS_QUALITY_SETTINGS = {
+  low: {
+    particleCount: 5,
+    enableVisualEffects: false,
+    starCount: 50
+  },
+  medium: {
+    particleCount: 10,
+    enableVisualEffects: true,
+    starCount: 75
+  },
+  high: {
+    particleCount: 15,
+    enableVisualEffects: true,
+    starCount: 100
+  }
+} as const

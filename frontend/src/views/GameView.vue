@@ -19,6 +19,7 @@
           <span class="score-value" style="color: #FFD700;">{{ authStore.user?.gold_balance || 0 }}</span>
         </div>
       </div>
+      <!-- Action buttons removed - all features now accessible via navigation menu -->
     </div>
 
     <GameCanvas
@@ -27,11 +28,21 @@
       @lives-change="handleLivesChange"
       @level-change="handleLevelChange"
       @game-over="handleGameOver"
+      @combo-change="handleComboChange"
+      @achievement-unlocked="handleAchievementUnlocked"
     />
 
-    <div v-if="gameStarted" class="game-controls">
-      <p class="controls-hint">← → Move | SPACE Shoot</p>
-    </div>
+    <AchievementNotification :achievements="newAchievements" />
+
+    <GameOverScreen
+      v-if="showGameOver && gameOverStats"
+      :stats="gameOverStats"
+      :rewards="gameOverRewards"
+      :high-score="highScore"
+      @restart="handleRestart"
+      @close="showGameOver = false"
+    />
+
   </div>
 </template>
 
@@ -40,7 +51,10 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { gameAPI } from '@/services/api'
 import GameCanvas from '@/components/game/GameCanvas.vue'
+import GameOverScreen from '@/components/game/GameOverScreen.vue'
+import AchievementNotification from '@/components/game/AchievementNotification.vue'
 import type { GameStats } from '@/game/types'
+import type { Achievement } from '@/game/Achievements'
 
 const authStore = useAuthStore()
 const gameCanvasRef = ref<InstanceType<typeof GameCanvas> | null>(null)
@@ -49,6 +63,12 @@ const score = ref(0)
 const level = ref(1)
 const lives = ref(3)
 const sessionStarted = ref(false)
+const showGameOver = ref(false)
+const gameOverStats = ref<GameStats | null>(null)
+const gameOverRewards = ref<{ goldEarned: number; xpEarned?: number } | null>(null)
+const highScore = ref(0)
+const combo = ref(0)
+const newAchievements = ref<Achievement[]>([])
 
 onMounted(() => {
   // Auto-start the game when view is mounted
@@ -65,7 +85,13 @@ async function startNewGame() {
     // Reset stats
     score.value = 0
     level.value = 1
-    lives.value = 3
+    lives.value = 1
+    combo.value = 0
+
+    // Get high score from game engine
+    if (gameCanvasRef.value?.getGameEngine) {
+      highScore.value = gameCanvasRef.value.getGameEngine().getHighScore()
+    }
 
     // Start the game engine
     gameCanvasRef.value?.startGame()
@@ -87,15 +113,27 @@ function handleLevelChange(newLevel: number) {
   level.value = newLevel
 }
 
+function handleComboChange(newCombo: number) {
+  combo.value = newCombo
+}
+
 async function handleGameOver(stats: GameStats) {
+  // Always store stats and show game over screen first
+  gameOverStats.value = stats
+  showGameOver.value = true
+
   if (!sessionStarted.value) return
 
   try {
-    // Send final score to backend
-    const response = await gameAPI.end(stats.score)
+    // Send final score to backend (ensure it's an integer)
+    const response = await gameAPI.end(Math.floor(stats.score))
     const data = response.data.data
 
-    alert(`Game Over!\nScore: ${stats.score}\nGold Earned: ${data.goldEarned}\nXP Earned: ${data.xpEarned || 0}`)
+    // Update rewards from backend
+    gameOverRewards.value = {
+      goldEarned: data.goldEarned,
+      xpEarned: data.xpEarned || 0
+    }
 
     // Refresh user data
     await authStore.fetchProfile()
@@ -104,8 +142,28 @@ async function handleGameOver(stats: GameStats) {
     sessionStarted.value = false
   } catch (err) {
     console.error('Failed to end game session:', err)
-    alert('Failed to save game results. Please try again.')
+
+    // Show game over screen with default rewards even if backend fails
+    gameOverRewards.value = {
+      goldEarned: 0,
+      xpEarned: 0
+    }
+
+    gameStarted.value = false
+    sessionStarted.value = false
+
+    // Don't show alert, just log the error
+    console.warn('Game results not saved to backend, but showing game over screen')
   }
+}
+
+function handleRestart() {
+  showGameOver.value = false
+  startNewGame()
+}
+
+function handleAchievementUnlocked(achievements: Achievement[]) {
+  newAchievements.value = achievements
 }
 </script>
 
@@ -125,6 +183,10 @@ async function handleGameOver(stats: GameStats) {
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .game-stats {
@@ -172,5 +234,69 @@ async function handleGameOver(stats: GameStats) {
   padding: 8px 16px;
   border-radius: 4px;
   border: 1px solid #00ff88;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.game-btn {
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #000;
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+}
+
+.skins-btn {
+  background: linear-gradient(135deg, #9370DB 0%, #8A2BE2 100%);
+  box-shadow: 0 4px 15px rgba(147, 112, 219, 0.4);
+}
+
+.skins-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(147, 112, 219, 0.6);
+}
+
+.profile-btn {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+}
+
+.leaderboard-btn {
+  background: linear-gradient(135deg, #FF6B9D 0%, #C44569 100%);
+  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+}
+
+.leaderboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 157, 0.6);
+}
+
+.settings-btn {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+}
+
+.settings-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.6);
 }
 </style>

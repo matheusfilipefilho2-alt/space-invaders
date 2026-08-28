@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useAchievementStore } from '@/stores/achievement'
+import { ref, onMounted, computed } from 'vue'
+import { AchievementManager, type Achievement } from '@/game/Achievements'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
-const achievementStore = useAchievementStore()
 const authStore = useAuthStore()
 const router = useRouter()
+
+const achievements = ref<Achievement[]>([])
+const filterStatus = ref<'all' | 'unlocked' | 'locked'>('all')
+const filterRarity = ref<string>('all')
 
 onMounted(async () => {
   if (!authStore.isAuthenticated) {
@@ -14,8 +17,88 @@ onMounted(async () => {
     return
   }
 
-  await achievementStore.initialize()
+  loadAchievements()
 })
+
+function loadAchievements() {
+  achievements.value = AchievementManager.getAchievements()
+}
+
+const filteredAchievements = computed(() => {
+  return achievements.value.filter(achievement => {
+    // Filter by status
+    if (filterStatus.value === 'unlocked' && !achievement.unlocked) return false
+    if (filterStatus.value === 'locked' && achievement.unlocked) return false
+
+    // Filter by rarity
+    if (filterRarity.value !== 'all' && achievement.category !== filterRarity.value.toLowerCase()) return false
+
+    return true
+  })
+})
+
+const unlockedCount = computed(() => {
+  return achievements.value.filter(a => a.unlocked).length
+})
+
+const totalCount = computed(() => {
+  return achievements.value.length
+})
+
+const completionPercentage = computed(() => {
+  if (totalCount.value === 0) return 0
+  return Math.round((unlockedCount.value / totalCount.value) * 100)
+})
+
+const totalGoldEarned = computed(() => {
+  return achievements.value
+    .filter(a => a.unlocked)
+    .reduce((sum, a) => sum + a.rewardGold, 0)
+})
+
+function setFilterStatus(status: 'all' | 'unlocked' | 'locked') {
+  filterStatus.value = status
+}
+
+function setFilterRarity(rarity: string) {
+  filterRarity.value = rarity
+}
+
+function isUnlocked(achievementId: string): boolean {
+  const achievement = achievements.value.find(a => a.id === achievementId)
+  return achievement?.unlocked || false
+}
+
+function getUnlockedDate(achievementId: string): string | null {
+  const progress = AchievementManager.loadProgress()
+  const achievementProgress = progress[achievementId]
+  if (achievementProgress?.unlockedAt) {
+    return new Date(achievementProgress.unlockedAt).toISOString()
+  }
+  return null
+}
+
+function getRarityIcon(category: string): string {
+  const icons: Record<string, string> = {
+    score: '🎯',
+    kills: '💀',
+    combo: '🔥',
+    survival: '🛡️',
+    special: '⭐'
+  }
+  return icons[category.toLowerCase()] || '🏆'
+}
+
+function getRarityColor(category: string): string {
+  const colors: Record<string, string> = {
+    score: '#4169E1',
+    kills: '#DC143C',
+    combo: '#FF8C00',
+    survival: '#32CD32',
+    special: '#FFD700'
+  }
+  return colors[category.toLowerCase()] || '#888'
+}
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr)
@@ -41,31 +124,31 @@ const formatDate = (dateStr: string) => {
         <div class="completion-circle">
           <svg viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8" />
-            <circle 
+            <circle
               cx="50" cy="50" r="45" fill="none" stroke="#ffd700" stroke-width="8"
-              stroke-dasharray="283" 
-              :stroke-dashoffset="283 - (283 * achievementStore.completionPercentage / 100)"
+              stroke-dasharray="283"
+              :stroke-dashoffset="283 - (283 * completionPercentage / 100)"
               transform="rotate(-90 50 50)"
               style="transition: stroke-dashoffset 1s ease"
             />
           </svg>
           <div class="circle-content">
-            <div class="percentage">{{ achievementStore.completionPercentage }}%</div>
+            <div class="percentage">{{ completionPercentage }}%</div>
             <div class="label">Complete</div>
           </div>
         </div>
 
         <div class="stats-grid">
           <div class="stat-item">
-            <div class="stat-value">{{ achievementStore.unlockedCount }}</div>
+            <div class="stat-value">{{ unlockedCount }}</div>
             <div class="stat-label">Unlocked</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value">{{ achievementStore.totalCount }}</div>
+            <div class="stat-value">{{ totalCount }}</div>
             <div class="stat-label">Total</div>
           </div>
           <div class="stat-item gold">
-            <div class="stat-value">🪙 {{ achievementStore.totalGoldEarned }}</div>
+            <div class="stat-value">🪙 {{ totalGoldEarned }}</div>
             <div class="stat-label">Gold Earned</div>
           </div>
         </div>
@@ -76,11 +159,11 @@ const formatDate = (dateStr: string) => {
     <div class="filters-bar">
       <div class="filter-group">
         <label>Status:</label>
-        <button 
-          v-for="status in ['all', 'unlocked', 'locked']" 
+        <button
+          v-for="status in ['all', 'unlocked', 'locked']"
           :key="status"
-          :class="{ active: achievementStore.filterStatus === status }"
-          @click="achievementStore.setFilterStatus(status)"
+          :class="{ active: filterStatus === status }"
+          @click="setFilterStatus(status as 'all' | 'unlocked' | 'locked')"
           class="filter-button"
         >
           {{ status.charAt(0).toUpperCase() + status.slice(1) }}
@@ -88,15 +171,15 @@ const formatDate = (dateStr: string) => {
       </div>
 
       <div class="filter-group">
-        <label>Rarity:</label>
-        <button 
-          v-for="rarity in ['all', 'COMMON', 'RARE', 'EPIC', 'LEGENDARY']" 
-          :key="rarity"
-          :class="{ active: achievementStore.filterRarity === rarity }"
-          @click="achievementStore.setFilterRarity(rarity)"
+        <label>Category:</label>
+        <button
+          v-for="category in ['all', 'score', 'kills', 'combo', 'survival', 'special']"
+          :key="category"
+          :class="{ active: filterRarity === category }"
+          @click="setFilterRarity(category)"
           class="filter-button"
         >
-          {{ rarity === 'all' ? 'All' : achievementStore.getRarityIcon(rarity) + ' ' + rarity }}
+          {{ category === 'all' ? 'All' : getRarityIcon(category) + ' ' + category.charAt(0).toUpperCase() + category.slice(1) }}
         </button>
       </div>
     </div>
@@ -104,21 +187,21 @@ const formatDate = (dateStr: string) => {
     <!-- Achievements Grid -->
     <div class="achievements-grid">
       <div
-        v-for="achievement in achievementStore.filteredAchievements"
+        v-for="achievement in filteredAchievements"
         :key="achievement.id"
         class="achievement-card"
-        :class="{ 
-          unlocked: achievementStore.isUnlocked(achievement.id),
-          locked: !achievementStore.isUnlocked(achievement.id)
+        :class="{
+          unlocked: isUnlocked(achievement.id),
+          locked: !isUnlocked(achievement.id)
         }"
       >
-        <!-- Rarity Badge -->
-        <div class="rarity-badge" :style="{ background: achievementStore.getRarityColor(achievement.rarity) }">
-          {{ achievementStore.getRarityIcon(achievement.rarity) }} {{ achievement.rarity }}
+        <!-- Category Badge -->
+        <div class="rarity-badge" :style="{ background: getRarityColor(achievement.category) }">
+          {{ getRarityIcon(achievement.category) }} {{ achievement.category }}
         </div>
 
         <!-- Icon -->
-        <div class="achievement-icon" :class="{ locked: !achievementStore.isUnlocked(achievement.id) }">
+        <div class="achievement-icon" :class="{ locked: !isUnlocked(achievement.id) }">
           {{ achievement.icon }}
         </div>
 
@@ -126,13 +209,17 @@ const formatDate = (dateStr: string) => {
         <div class="achievement-info">
           <h3 class="achievement-name">{{ achievement.name }}</h3>
           <p class="achievement-description">{{ achievement.description }}</p>
-          
-          <div class="achievement-reward">
-            🪙 {{ achievement.reward_gold }} Gold
+
+          <div class="achievement-progress">
+            <div class="progress-text">{{ achievement.progress }} / {{ achievement.requirement }}</div>
           </div>
 
-          <div v-if="achievementStore.isUnlocked(achievement.id)" class="unlocked-date">
-            ✅ Unlocked {{ formatDate(achievementStore.getUnlockedDate(achievement.id) || '') }}
+          <div class="achievement-reward">
+            🪙 {{ achievement.rewardGold }} Gold
+          </div>
+
+          <div v-if="isUnlocked(achievement.id)" class="unlocked-date">
+            ✅ Unlocked {{ formatDate(getUnlockedDate(achievement.id) || '') }}
           </div>
           <div v-else class="locked-overlay">
             🔒 Locked
@@ -142,7 +229,7 @@ const formatDate = (dateStr: string) => {
     </div>
 
     <!-- Empty State -->
-    <div v-if="achievementStore.filteredAchievements.length === 0" class="empty-state">
+    <div v-if="filteredAchievements.length === 0" class="empty-state">
       <div class="empty-icon">🏆</div>
       <h3>No Achievements Found</h3>
       <p>Try changing your filters</p>
@@ -357,6 +444,20 @@ const formatDate = (dateStr: string) => {
   color: #aaa;
   line-height: 1.5;
   margin: 0 0 15px 0;
+}
+
+.achievement-progress {
+  font-size: 0.65em;
+  color: #aaa;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.progress-text {
+  font-family: monospace;
 }
 
 .achievement-reward {

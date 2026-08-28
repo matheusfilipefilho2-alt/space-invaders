@@ -9,8 +9,25 @@ const api = axios.create({
   }
 })
 
+// API instance for new routes (without v1)
+const apiV2 = axios.create({
+  baseURL: API_BASE_URL + '/api',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
 // Interceptor para adicionar JWT token
 api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Interceptor para adicionar JWT token (apiV2)
+apiV2.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -45,7 +62,17 @@ export const gameAPI = {
 // Achievements endpoints
 export const achievementAPI = {
   list: () => api.get('/achievements'),
-  check: () => api.post('/achievements/check')
+  check: () => api.post('/achievements/check'),
+  // New endpoints
+  getWithStatus: () => apiV2.get('/achievements'),
+  checkGameStats: (stats: {
+    score: number
+    killCount: number
+    maxCombo: number
+    level: number
+    bossKills: number
+    accuracy: number
+  }) => apiV2.post('/achievements/check-game-stats', stats)
 }
 
 // Items endpoints

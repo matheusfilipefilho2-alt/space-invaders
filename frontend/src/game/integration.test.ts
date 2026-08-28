@@ -13,9 +13,16 @@ describe('Game Integration', () => {
     // Mock canvas 2D context
     const mockCtx = {
       fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 0,
+      font: '',
+      textAlign: 'left',
+      textBaseline: 'top',
       fillRect: vi.fn(),
+      strokeRect: vi.fn(),
       clearRect: vi.fn(),
       drawImage: vi.fn(),
+      fillText: vi.fn(),
       save: vi.fn(),
       restore: vi.fn(),
       beginPath: vi.fn(),
@@ -43,7 +50,7 @@ describe('Game Integration', () => {
     // Get initial stats
     const stats = engine.getStats()
     expect(stats.score).toBe(0)
-    expect(stats.lives).toBe(3)
+    expect(stats.lives).toBe(1)
     expect(stats.level).toBe(1)
   })
 

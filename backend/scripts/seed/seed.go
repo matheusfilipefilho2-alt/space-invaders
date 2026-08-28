@@ -45,6 +45,10 @@ func main() {
 	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 	// Seed in order
+	if err := SeedPlayers(ctx, db); err != nil {
+		log.Fatalf("❌ Failed to seed players: %v", err)
+	}
+
 	if err := SeedLeagues(ctx, db); err != nil {
 		log.Fatalf("❌ Failed to seed leagues: %v", err)
 	}

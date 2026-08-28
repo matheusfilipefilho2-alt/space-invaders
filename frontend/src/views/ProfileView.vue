@@ -1,27 +1,5 @@
 <template>
   <div class="profile-page">
-    <!-- Fixed Navigation Bar -->
-    <nav class="game-navbar">
-      <div class="navbar-container">
-        <router-link to="/game" class="navbar-btn navbar-btn-play">
-          <span class="navbar-icon">🚀</span>
-          <span class="navbar-text">JOGAR</span>
-        </router-link>
-        <router-link to="/shop" class="navbar-btn navbar-btn-shop">
-          <span class="navbar-icon">🛍️</span>
-          <span class="navbar-text">LOJA</span>
-        </router-link>
-        <router-link to="/leaderboard" class="navbar-btn navbar-btn-ranking">
-          <span class="navbar-icon">🏆</span>
-          <span class="navbar-text">RANKING</span>
-        </router-link>
-        <router-link to="/" class="navbar-btn navbar-btn-home">
-          <span class="navbar-icon">🏠</span>
-          <span class="navbar-text">INÍCIO</span>
-        </router-link>
-      </div>
-    </nav>
-
     <!-- Wallet UI Container -->
     <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
       <button v-if="!walletConnected" @click="connectWallet" class="wallet-btn">
@@ -107,7 +85,7 @@
                 <div class="stat-icon">🎮</div>
                 <div class="stat-content">
                   <div class="stat-label">Partidas Jogadas</div>
-                  <div class="stat-value">{{ player?.total_games || 0 }}</div>
+                  <div class="stat-value">{{ stats.totalGamesPlayed }}</div>
                 </div>
               </div>
 
@@ -115,7 +93,7 @@
                 <div class="stat-icon">🏅</div>
                 <div class="stat-content">
                   <div class="stat-label">Vitórias</div>
-                  <div class="stat-value">0</div>
+                  <div class="stat-value">{{ stats.totalLevelsCompleted }}</div>
                 </div>
               </div>
 
@@ -123,7 +101,7 @@
                 <div class="stat-icon">⚔️</div>
                 <div class="stat-content">
                   <div class="stat-label">Taxa de Vitória</div>
-                  <div class="stat-value">0%</div>
+                  <div class="stat-value">{{ winRate }}%</div>
                 </div>
               </div>
 
@@ -131,7 +109,7 @@
                 <div class="stat-icon">💯</div>
                 <div class="stat-content">
                   <div class="stat-label">Melhor Score</div>
-                  <div class="stat-value">{{ player?.high_score || 0 }}</div>
+                  <div class="stat-value">{{ stats.highestScore.toLocaleString() }}</div>
                 </div>
               </div>
 
@@ -139,7 +117,7 @@
                 <div class="stat-icon">👾</div>
                 <div class="stat-content">
                   <div class="stat-label">Inimigos Destruídos</div>
-                  <div class="stat-value">{{ player?.total_kills || 0 }}</div>
+                  <div class="stat-value">{{ stats.totalKills.toLocaleString() }}</div>
                 </div>
               </div>
 
@@ -147,7 +125,77 @@
                 <div class="stat-icon">⏱️</div>
                 <div class="stat-content">
                   <div class="stat-label">Tempo Jogado</div>
-                  <div class="stat-value">0h</div>
+                  <div class="stat-value">{{ formatPlayTime }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Statistics -->
+            <div class="stats-section">
+              <h3 class="section-title">📊 Estatísticas Detalhadas</h3>
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-icon">🎯</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Precisão Geral</div>
+                    <div class="stat-value">{{ stats.overallAccuracy }}%</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">⭐</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Melhor Precisão</div>
+                    <div class="stat-value">{{ stats.bestAccuracy }}%</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">🔥</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Melhor Combo</div>
+                    <div class="stat-value">x{{ stats.bestCombo }}</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">🐲</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Bosses Derrotados</div>
+                    <div class="stat-value">{{ stats.totalBossKills }}</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">📊</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Nível Mais Alto</div>
+                    <div class="stat-value">{{ stats.highestLevel }}</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">📈</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Pontuação Média</div>
+                    <div class="stat-value">{{ stats.averageScore.toLocaleString() }}</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">🚀</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Total de Disparos</div>
+                    <div class="stat-value">{{ stats.totalShots.toLocaleString() }}</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">✅</div>
+                  <div class="stat-content">
+                    <div class="stat-label">Total de Acertos</div>
+                    <div class="stat-value">{{ stats.totalHits.toLocaleString() }}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -171,47 +219,108 @@
             :class="['ui-tabs__pane', { 'ui-tabs__pane--active': activeTab === 'achievements' }]"
           >
             <div class="achievements-container">
+              <div class="achievements-summary">
+                <div class="summary-stat">
+                  <span class="summary-label">Total de Conquistas:</span>
+                  <span class="summary-value">{{ localAchievements.length }}</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="summary-label">Desbloqueadas:</span>
+                  <span class="summary-value unlocked">{{ unlockedAchievementsCount }}</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="summary-label">Progresso:</span>
+                  <span class="summary-value">{{ achievementProgress }}%</span>
+                </div>
+              </div>
+
               <div class="achievements-grid">
-                <div v-if="loadingAchievements" class="loading">Carregando conquistas...</div>
-                <div v-else-if="achievements.length === 0" class="loading">
-                  Nenhuma conquista desbloqueada ainda
+                <div v-if="localAchievements.length === 0" class="loading">
+                  Nenhuma conquista disponível
                 </div>
                 <div
-                  v-for="achievement in achievements"
+                  v-for="achievement in localAchievements"
                   :key="achievement.id"
                   class="achievement-card"
+                  :class="{ unlocked: achievement.unlocked, locked: !achievement.unlocked }"
                 >
                   <div class="achievement-icon">{{ achievement.icon || '🏆' }}</div>
                   <div class="achievement-info">
                     <h4 class="achievement-name">{{ achievement.name }}</h4>
                     <p class="achievement-description">{{ achievement.description }}</p>
-                    <span class="achievement-rarity">{{ achievement.rarity }}</span>
+                    <div class="achievement-progress-info">
+                      <span class="progress-text">{{ achievement.progress }} / {{ achievement.requirement }}</span>
+                      <span class="gold-reward">💰 {{ achievement.rewardGold }}</span>
+                    </div>
+                    <div v-if="achievement.unlocked" class="achievement-unlocked">✓ DESBLOQUEADA</div>
+                    <div v-else class="achievement-locked">🔒 BLOQUEADA</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Tab: Inventário -->
+          <!-- Tab: Inventário (Skins) -->
           <div
             :class="['ui-tabs__pane', { 'ui-tabs__pane--active': activeTab === 'inventory' }]"
           >
             <div class="inventory-container">
-              <div class="inventory-grid">
-                <div v-if="loadingInventory" class="loading">Carregando inventário...</div>
-                <div v-else-if="inventory.length === 0" class="loading">
-                  Seu inventário está vazio
-                </div>
+              <div class="user-gold-display">
+                💰 Seu Gold: <span class="gold-amount">{{ authStore.user?.gold_balance || 0 }}</span>
+              </div>
+
+              <div class="skins-grid">
                 <div
-                  v-for="item in inventory"
-                  :key="item.id"
-                  class="inventory-item"
+                  v-for="skin in skins"
+                  :key="skin.id"
+                  class="skin-card"
+                  :class="{
+                    selected: skin.id === selectedSkinId,
+                    locked: !skin.unlocked
+                  }"
+                  @click="handleSkinClick(skin)"
                 >
-                  <div class="item-icon">{{ getItemIcon(item.item?.category) }}</div>
-                  <div class="item-info">
-                    <h4 class="item-name">{{ item.item?.name }}</h4>
-                    <p class="item-description">{{ item.item?.description }}</p>
-                    <span v-if="item.equipped" class="item-equipped">✓ EQUIPADO</span>
+                  <div class="skin-preview">
+                    <img :src="skin.shipImage" :alt="skin.name" />
+                    <div v-if="!skin.unlocked" class="lock-overlay">
+                      <span class="lock-icon">🔒</span>
+                    </div>
+                    <div v-if="skin.id === selectedSkinId" class="selected-badge">
+                      ✓ EQUIPADA
+                    </div>
+                  </div>
+
+                  <div class="skin-info">
+                    <h3 class="skin-name">{{ skin.name }}</h3>
+                    <p class="skin-description">{{ skin.description }}</p>
+
+                    <div class="skin-rarity">
+                      <span :class="`rarity-badge ${skin.rarity}`">
+                        {{ getRarityLabel(skin.rarity) }}
+                      </span>
+                    </div>
+
+                    <div v-if="!skin.unlocked && skin.price" class="skin-price">
+                      💰 {{ skin.price }} Gold
+                    </div>
+                  </div>
+
+                  <div class="skin-actions">
+                    <button
+                      v-if="skin.unlocked && skin.id !== selectedSkinId"
+                      class="btn btn-equip"
+                      @click.stop="equipSkin(skin.id)"
+                    >
+                      Equipar
+                    </button>
+                    <button
+                      v-else-if="!skin.unlocked && skin.price"
+                      class="btn btn-purchase"
+                      @click.stop="purchaseSkin(skin.id)"
+                      :disabled="(authStore.user?.gold_balance || 0) < skin.price"
+                    >
+                      {{ (authStore.user?.gold_balance || 0) >= skin.price ? 'Comprar' : 'Sem Gold' }}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -223,78 +332,141 @@
             :class="['ui-tabs__pane', { 'ui-tabs__pane--active': activeTab === 'settings' }]"
           >
             <div class="settings-container">
+              <!-- Audio Settings -->
               <div class="settings-section">
-                <h3 class="settings-title">Preferências de Áudio</h3>
+                <h3 class="settings-section-title">🔊 ÁUDIO</h3>
+
                 <div class="setting-item">
-                  <label class="setting-label">Música</label>
+                  <label class="setting-label">
+                    <span class="label-icon">🎵</span>
+                    <span class="label-text">Volume da Música</span>
+                    <span class="label-value">{{ musicVolume }}%</span>
+                  </label>
                   <input
                     type="range"
-                    class="setting-slider"
-                    v-model="settings.musicVolume"
                     min="0"
                     max="100"
-                  >
+                    v-model.number="musicVolume"
+                    @input="handleMusicVolumeChange"
+                    class="volume-slider"
+                  />
                 </div>
+
                 <div class="setting-item">
-                  <label class="setting-label">Efeitos Sonoros</label>
+                  <label class="setting-label">
+                    <span class="label-icon">🔔</span>
+                    <span class="label-text">Volume dos Efeitos</span>
+                    <span class="label-value">{{ sfxVolume }}%</span>
+                  </label>
                   <input
                     type="range"
-                    class="setting-slider"
-                    v-model="settings.sfxVolume"
                     min="0"
                     max="100"
-                  >
+                    v-model.number="sfxVolume"
+                    @input="handleSfxVolumeChange"
+                    class="volume-slider"
+                  />
                 </div>
               </div>
 
+              <!-- Graphics Settings -->
               <div class="settings-section">
-                <h3 class="settings-title">Preferências de Jogo</h3>
+                <h3 class="settings-section-title">🎨 GRÁFICOS</h3>
+
                 <div class="setting-item">
-                  <label class="setting-label">Dificuldade</label>
-                  <select class="setting-select" v-model="settings.difficulty">
-                    <option value="easy">Fácil</option>
-                    <option value="normal">Normal</option>
-                    <option value="hard">Difícil</option>
-                  </select>
+                  <label class="setting-label">
+                    <span class="label-icon">✨</span>
+                    <span class="label-text">Qualidade Gráfica</span>
+                  </label>
+                  <div class="quality-options">
+                    <button
+                      v-for="quality in graphicsQualities"
+                      :key="quality.value"
+                      :class="['quality-btn', { active: graphicsQuality === quality.value }]"
+                      @click="setGraphicsQuality(quality.value)"
+                    >
+                      {{ quality.label }}
+                    </button>
+                  </div>
                 </div>
-                <div class="setting-item checkbox">
-                  <input
-                    type="checkbox"
-                    id="fullscreen-toggle"
-                    class="setting-checkbox"
-                    v-model="settings.fullscreen"
+
+                <div class="setting-item">
+                  <label class="setting-label">
+                    <span class="label-icon">⭐</span>
+                    <span class="label-text">Partículas</span>
+                  </label>
+                  <button
+                    :class="['toggle-btn', { active: particlesEnabled }]"
+                    @click="particlesEnabled = !particlesEnabled; saveGameSettings()"
                   >
-                  <label class="setting-label" for="fullscreen-toggle">Modo Tela Cheia</label>
+                    {{ particlesEnabled ? 'Ativado' : 'Desativado' }}
+                  </button>
+                </div>
+
+                <div class="setting-item">
+                  <label class="setting-label">
+                    <span class="label-icon">💫</span>
+                    <span class="label-text">Efeitos Visuais</span>
+                  </label>
+                  <button
+                    :class="['toggle-btn', { active: visualEffects }]"
+                    @click="visualEffects = !visualEffects; saveGameSettings()"
+                  >
+                    {{ visualEffects ? 'Ativado' : 'Desativado' }}
+                  </button>
                 </div>
               </div>
 
+              <!-- Gameplay Settings -->
               <div class="settings-section">
-                <h3 class="settings-title">Privacidade</h3>
-                <div class="setting-item checkbox">
-                  <input
-                    type="checkbox"
-                    id="public-profile-toggle"
-                    class="setting-checkbox"
-                    v-model="settings.publicProfile"
+                <h3 class="settings-section-title">🎮 GAMEPLAY</h3>
+
+                <div class="setting-item">
+                  <label class="setting-label">
+                    <span class="label-icon">🎯</span>
+                    <span class="label-text">Mostrar FPS</span>
+                  </label>
+                  <button
+                    :class="['toggle-btn', { active: showFPS }]"
+                    @click="showFPS = !showFPS; saveGameSettings()"
                   >
-                  <label class="setting-label" for="public-profile-toggle">Perfil Público</label>
+                    {{ showFPS ? 'Ativado' : 'Desativado' }}
+                  </button>
                 </div>
-                <div class="setting-item checkbox">
-                  <input
-                    type="checkbox"
-                    id="show-score-toggle"
-                    class="setting-checkbox"
-                    v-model="settings.showScore"
+
+                <div class="setting-item">
+                  <label class="setting-label">
+                    <span class="label-icon">📊</span>
+                    <span class="label-text">Mostrar Stats</span>
+                  </label>
+                  <button
+                    :class="['toggle-btn', { active: showStats }]"
+                    @click="showStats = !showStats; saveGameSettings()"
                   >
-                  <label class="setting-label" for="show-score-toggle">Mostrar Score no Ranking</label>
+                    {{ showStats ? 'Ativado' : 'Desativado' }}
+                  </button>
+                </div>
+
+                <div class="setting-item">
+                  <label class="setting-label">
+                    <span class="label-icon">⌨️</span>
+                    <span class="label-text">Dificuldade</span>
+                  </label>
+                  <div class="quality-options">
+                    <button
+                      v-for="diff in difficulties"
+                      :key="diff.value"
+                      :class="['quality-btn', { active: gameDifficulty === diff.value }]"
+                      @click="gameDifficulty = diff.value; saveGameSettings()"
+                    >
+                      {{ diff.label }}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div class="settings-actions">
-                <button class="ui-button ui-button--primary" @click="saveSettings">
-                  💾 SALVAR CONFIGURAÇÕES
-                </button>
-                <button class="ui-button ui-button--secondary" @click="resetSettings">
+                <button class="ui-button ui-button--secondary" @click="resetToDefaults">
                   🔄 RESTAURAR PADRÕES
                 </button>
               </div>
@@ -309,13 +481,35 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { playerAPI } from '@/services/api'
+import { StatisticsManager, type GameStatistics } from '@/game/Statistics'
+import { AchievementManager, type Achievement } from '@/game/Achievements'
+import { SkinManager, type Skin } from '@/game/Skins'
+import { SettingsManager, type GameSettings } from '@/game/Settings'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
 const player = ref<any>(null)
 const achievements = ref<any[]>([])
 const inventory = ref<any[]>([])
 const loadingAchievements = ref(false)
 const loadingInventory = ref(false)
 const activeTab = ref<'stats' | 'achievements' | 'inventory' | 'settings'>('stats')
+const stats = ref<GameStatistics>(StatisticsManager.getStatistics())
+const localAchievements = ref<Achievement[]>([])
+
+// Skins
+const skins = ref<Skin[]>([])
+const selectedSkinId = ref<string>('default')
+
+// Settings
+const musicVolume = ref(70)
+const sfxVolume = ref(80)
+const graphicsQuality = ref<'low' | 'medium' | 'high'>('high')
+const particlesEnabled = ref(true)
+const visualEffects = ref(true)
+const showFPS = ref(false)
+const showStats = ref(true)
+const gameDifficulty = ref<'easy' | 'normal' | 'hard'>('normal')
 
 // Wallet state
 const walletConnected = ref(false)
@@ -351,13 +545,159 @@ const progressPercentage = computed(() => {
   return (currentXP.value / 1000) * 100
 })
 
+const winRate = computed(() => {
+  if (stats.value.totalGamesPlayed === 0) return 0
+  return Math.round((stats.value.totalLevelsCompleted / stats.value.totalGamesPlayed) * 100)
+})
+
+const formatPlayTime = computed(() => {
+  return StatisticsManager.formatTime(stats.value.totalPlayTime)
+})
+
+const unlockedAchievementsCount = computed(() => {
+  return localAchievements.value.filter(a => a.unlocked).length
+})
+
+const achievementProgress = computed(() => {
+  if (localAchievements.value.length === 0) return 0
+  return Math.round((unlockedAchievementsCount.value / localAchievements.value.length) * 100)
+})
+
+// Graphics and Difficulty options
+const graphicsQualities = [
+  { value: 'low' as const, label: 'Baixa' },
+  { value: 'medium' as const, label: 'Média' },
+  { value: 'high' as const, label: 'Alta' }
+]
+
+const difficulties = [
+  { value: 'easy' as const, label: 'Fácil' },
+  { value: 'normal' as const, label: 'Normal' },
+  { value: 'hard' as const, label: 'Difícil' }
+]
+
 async function loadProfile() {
   try {
     const response = await playerAPI.getProfile()
     player.value = response.data.data
+
+    // Load local statistics
+    stats.value = StatisticsManager.getStatistics()
+
+    // Load local achievements
+    localAchievements.value = AchievementManager.getAchievements()
+
+    // Load skins
+    loadSkins()
+
+    // Load settings
+    loadGameSettings()
   } catch (err) {
     console.error('Failed to load profile:', err)
   }
+}
+
+// Skins functions
+function loadSkins() {
+  skins.value = SkinManager.getAllSkins()
+  const currentSkin = SkinManager.getSelectedSkin()
+  selectedSkinId.value = currentSkin.id
+}
+
+function getRarityLabel(rarity: string): string {
+  const labels: Record<string, string> = {
+    common: 'COMUM',
+    rare: 'RARA',
+    epic: 'ÉPICA',
+    legendary: 'LENDÁRIA'
+  }
+  return labels[rarity] || rarity.toUpperCase()
+}
+
+function handleSkinClick(skin: Skin) {
+  if (skin.unlocked) {
+    equipSkin(skin.id)
+  }
+}
+
+function equipSkin(skinId: string) {
+  if (SkinManager.selectSkin(skinId)) {
+    selectedSkinId.value = skinId
+    alert('Skin equipada com sucesso!')
+  }
+}
+
+function purchaseSkin(skinId: string) {
+  const skin = skins.value.find(s => s.id === skinId)
+  if (skin && skin.price) {
+    const currentGold = authStore.user?.gold_balance || 0
+    const result = SkinManager.purchaseSkin(skinId, currentGold)
+
+    if (result.success && result.newGold !== undefined) {
+      // Update user's gold balance
+      if (authStore.user) {
+        authStore.user.gold_balance = result.newGold
+      }
+      alert(`Skin comprada com sucesso! Novo saldo: ${result.newGold} Gold`)
+      loadSkins()
+    } else {
+      alert(result.error || 'Erro ao comprar skin')
+    }
+  }
+}
+
+// Settings functions
+function loadGameSettings() {
+  const settings = SettingsManager.getSettings()
+  musicVolume.value = settings.musicVolume
+  sfxVolume.value = settings.sfxVolume
+  graphicsQuality.value = settings.graphicsQuality
+  particlesEnabled.value = settings.particlesEnabled
+  visualEffects.value = settings.visualEffects
+  showFPS.value = settings.showFPS
+  showStats.value = settings.showStats
+  gameDifficulty.value = settings.difficulty
+}
+
+function saveGameSettings() {
+  const settings: GameSettings = {
+    musicVolume: musicVolume.value,
+    sfxVolume: sfxVolume.value,
+    graphicsQuality: graphicsQuality.value,
+    particlesEnabled: particlesEnabled.value,
+    visualEffects: visualEffects.value,
+    showFPS: showFPS.value,
+    showStats: showStats.value,
+    difficulty: gameDifficulty.value
+  }
+
+  SettingsManager.saveSettings(settings)
+}
+
+function handleMusicVolumeChange() {
+  saveGameSettings()
+}
+
+function handleSfxVolumeChange() {
+  saveGameSettings()
+}
+
+function setGraphicsQuality(quality: 'low' | 'medium' | 'high') {
+  graphicsQuality.value = quality
+  saveGameSettings()
+}
+
+function resetToDefaults() {
+  const defaults = SettingsManager.resetToDefaults()
+  musicVolume.value = defaults.musicVolume
+  sfxVolume.value = defaults.sfxVolume
+  graphicsQuality.value = defaults.graphicsQuality
+  particlesEnabled.value = defaults.particlesEnabled
+  visualEffects.value = defaults.visualEffects
+  showFPS.value = defaults.showFPS
+  showStats.value = defaults.showStats
+  gameDifficulty.value = defaults.difficulty
+  alert('Configurações restauradas para os padrões!')
 }
 
 async function loadAchievements() {
@@ -382,34 +722,6 @@ async function loadInventory() {
   } finally {
     loadingInventory.value = false
   }
-}
-
-function getItemIcon(category: string): string {
-  const icons: Record<string, string> = {
-    ship: '🚀',
-    weapon: '🔫',
-    shield: '🛡️',
-    background: '🌌',
-  }
-  return icons[category?.toLowerCase()] || '📦'
-}
-
-function saveSettings() {
-  localStorage.setItem('game_settings', JSON.stringify(settings.value))
-  alert('Configurações salvas com sucesso!')
-}
-
-function resetSettings() {
-  settings.value = {
-    musicVolume: 70,
-    sfxVolume: 70,
-    difficulty: 'normal',
-    fullscreen: false,
-    publicProfile: true,
-    showScore: true
-  }
-  localStorage.removeItem('game_settings')
-  alert('Configurações restauradas para os padrões!')
 }
 
 // Wallet functions
@@ -448,12 +760,6 @@ onMounted(() => {
   loadProfile()
   loadAchievements()
   loadInventory()
-
-  // Load settings from localStorage
-  const savedSettings = localStorage.getItem('game_settings')
-  if (savedSettings) {
-    settings.value = JSON.parse(savedSettings)
-  }
 
   // Check if wallet was previously connected
   const savedWallet = localStorage.getItem('wallet_address')
@@ -558,6 +864,405 @@ onMounted(() => {
   font-weight: bold;
   margin-top: 5px;
   text-transform: uppercase;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 12px;
+  color: #FFD700;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+/* Achievements Summary */
+.achievements-summary {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.summary-label {
+  font-size: 9px;
+  color: #aaa;
+}
+
+.summary-value {
+  font-size: 16px;
+  color: #FFD700;
+  font-weight: bold;
+}
+
+.summary-value.unlocked {
+  color: #00ff88;
+}
+
+/* Achievement Card Updates */
+.achievement-card {
+  opacity: 1;
+}
+
+.achievement-card.locked {
+  opacity: 0.5;
+  filter: grayscale(50%);
+}
+
+.achievement-card.unlocked {
+  border-color: rgba(0, 255, 136, 0.5);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.achievement-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-text {
+  font-size: 9px;
+  color: #888;
+}
+
+.gold-reward {
+  font-size: 9px;
+  color: #FFD700;
+  font-weight: bold;
+}
+
+.achievement-unlocked {
+  font-size: 9px;
+  color: #00ff88;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.achievement-locked {
+  font-size: 9px;
+  color: #888;
+  margin-top: 8px;
+}
+
+/* Skins Styles */
+.user-gold-display {
+  text-align: center;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 25px;
+}
+
+.gold-amount {
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.skins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.skin-card {
+  background: rgba(0, 255, 136, 0.05);
+  border: 2px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.skin-card:hover {
+  transform: translateY(-5px);
+  border-color: #00ff88;
+  box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3);
+}
+
+.skin-card.selected {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.1);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.skin-card.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.skin-card.locked:hover {
+  transform: none;
+}
+
+.skin-preview {
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.skin-preview img {
+  max-width: 80px;
+  height: auto;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.lock-icon {
+  font-size: 3rem;
+}
+
+.selected-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #FFD700;
+  color: #000;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.skin-name {
+  font-size: 12px;
+  color: #fff;
+  margin: 0 0 8px 0;
+}
+
+.skin-description {
+  font-size: 9px;
+  color: #aaa;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.skin-rarity {
+  margin-bottom: 10px;
+}
+
+.rarity-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.rarity-badge.common {
+  background: #888;
+  color: #fff;
+}
+
+.rarity-badge.rare {
+  background: #4169E1;
+  color: #fff;
+}
+
+.rarity-badge.epic {
+  background: #9370DB;
+  color: #fff;
+}
+
+.rarity-badge.legendary {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+}
+
+.skin-price {
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.skin-actions {
+  margin-top: 10px;
+}
+
+.btn-equip {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: linear-gradient(135deg, #00ff88, #00cc70);
+  color: #000;
+  font-size: 10px;
+}
+
+.btn-equip:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+}
+
+.btn-purchase {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  font-size: 10px;
+}
+
+.btn-purchase:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.btn-purchase:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Settings Styles */
+.settings-section-title {
+  font-size: 12px;
+  color: #00ff88;
+  margin: 0 0 20px 0;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.label-icon {
+  font-size: 14px;
+}
+
+.label-value {
+  color: #00ff88;
+  font-weight: bold;
+  min-width: 45px;
+  text-align: right;
+}
+
+.volume-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #00ff88;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #00ff88;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.quality-options {
+  display: flex;
+  gap: 10px;
+}
+
+.quality-btn {
+  flex: 1;
+  padding: 10px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 2px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+.quality-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+}
+
+.quality-btn.active {
+  background: linear-gradient(135deg, #00ff88, #00cc70);
+  border-color: #00ff88;
+  color: #000;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+}
+
+.toggle-btn {
+  width: 120px;
+  padding: 10px;
+  background: rgba(255, 68, 68, 0.2);
+  border: 2px solid rgba(255, 68, 68, 0.5);
+  color: #ff4444;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 68, 68, 0.3);
+  border-color: #ff4444;
+}
+
+.toggle-btn.active {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+  color: #00ff88;
 }
 
 /* Item styles */

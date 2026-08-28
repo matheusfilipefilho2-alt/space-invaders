@@ -1,27 +1,5 @@
 <template>
   <div class="shop-page">
-    <!-- Fixed Navigation Bar -->
-    <nav class="game-navbar">
-      <div class="navbar-container">
-        <router-link to="/game" class="navbar-btn navbar-btn-play">
-          <span class="navbar-icon">🚀</span>
-          <span class="navbar-text">JOGAR</span>
-        </router-link>
-        <router-link to="/profile" class="navbar-btn navbar-btn-profile">
-          <span class="navbar-icon">👨‍🚀</span>
-          <span class="navbar-text">PERFIL</span>
-        </router-link>
-        <router-link to="/leaderboard" class="navbar-btn navbar-btn-ranking">
-          <span class="navbar-icon">🏆</span>
-          <span class="navbar-text">RANKING</span>
-        </router-link>
-        <router-link to="/" class="navbar-btn navbar-btn-home">
-          <span class="navbar-icon">🏠</span>
-          <span class="navbar-text">INÍCIO</span>
-        </router-link>
-      </div>
-    </nav>
-
     <!-- Wallet UI Container -->
     <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
       <button v-if="!walletConnected" @click="connectWallet" class="wallet-btn">
@@ -35,12 +13,6 @@
     </div>
 
     <div class="shop-container">
-      <!-- Back Button -->
-      <router-link to="/" class="navbar-btn navbar-btn-home back-btn-header">
-        <span class="navbar-icon">←</span>
-        <span class="navbar-text">VOLTAR</span>
-      </router-link>
-
       <!-- Header da Loja -->
       <div class="shop-header">
         <h1 class="shop-title">🛍️ LOJA GALÁCTICA</h1>

@@ -21,46 +21,9 @@ func NewPostgresConnection(dsn string) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Auto-migrate all 10 entities from Fase 0
-	log.Println("Starting auto-migration of domain entities...")
-
-	// Note: League entity temporarily excluded due to GORM migration issue
-	// The table exists and works fine, just can't be auto-migrated
-	err = db.AutoMigrate(
-		// Core entities
-		&entity.Player{},
-		// &entity.League{}, // Skipped - causes "insufficient arguments" error in GORM
-		&entity.Item{},
-		&entity.PlayerItem{},
-		&entity.Achievement{},
-		&entity.PlayerAchievement{},
-
-		// Economy entities
-		&entity.TreasuryConfig{},
-		&entity.GoldSpaceConversion{},
-		&entity.DailyEmission{},
-		&entity.RewardHistory{},
-		&entity.Order{},
-
-		// Battle Pass entities (Fase 3)
-		&entity.BattlePassSeason{},
-		&entity.BattlePassProgress{},
-		&entity.BattlePassReward{},
-		&entity.BattlePassPurchase{},
-
-		// NFT entities (Fase 3)
-		&entity.NFT{},
-
-		// Migration support
-		&entity.UUIDMapping{},
-	)
-
-	if err != nil {
-		log.Printf("Auto-migration failed: %v", err)
-		return nil, err
-	}
-
-	log.Println("Auto-migration completed successfully")
+	// Auto-migration disabled - using goose migrations instead
+	// The database schema is managed by SQL migrations in database/migrations/
+	log.Println("Database connection established (schema managed by goose migrations)")
 
 	// Seed Treasury Config if empty
 	var treasuryCount int64

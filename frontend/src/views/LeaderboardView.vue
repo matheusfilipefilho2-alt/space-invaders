@@ -39,16 +39,22 @@
     <!-- Tab Navigation -->
     <div class="tabs">
       <button
-        :class="{ active: activeTab === 'league' }"
-        @click="activeTab = 'league'"
+        :class="{ active: activeTab === 'local' }"
+        @click="activeTab = 'local'"
       >
-        {{ leaderboardStore.currentLeague?.icon }} My League
+        🎮 Local Scores
       </button>
       <button
         :class="{ active: activeTab === 'global' }"
         @click="activeTab = 'global'"
       >
         🌍 Global
+      </button>
+      <button
+        :class="{ active: activeTab === 'league' }"
+        @click="activeTab = 'league'"
+      >
+        {{ leaderboardStore.currentLeague?.icon }} My League
       </button>
       <button
         :class="{ active: activeTab === 'leagues' }"
@@ -70,6 +76,64 @@
       <button @click="leaderboardStore.initialize()" class="retry-btn">
         🔄 Retry
       </button>
+    </div>
+
+    <!-- Local Leaderboard Tab -->
+    <div v-else-if="activeTab === 'local'" class="leaderboard-content">
+      <h3>🎮 Pontuações Locais</h3>
+      <div class="leaderboard-table">
+        <div class="table-header">
+          <span class="rank-col">Rank</span>
+          <span class="player-col">Jogador</span>
+          <span class="score-col">Score</span>
+          <span class="level-col">Nível</span>
+          <span class="date-col">Data</span>
+        </div>
+        <div
+          v-for="(entry, index) in localLeaderboard"
+          :key="entry.id"
+          class="table-row"
+        >
+          <span class="rank-col">
+            <span v-if="index === 0" class="medal">🥇</span>
+            <span v-else-if="index === 1" class="medal">🥈</span>
+            <span v-else-if="index === 2" class="medal">🥉</span>
+            <span v-else>#{{ index + 1 }}</span>
+          </span>
+          <span class="player-col">
+            {{ entry.playerName }}
+          </span>
+          <span class="score-col">{{ formatNumber(entry.score) }}</span>
+          <span class="level-col">Nv{{ entry.level }}</span>
+          <span class="date-col">{{ formatDate(entry.date) }}</span>
+        </div>
+        <div v-if="localLeaderboard.length === 0" class="empty-state">
+          <p>Nenhuma pontuação registrada ainda.</p>
+          <p>Jogue para aparecer aqui!</p>
+        </div>
+      </div>
+
+      <div class="stats-summary">
+        <h4>📊 Resumo das Estatísticas</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">Total de Jogos:</span>
+            <span class="stat-value">{{ localLeaderboard.length }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Melhor Score:</span>
+            <span class="stat-value">{{ formatNumber(getBestScore()) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Score Médio:</span>
+            <span class="stat-value">{{ formatNumber(getAverageScore()) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Maior Nível:</span>
+            <span class="stat-value">Nv{{ getHighestLevel() }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- League Leaderboard Tab -->
@@ -177,14 +241,21 @@
 import { ref, onMounted } from 'vue'
 import { useLeaderboardStore } from '@/stores/leaderboard'
 import { useAuthStore } from '@/stores/auth'
+import { LeaderboardManager, type LeaderboardEntry } from '@/game/Leaderboard'
 
 const leaderboardStore = useLeaderboardStore()
 const authStore = useAuthStore()
-const activeTab = ref<'league' | 'global' | 'leagues'>('league')
+const activeTab = ref<'local' | 'league' | 'global' | 'leagues'>('local')
+const localLeaderboard = ref<LeaderboardEntry[]>([])
 
 onMounted(async () => {
+  loadLocalLeaderboard()
   await leaderboardStore.initialize()
 })
+
+function loadLocalLeaderboard() {
+  localLeaderboard.value = LeaderboardManager.getLeaderboard()
+}
 
 function isCurrentUser(username: string): boolean {
   return authStore.user?.username === username
@@ -197,6 +268,31 @@ function getLeagueIcon(leagueId: number | undefined): string {
 
 function formatNumber(num: number): string {
   return new Intl.NumberFormat().format(num)
+}
+
+function formatDate(timestamp: number): string {
+  const date = new Date(timestamp)
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+function getBestScore(): number {
+  if (localLeaderboard.value.length === 0) return 0
+  return Math.max(...localLeaderboard.value.map(e => e.score))
+}
+
+function getAverageScore(): number {
+  if (localLeaderboard.value.length === 0) return 0
+  const total = localLeaderboard.value.reduce((sum, e) => sum + e.score, 0)
+  return Math.round(total / localLeaderboard.value.length)
+}
+
+function getHighestLevel(): number {
+  if (localLeaderboard.value.length === 0) return 0
+  return Math.max(...localLeaderboard.value.map(e => e.level))
 }
 
 function switchToLeague(leagueId: number) {
@@ -368,7 +464,7 @@ function switchToLeague(leagueId: number) {
 
 .table-header, .table-row {
   display: grid;
-  grid-template-columns: 80px 1fr 150px 100px;
+  grid-template-columns: 80px 1fr 150px 100px 120px;
   padding: 1rem;
   gap: 1rem;
   align-items: center;
@@ -419,7 +515,7 @@ function switchToLeague(leagueId: number) {
   font-weight: bold;
 }
 
-.score-col, .games-col, .league-col {
+.score-col, .games-col, .league-col, .level-col, .date-col {
   text-align: center;
 }
 
@@ -427,6 +523,49 @@ function switchToLeague(leagueId: number) {
   text-align: center;
   padding: 3rem;
   color: #a0aec0;
+}
+
+/* Stats Summary */
+.stats-summary {
+  margin-top: 2rem;
+  background: #2d3748;
+  border: 2px solid #4a5568;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.stats-summary h4 {
+  color: #ffd700;
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  background: #1a202c;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #4a5568;
+}
+
+.stat-label {
+  display: block;
+  color: #a0aec0;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  display: block;
+  color: #ffd700;
+  font-size: 1.3rem;
+  font-weight: bold;
 }
 
 /* Leagues Grid */
@@ -501,10 +640,14 @@ function switchToLeague(leagueId: number) {
   }
 
   .table-header, .table-row {
-    grid-template-columns: 60px 1fr 120px 80px;
+    grid-template-columns: 60px 1fr 100px 70px 90px;
     padding: 0.75rem;
     gap: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+  }
+
+  .date-col {
+    display: none;
   }
 
   .leagues-grid {

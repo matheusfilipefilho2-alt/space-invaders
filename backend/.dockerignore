@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Testing
+coverage.out
+*.test
+test_api.sh
+test/
+
+# Documentation
+docs/
+*.md
+README.md
+
+# Development
+dev/
+bin/
+tmp/
+
+# Kubernetes & Helm
+k8s/
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies (will be downloaded during build)
+vendor/

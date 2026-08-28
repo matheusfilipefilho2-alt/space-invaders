@@ -23,12 +23,16 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { GameEngine } from '@/game/GameEngine'
 import type { GameStats } from '@/game/types'
+import { ensureAuthenticated } from '@/utils/ensureAuth'
 
 const emit = defineEmits<{
   scoreChange: [score: number]
   livesChange: [lives: number]
   levelChange: [level: number]
   gameOver: [stats: GameStats]
+  comboChange: [combo: number]
+  achievementUnlocked: [achievements: any[]]
+  leaderboardEntry: [data: { rank: number; isPersonalBest: boolean; score: number }]
 }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -58,6 +62,18 @@ onMounted(() => {
       gameState.value = 'GAME_OVER'
       emit('gameOver', stats)
     })
+
+    gameEngine.value.on('comboChange', (combo: number) => {
+      emit('comboChange', combo)
+    })
+
+    gameEngine.value.on('achievementUnlocked', (achievements: any[]) => {
+      emit('achievementUnlocked', achievements)
+    })
+
+    gameEngine.value.on('leaderboardEntry', (data: { rank: number; isPersonalBest: boolean; score: number }) => {
+      emit('leaderboardEntry', data)
+    })
   }
 })
 
@@ -65,7 +81,15 @@ onUnmounted(() => {
   gameEngine.value?.destroy()
 })
 
-function startGame() {
+async function startGame() {
+  // Ensure user is authenticated before starting game
+  const isAuthenticated = await ensureAuthenticated()
+
+  if (!isAuthenticated) {
+    console.warn('⚠️ Failed to authenticate. Some features may not work (achievements, backend sync).')
+    // Continue anyway for offline mode
+  }
+
   gameState.value = 'PLAYING'
   gameEngine.value?.start()
 }
@@ -77,7 +101,8 @@ function restartGame() {
 
 defineExpose({
   startGame,
-  restartGame
+  restartGame,
+  getGameEngine: () => gameEngine.value
 })
 </script>
 

@@ -1,7 +1,7 @@
 <template>
   <div class="start-screen screen">
     <!-- Wallet UI Container -->
-    <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+    <div class="header-wallet" style="position: fixed; top: 10px; right: 10px; z-index: 1000">
       <button v-if="!walletConnected" @click="connectWallet" class="wallet-btn">
         <span>🔗</span> CONECTAR WALLET
       </button>
@@ -20,12 +20,14 @@
             class="title-word space-word"
             data-text="SPACE"
             style="font-size: 100px; display: block; margin-bottom: 20px"
-          >SPACE</span>
+            >SPACE</span
+          >
           <span
             class="title-word invaders-word"
             data-text="INVADERS"
             style="font-size: 100px; display: block"
-          >INVADERS</span>
+            >INVADERS</span
+          >
         </h1>
         <div class="title-scanlines"></div>
         <div class="title-glow"></div>
@@ -35,56 +37,22 @@
       <p class="game-subtitle">DEFEND EARTH FROM ALIEN INVASION</p>
 
       <!-- Menu de botões AUTENTICADO -->
-      <div v-if="authStore.isAuthenticated" class="menu-buttons action-buttons menu-buttons-enhanced" id="main-menu-buttons">
+      <div
+        v-if="authStore.isAuthenticated"
+        class="menu-buttons action-buttons menu-buttons-enhanced"
+        id="main-menu-buttons"
+      >
         <!-- Mensagem de boas-vindas -->
-        <p style="color: #FFD700; font-size: 14px; margin-bottom: 20px; text-shadow: 0 0 10px #FFD700;">
+        <p
+          style="
+            color: #ffd700;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ffd700;
+          "
+        >
           WELCOME BACK, {{ authStore.user?.username?.toUpperCase() }}!
         </p>
-
-        <!-- Botão Jogar -->
-        <div class="button-with-badge">
-          <router-link to="/game" class="button-play primary-action">
-            <span class="button-icon">🚀</span>
-            START GAME
-          </router-link>
-        </div>
-
-        <!-- Botão PvP Arena -->
-        <div class="button-with-badge">
-          <router-link to="/pvp" class="button-pvp pvp-action">
-            <span class="button-icon">⚔️</span>
-            PVP ARENA
-          </router-link>
-        </div>
-
-        <!-- Botão Perfil -->
-        <div class="button-with-badge">
-          <router-link to="/profile" class="button-view-ranking secondary-action">
-            <span class="button-icon">👤</span>
-            PROFILE
-          </router-link>
-        </div>
-
-        <!-- Menu secundário -->
-        <div class="button-with-badge">
-          <router-link to="/leaderboard" class="button-view-ranking secondary-action">
-            <span class="button-icon">🏆</span>
-            RANKING
-          </router-link>
-        </div>
-
-        <div class="button-with-badge">
-          <router-link to="/shop" class="button-view-ranking secondary-action">
-            <span class="button-icon">🛍️</span>
-            LOJA
-          </router-link>
-        </div>
-
-        <!-- Botão Logout -->
-        <button @click="handleLogout" class="button-view-ranking secondary-action" style="background: #FF4757; border-color: #FF4757;">
-          <span class="button-icon">🚪</span>
-          LOGOUT
-        </button>
       </div>
 
       <!-- Menu de botões NÃO AUTENTICADO -->
@@ -126,12 +94,8 @@
     <!-- Footer -->
     <div class="footer-container">
       <div class="footer-line"></div>
-      <span class="footer-text">
-        DEVELOPED BY MATHEUSIN v2.0
-      </span>
-      <div class="footer-stars">
-        <span>✦</span><span>✧</span><span>✦</span>
-      </div>
+      <span class="footer-text"> DEVELOPED BY MATHEUSIN v2.0 </span>
+      <div class="footer-stars"><span>✦</span><span>✧</span><span>✦</span></div>
     </div>
   </div>
 </template>
@@ -187,7 +151,7 @@ const disconnectWallet = () => {
   walletAddress.value = ''
   localStorage.removeItem('wallet_address')
   if ((window as any).solana) {
-    (window as any).solana.disconnect()
+    ;(window as any).solana.disconnect()
   }
   console.log('Wallet desconectada')
 }
@@ -277,7 +241,7 @@ const handleLogout = () => {
 
 .wallet-display {
   background: rgba(0, 0, 0, 0.8);
-  border: 2px solid #FFD700;
+  border: 2px solid #ffd700;
   border-radius: 12px;
   padding: 10px 15px;
   display: flex;
@@ -294,12 +258,12 @@ const handleLogout = () => {
 }
 
 .wallet-address {
-  color: #FFD700;
+  color: #ffd700;
   font-size: 9px;
 }
 
 .wallet-disconnect-btn {
-  background: #FF4757;
+  background: #ff4757;
   border: none;
   border-radius: 50%;
   width: 24px;
