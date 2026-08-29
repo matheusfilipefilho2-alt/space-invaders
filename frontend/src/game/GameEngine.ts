@@ -506,6 +506,7 @@ export class GameEngine {
     if (this.isBossLevel) {
       // Boss level - complete when boss defeated
       if (this.boss && this.boss.isDefeated() && !this.levelCompletePending) {
+        console.log(`🏆 Boss defeated detected in update loop! Level ${this.stats.level}`)
         this.levelCompletePending = true
         // Delay is handled in checkCollisions with explosions
       }
@@ -729,6 +730,7 @@ export class GameEngine {
 
           // Check if boss defeated
           if (this.boss.isDefeated() && !this.levelCompletePending) {
+            console.log(`💥 Boss killed by projectile! Level ${this.stats.level}, pending: ${this.levelCompletePending}`)
             this.levelCompletePending = true
             const reward = this.boss.getReward()
 
@@ -1034,11 +1036,14 @@ export class GameEngine {
   }
 
   private levelComplete(): void {
+    console.log(`🎯 levelComplete() called! Current level: ${this.stats.level}, pending flag: ${this.levelCompletePending}`)
+
     // Reset flag
     this.levelCompletePending = false
 
     // Increment level
     this.stats.level++
+    console.log(`📈 Level incremented to: ${this.stats.level}`)
     this.emit('levelChange', this.stats.level)
 
     // Play next level sound and change music
