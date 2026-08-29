@@ -220,7 +220,11 @@ function formatNumber(value: number): string {
 }
 
 function formatDate(dateString: string): string {
+  if (!dateString) return '-'
+
   const date = new Date(dateString)
+  if (isNaN(date.getTime())) return '-'
+
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
