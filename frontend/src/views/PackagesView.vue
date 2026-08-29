@@ -158,25 +158,25 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id" :class="'status-' + order.status">
-                <td>{{ formatDate(order.created_at) }}</td>
-                <td>{{ getPackageName(order.package_id) }}</td>
-                <td class="gold-amount">{{ formatNumber(order.gold_amount) }} 🪙</td>
+              <tr v-for="order in orders" :key="order.id" :class="'status-' + order.status.toLowerCase()">
+                <td>{{ formatDate(order.createdAt) }}</td>
+                <td>{{ getPackageName(order.packageId) }}</td>
+                <td class="gold-amount">{{ formatNumber(order.goldAmount) }} 🪙</td>
                 <td>{{ shopStore.formatPrice(order.amount) }}</td>
                 <td>
-                  <span class="status-badge" :class="order.status">
+                  <span class="status-badge" :class="order.status.toLowerCase()">
                     {{ order.status }}
                   </span>
                 </td>
                 <td>
                   <button
-                    v-if="order.status === 'pending' && !shopStore.isPixExpired(order.pix_expiration)"
+                    v-if="order.status === 'PENDING' && order.expiresAt && new Date(order.expiresAt) > new Date()"
                     @click="viewOrder(order)"
                     class="btn-view"
                   >
                     View PIX
                   </button>
-                  <span v-else-if="order.status === 'completed'" class="completed-text">
+                  <span v-else-if="order.status === 'COMPLETED'" class="completed-text">
                     Completed ✓
                   </span>
                   <span v-else class="expired-text">Expired</span>

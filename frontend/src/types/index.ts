@@ -102,17 +102,18 @@ export interface ShopPackage {
 
 export interface Order {
   id: number
-  player_id: number
-  package_id: string
+  playerId: number
+  packageId: string
   amount: number // Price in cents
-  gold_amount: number
-  status: 'pending' | 'completed' | 'expired' | 'cancelled'
-  pix_code?: string // PIX copy-paste code
-  pix_qr_code?: string // PIX QR code base64
-  pix_expiration?: string
-  abacatepay_order_id?: string
-  completed_at?: string
-  expired_at?: string
+  goldAmount: number
+  status: 'PENDING' | 'COMPLETED' | 'EXPIRED' | 'CANCELLED'
+  pixCode?: string // PIX copy-paste code
+  qrCodeUrl?: string // PIX QR code URL
+  expiresAt?: string
+  externalId?: string // AbacatePay order ID
+  completedAt?: string
+  createdAt: string
+  updatedAt: string
   created_at: string
   updated_at: string
 }
