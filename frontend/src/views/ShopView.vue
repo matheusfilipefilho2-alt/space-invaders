@@ -671,6 +671,40 @@ function getStatusLabel(status: string): string {
   return labels[status] || status
 }
 
+// Load orders from API
+async function loadOrders() {
+  try {
+    ordersLoading.value = true
+    const response = await shopAPI.getOrders(10, 0)
+    orders.value = response.data.data
+    ordersPage.value = 0
+    hasMoreOrders.value = response.data.data.length === 10
+  } catch (err) {
+    console.error('Failed to load orders:', err)
+    showResult('Erro', 'Falha ao carregar pedidos. Tente novamente.')
+  } finally {
+    ordersLoading.value = false
+  }
+}
+
+// Load more orders (pagination)
+async function loadMoreOrders() {
+  try {
+    ordersLoading.value = true
+    const nextPage = ordersPage.value + 10
+    const response = await shopAPI.getOrders(10, nextPage)
+    const newOrders = response.data.data
+
+    orders.value = [...orders.value, ...newOrders]
+    ordersPage.value = nextPage
+    hasMoreOrders.value = newOrders.length === 10
+  } catch (err) {
+    console.error('Failed to load more orders:', err)
+  } finally {
+    ordersLoading.value = false
+  }
+}
+
 onMounted(() => {
   loadItems()
 
