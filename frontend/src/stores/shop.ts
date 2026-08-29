@@ -13,15 +13,15 @@ export const useShopStore = defineStore('shop', () => {
 
   // Computed
   const pendingOrders = computed(() =>
-    orders.value.filter((o) => o.status === 'pending')
+    orders.value.filter((o) => o.status === 'PENDING')
   )
 
   const completedOrders = computed(() =>
-    orders.value.filter((o) => o.status === 'completed')
+    orders.value.filter((o) => o.status === 'COMPLETED')
   )
 
   const expiredOrders = computed(() =>
-    orders.value.filter((o) => o.status === 'expired')
+    orders.value.filter((o) => o.status === 'EXPIRED')
   )
 
   // Helper: Format price in BRL
