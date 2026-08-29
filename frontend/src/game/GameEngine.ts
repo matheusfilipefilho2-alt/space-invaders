@@ -394,7 +394,8 @@ export class GameEngine {
   }
 
   private update(deltaTime: number): void {
-    if (!this.player || !this.invaderGrid) return
+    // Player must exist, but invaderGrid can be null in boss levels
+    if (!this.player) return
 
     // Apply slowmo effect to deltaTime for enemies
     const slowmoFactor = this.isPowerUpActive('slowmo') ? 0.5 : 1.0
