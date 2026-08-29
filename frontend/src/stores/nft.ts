@@ -1,8 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+import { nftAPI } from '@/services/api'
 
 export interface NFT {
   id: number
@@ -130,10 +128,7 @@ export const useNFTStore = defineStore('nft', () => {
     error.value = null
 
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_BASE_URL}/api/v1/nfts`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const response = await nftAPI.list()
 
       if (response.data.success && response.data.data) {
         nfts.value = response.data.data
@@ -154,10 +149,7 @@ export const useNFTStore = defineStore('nft', () => {
     error.value = null
 
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_BASE_URL}/api/v1/nfts/${nftId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const response = await nftAPI.getById(nftId)
 
       if (response.data.success && response.data.data) {
         selectedNFT.value = response.data.data
@@ -178,17 +170,12 @@ export const useNFTStore = defineStore('nft', () => {
     error.value = null
 
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.post(
-        `${API_BASE_URL}/api/v1/nfts/mint`,
-        {
-          name,
-          description,
-          rarity,
-          attributes
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      const response = await nftAPI.mint({
+        name,
+        description,
+        rarity,
+        attributes
+      })
 
       if (response.data.success && response.data.data.nft) {
         // Add new NFT to the list

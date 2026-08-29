@@ -23,6 +23,17 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // Log request details for debugging
+  if (config.url?.includes('/shop/orders')) {
+    console.log('API Request:', {
+      method: config.method,
+      url: config.url,
+      data: config.data,
+      headers: config.headers
+    })
+  }
+
   return config
 })
 
@@ -34,6 +45,22 @@ apiV2.interceptors.request.use((config) => {
   }
   return config
 })
+
+// Interceptor para capturar erros
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.config?.url?.includes('/shop/orders') && error.response?.status === 400) {
+      console.error('Shop Orders Error 400:', {
+        url: error.config.url,
+        data: error.config.data,
+        responseData: error.response.data,
+        responseHeaders: error.response.headers
+      })
+    }
+    return Promise.reject(error)
+  }
+)
 
 export default api
 
@@ -56,7 +83,7 @@ export const playerAPI = {
 // Game endpoints
 export const gameAPI = {
   start: () => api.post('/game/start'),
-  end: (score: number) => api.post('/game/end', { score })
+  end: (score: number, kills: number) => api.post('/game/end', { score, kills })
 }
 
 // Achievements endpoints
@@ -78,9 +105,9 @@ export const achievementAPI = {
 // Items endpoints
 export const itemAPI = {
   list: () => api.get('/items'),
-  purchase: (itemId: number) => api.post(`/items/${itemId}/purchase`),
-  equip: (itemId: number) => api.post(`/items/${itemId}/equip`),
-  unequip: (itemId: number) => api.post(`/items/${itemId}/unequip`)
+  purchase: (itemId: string) => api.post(`/items/${itemId}/purchase`),
+  equip: (itemId: string) => api.post(`/items/${itemId}/equip`),
+  unequip: (itemId: string) => api.post(`/items/${itemId}/unequip`)
 }
 
 // Leaderboard endpoints
@@ -103,9 +130,21 @@ export const conversionAPI = {
 // Shop endpoints (Gold purchase via PIX)
 export const shopAPI = {
   getPackages: () => api.get('/shop/packages'),
-  createOrder: (packageId: string) =>
-    api.post('/shop/orders', { package_id: packageId }),
+  createOrder: (packageId: string) => {
+    console.log('shopAPI.createOrder called with packageId:', packageId)
+    console.log('Request payload:', { packageId })
+    return api.post('/shop/orders', { packageId })
+  },
   getOrders: (limit = 10, offset = 0) =>
     api.get('/shop/orders', { params: { limit, offset } }),
-  getOrder: (id: number) => api.get(`/shop/orders/${id}`)
+  getOrder: (id: number) => api.get(`/shop/orders/${id}`),
+  simulatePayment: (orderId: number) => api.post(`/shop/orders/${orderId}/simulate-payment`)
+}
+
+// NFT endpoints
+export const nftAPI = {
+  list: () => api.get('/nfts'),
+  getById: (id: number) => api.get(`/nfts/${id}`),
+  mint: (data: { name: string; description: string; rarity: string; attributes: any }) =>
+    api.post('/nfts/mint', data)
 }
