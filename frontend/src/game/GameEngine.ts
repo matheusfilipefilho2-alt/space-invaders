@@ -502,9 +502,8 @@ export class GameEngine {
     // Check for wave/level completion
     if (this.isBossLevel) {
       // Boss level - complete when boss defeated
-      if (this.boss && this.boss.isDefeated()) {
-        this.levelComplete()
-      }
+      // Skip this check as levelComplete is already scheduled in checkCollisions with visual effects
+      // Removing this prevents double levelComplete() calls
     } else if (this.waveManager && this.invaderGrid) {
       // Wave-based level
       if (this.invaderGrid.isAllDead()) {
