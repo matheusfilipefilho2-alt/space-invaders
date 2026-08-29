@@ -705,7 +705,8 @@ export class GameEngine {
   }
 
   private checkCollisions(): void {
-    if (!this.player || !this.invaderGrid) return
+    // Player must exist, but invaderGrid can be null in boss levels
+    if (!this.player) return
 
     const playerProjectilesToRemove = new Set<number>()
     const enemyProjectilesToRemove = new Set<number>()
