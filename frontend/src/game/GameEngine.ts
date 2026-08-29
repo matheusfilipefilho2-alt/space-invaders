@@ -304,11 +304,9 @@ export class GameEngine {
 
     // Check if this is a boss level (level 2, then every 5 levels: 7, 12, 17, etc.)
     this.isBossLevel = this.stats.level === 2 || (this.stats.level > 2 && (this.stats.level - 2) % 5 === 0)
-    console.log(`🎮 Starting level ${this.stats.level}, isBossLevel: ${this.isBossLevel}`)
 
     if (this.isBossLevel) {
       // Spawn boss instead of invader grid
-      console.log(`👾 Spawning boss for level ${this.stats.level}`)
       this.boss = new Boss(this.config.canvasWidth, this.config.canvasHeight, this.stats.level)
       this.invaderGrid = null
       this.waveManager = null
@@ -509,7 +507,6 @@ export class GameEngine {
     if (this.isBossLevel) {
       // Boss level - complete when boss defeated
       if (this.boss && this.boss.isDefeated() && !this.levelCompletePending) {
-        console.log(`🏆 Boss defeated detected in update loop! Level ${this.stats.level}`)
         this.levelCompletePending = true
         // Delay is handled in checkCollisions with explosions
       }
@@ -734,7 +731,6 @@ export class GameEngine {
 
           // Check if boss defeated
           if (this.boss.isDefeated() && !this.levelCompletePending) {
-            console.log(`💥 Boss killed by projectile! Level ${this.stats.level}, pending: ${this.levelCompletePending}`)
             this.levelCompletePending = true
             const reward = this.boss.getReward()
 
@@ -1040,14 +1036,11 @@ export class GameEngine {
   }
 
   private levelComplete(): void {
-    console.log(`🎯 levelComplete() called! Current level: ${this.stats.level}, pending flag: ${this.levelCompletePending}`)
-
     // Reset flag
     this.levelCompletePending = false
 
     // Increment level
     this.stats.level++
-    console.log(`📈 Level incremented to: ${this.stats.level}`)
     this.emit('levelChange', this.stats.level)
 
     // Play next level sound and change music
@@ -1056,11 +1049,9 @@ export class GameEngine {
 
     // Check if next level is a boss level (level 2, then every 5 levels: 7, 12, 17, etc.)
     this.isBossLevel = this.stats.level === 2 || (this.stats.level > 2 && (this.stats.level - 2) % 5 === 0)
-    console.log(`🔄 Level complete transition to ${this.stats.level}, isBossLevel: ${this.isBossLevel}`)
 
     if (this.isBossLevel) {
       // Spawn boss for boss level
-      console.log(`👾 Creating boss for level ${this.stats.level}`)
       this.boss = new Boss(this.config.canvasWidth, this.config.canvasHeight, this.stats.level)
       this.invaderGrid = null
       this.waveManager = null
