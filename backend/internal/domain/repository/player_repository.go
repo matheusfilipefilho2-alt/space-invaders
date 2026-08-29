@@ -23,6 +23,7 @@ type PlayerRepository interface {
 	UpdateSpaceBalance(ctx context.Context, playerID uint, delta int64) error
 	UpdateHighScore(ctx context.Context, playerID uint, newScore uint64) error
 	IncrementTotalGames(ctx context.Context, playerID uint) error
+	IncrementTotalKills(ctx context.Context, playerID uint, kills uint) error
 	UpdateLeague(ctx context.Context, playerID uint, leagueID uint) error
 
 	// Leaderboard queries

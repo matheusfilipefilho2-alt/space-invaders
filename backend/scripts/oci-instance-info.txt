@@ -1,0 +1,12 @@
+OCI Instance Information
+========================
+Instance ID: ocid1.instance.oc1.sa-saopaulo-1.antxeljrcqrjunqcdwhwm25smzliqz5vn5ec57jwb36sintsephsufphiyga
+Public IP: 152.67.55.84
+SSH Key: /Users/matheuscarmo/.ssh/space-invaders-oci
+SSH Command: ssh -i /Users/matheuscarmo/.ssh/space-invaders-oci opc@152.67.55.84
+
+VCN ID: ocid1.vcn.oc1.sa-saopaulo-1.amaaaaaacqrjunqauva7ubzgpu7rymvwrehrklywqfhodisvquyc7ymznvta
+Subnet ID: ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaaqzxbamjcr7huzgavw3xag2wqviyxgpw2hujdxsegcb2szjcjczya
+Security List ID: ocid1.securitylist.oc1.sa-saopaulo-1.aaaaaaaavtjnpvfpcajjrta7nvpo2uo4satmvrgi52zfhqhfs77lhmpa4leq
+
+Created: Fri Aug 28 20:55:56 -03 2026

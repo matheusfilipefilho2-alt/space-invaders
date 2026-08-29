@@ -23,9 +23,9 @@ func (r *itemRepository) Create(ctx context.Context, item *entity.Item) error {
 }
 
 // FindByID retrieves an item by ID
-func (r *itemRepository) FindByID(ctx context.Context, id uint) (*entity.Item, error) {
+func (r *itemRepository) FindByID(ctx context.Context, id string) (*entity.Item, error) {
 	var item entity.Item
-	err := r.db.WithContext(ctx).First(&item, id).Error
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&item).Error
 	if err != nil {
 		return nil, err
 	}

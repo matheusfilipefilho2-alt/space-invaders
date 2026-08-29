@@ -184,7 +184,8 @@ func (r *Router) Setup() *gin.Engine {
 		// Shop (Gold packages) - mixed public/protected
 		shop := v1.Group("/shop")
 		{
-			// Public - list packages
+			// Public - list items and packages
+			shop.GET("/items", r.shopHandler.ListItems)
 			shop.GET("/packages", r.shopHandler.ListPackages)
 		}
 
@@ -195,6 +196,8 @@ func (r *Router) Setup() *gin.Engine {
 			shopProtected.POST("/orders", r.shopHandler.CreateOrder)
 			shopProtected.GET("/orders", r.shopHandler.GetPlayerOrders)
 			shopProtected.GET("/orders/:id", r.shopHandler.GetOrder)
+			// Simulate payment (development/testing only)
+			shopProtected.POST("/orders/:id/simulate-payment", r.shopHandler.SimulatePayment)
 		}
 
 		// Battle Pass (mixed public/protected)

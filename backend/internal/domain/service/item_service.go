@@ -37,7 +37,7 @@ func (s *ItemService) GetPlayerItems(ctx context.Context, playerID uint) ([]*ent
 }
 
 // PurchaseItem allows a player to purchase an item with gold
-func (s *ItemService) PurchaseItem(ctx context.Context, playerID, itemID uint) error {
+func (s *ItemService) PurchaseItem(ctx context.Context, playerID uint, itemID string) error {
 	// 1. Check if item exists
 	item, err := s.itemRepo.FindByID(ctx, itemID)
 	if err != nil {
@@ -56,14 +56,17 @@ func (s *ItemService) PurchaseItem(ctx context.Context, playerID, itemID uint) e
 		return errors.New("player not found")
 	}
 
-	if player.GoldBalance < item.PriceGold {
-		return errors.New("insufficient gold balance")
-	}
+	// Check if item has a gold price and player has enough balance
+	if item.PriceGold != nil {
+		if player.GoldBalance < *item.PriceGold {
+			return errors.New("insufficient gold balance")
+		}
 
-	// 4. Deduct gold from player
-	player.GoldBalance -= item.PriceGold
-	if err := s.playerRepo.Update(ctx, player); err != nil {
-		return err
+		// 4. Deduct gold from player
+		player.GoldBalance -= *item.PriceGold
+		if err := s.playerRepo.Update(ctx, player); err != nil {
+			return err
+		}
 	}
 
 	// 5. Add item to player inventory (not equipped by default)
@@ -77,7 +80,7 @@ func (s *ItemService) PurchaseItem(ctx context.Context, playerID, itemID uint) e
 }
 
 // EquipItem equips an item for a player (only one item per category can be equipped)
-func (s *ItemService) EquipItem(ctx context.Context, playerID, itemID uint) error {
+func (s *ItemService) EquipItem(ctx context.Context, playerID uint, itemID string) error {
 	// 1. Check if player owns the item
 	playerItem, err := s.playerItemRepo.FindByPlayerAndItem(ctx, playerID, itemID)
 	if err != nil || playerItem == nil {
@@ -97,7 +100,7 @@ func (s *ItemService) EquipItem(ctx context.Context, playerID, itemID uint) erro
 }
 
 // UnequipItem unequips an item for a player
-func (s *ItemService) UnequipItem(ctx context.Context, playerID, itemID uint) error {
+func (s *ItemService) UnequipItem(ctx context.Context, playerID uint, itemID string) error {
 	// 1. Check if player owns the item
 	playerItem, err := s.playerItemRepo.FindByPlayerAndItem(ctx, playerID, itemID)
 	if err != nil || playerItem == nil {

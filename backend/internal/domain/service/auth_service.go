@@ -85,7 +85,7 @@ func (s *AuthService) Register(ctx context.Context, username, email, password st
 		Username:     username,
 		Email:        email,
 		PasswordHash: string(hashedPassword),
-		LeagueID:     1, // Start at Bronze (assuming league ID 1 is Bronze)
+		// LeagueID will be set when leagues are implemented
 	}
 
 	if err := s.playerRepo.Create(ctx, player); err != nil {

@@ -36,7 +36,7 @@ func (r *playerItemRepository) FindByPlayerID(ctx context.Context, playerID uint
 }
 
 // FindByPlayerAndItem retrieves a specific player item
-func (r *playerItemRepository) FindByPlayerAndItem(ctx context.Context, playerID, itemID uint) (*entity.PlayerItem, error) {
+func (r *playerItemRepository) FindByPlayerAndItem(ctx context.Context, playerID uint, itemID string) (*entity.PlayerItem, error) {
 	var playerItem entity.PlayerItem
 	err := r.db.WithContext(ctx).
 		Preload("Item").

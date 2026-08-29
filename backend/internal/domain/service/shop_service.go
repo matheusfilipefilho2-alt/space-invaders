@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/yourusername/space-invaders/internal/domain/entity"
@@ -74,13 +75,88 @@ func NewShopService(
 	}
 }
 
-// GetPackages returns all available Gold packages
+// GetPackages returns all available Gold packages from the items table
 func (s *ShopService) GetPackages() []GoldPackage {
-	return GoldPackages
+	// Fetch coin packs from items table
+	var items []entity.Item
+	err := s.db.
+		Where("category = ?", "coin_pack").
+		Where("is_active = ?", true).
+		Where("deleted_at IS NULL").
+		Order("price_real ASC").
+		Find(&items).Error
+
+	if err != nil {
+		log.Printf("Error fetching coin packs: %v", err)
+		// Fallback to hardcoded packages if DB fetch fails
+		return GoldPackages
+	}
+
+	log.Printf("Found %d coin pack items", len(items))
+
+	// Convert items to GoldPackage format
+	packages := make([]GoldPackage, 0, len(items))
+	for _, item := range items {
+		log.Printf("Processing item: %s, priceReal=%v, coinAmount=%v", item.ID, item.PriceReal, item.CoinAmount)
+		if item.PriceReal != nil && item.CoinAmount != nil {
+			packages = append(packages, GoldPackage{
+				ID:           item.ID,
+				Name:         item.Name,
+				Description:  item.Description,
+				GoldAmount:   *item.CoinAmount,
+				PriceInCents: uint64(*item.PriceReal * 100), // Convert BRL to cents
+			})
+		}
+	}
+
+	log.Printf("Returning %d packages", len(packages))
+
+	// If no items found, return hardcoded packages
+	if len(packages) == 0 {
+		return GoldPackages
+	}
+
+	return packages
+}
+
+// GetItems returns all active shop items from the database
+func (s *ShopService) GetItems(ctx context.Context) ([]entity.Item, error) {
+	var items []entity.Item
+	err := s.db.WithContext(ctx).
+		Where("is_active = ?", true).
+		Where("deleted_at IS NULL").
+		Order("category, name").
+		Find(&items).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch shop items: %w", err)
+	}
+
+	return items, nil
 }
 
 // GetPackage returns a specific package by ID
 func (s *ShopService) GetPackage(packageID string) (*GoldPackage, error) {
+	// Try to fetch from items table first
+	var item entity.Item
+	err := s.db.
+		Where("id = ?", packageID).
+		Where("category = ?", "coin_pack").
+		Where("is_active = ?", true).
+		Where("deleted_at IS NULL").
+		First(&item).Error
+
+	if err == nil && item.PriceReal != nil && item.CoinAmount != nil {
+		return &GoldPackage{
+			ID:           item.ID,
+			Name:         item.Name,
+			Description:  item.Description,
+			GoldAmount:   *item.CoinAmount,
+			PriceInCents: uint64(*item.PriceReal * 100), // Convert BRL to cents
+		}, nil
+	}
+
+	// Fallback to hardcoded packages
 	for _, pkg := range GoldPackages {
 		if pkg.ID == packageID {
 			return &pkg, nil

@@ -1,76 +1,41 @@
-# Database Seed Scripts
+# Space Invaders Backend - OCI Deployment Scripts
 
-Scripts for initializing and seeding the Space Invaders database.
+Scripts para provisionar e fazer deploy da aplicação no Oracle Cloud Infrastructure (OCI) usando free tier.
 
-## Available Scripts
+## 📋 Pré-requisitos
 
-### `seed_treasury.sql`
-Initializes treasury configuration with production-ready defaults.
+- OCI CLI instalado e configurado (`oci setup config`)
+- Conta Oracle Cloud com free tier disponível  
+- SSH configurado
 
-**What it does:**
-- Sets conversion ratio to 100:1 (100 Gold = 1 SPACE)
-- Sets revenue share to 30% for daily emission calculation
-- Sets max daily emission to 1,000 SPACE
-- Creates or updates the treasury config (singleton table)
+## 🚀 Uso Rápido
 
-**Usage:**
-```bash
-# Using psql
-psql -U postgres -d space_invaders -f scripts/seed_treasury.sql
-
-# Or using Docker
-docker exec -i postgres_container psql -U postgres -d space_invaders < scripts/seed_treasury.sql
-```
-
-**Environment Variables Required:**
-- `TREASURY_WALLET_PUBKEY` - Solana wallet address for treasury (set in .env)
-
-### `seed_test_data.sql`
-Creates test data for development and testing.
-
-**What it does:**
-- Creates test players with Gold balances
-- Creates sample conversion history
-- Creates sample daily emission records
-- Creates test PIX orders
-
-**Usage:**
-```bash
-psql -U postgres -d space_invaders -f scripts/seed_test_data.sql
-```
-
-⚠️ **Warning:** Only run this in development environments!
-
-## Running All Seeds
-
-To initialize a fresh database:
+### 1. Provisionar Instância no OCI
 
 ```bash
-# 1. Run migrations (GORM auto-migrate)
-go run cmd/http/main.go  # Will auto-migrate on startup
-
-# 2. Seed treasury config
-psql -U postgres -d space_invaders -f scripts/seed_treasury.sql
-
-# 3. (Optional) Seed test data for development
-psql -U postgres -d space_invaders -f scripts/seed_test_data.sql
+./scripts/provision-oci-instance.sh
 ```
 
-## Production Deployment
+Saída: IP público da instância e SSH key criado
 
-For production, only run `seed_treasury.sql` and ensure these environment variables are set:
+### 2. Configurar a Instância
 
 ```bash
-TREASURY_WALLET_PUBKEY=<your-solana-treasury-wallet>
-SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-SOLANA_NETWORK=mainnet-beta
-ABACATEPAY_API_KEY=<your-production-api-key>
+# Copiar e executar setup
+scp -i ~/.ssh/space-invaders-oci scripts/setup-instance.sh opc@IP:/tmp/
+ssh -i ~/.ssh/space-invaders-oci opc@IP "bash /tmp/setup-instance.sh"
 ```
 
-## Backup Before Seeding
-
-Always backup production data before running seed scripts:
+### 3. Deploy da Aplicação
 
 ```bash
-pg_dump -U postgres space_invaders > backup_$(date +%Y%m%d_%H%M%S).sql
+./scripts/deploy-oci.sh
 ```
+
+## 📝 Documentação Completa
+
+Consulte DEPLOY.md para instruções detalhadas.
+
+## 🌐 Acesso
+
+Após deploy: http://SEU_IP:8080

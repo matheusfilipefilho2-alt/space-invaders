@@ -63,7 +63,7 @@ type GameRewards struct {
 
 // EndGame finalizes a game session and processes rewards
 // Returns the gold and XP earned
-func (s *GameService) EndGame(ctx context.Context, playerID uint, score uint64) (*GameRewards, error) {
+func (s *GameService) EndGame(ctx context.Context, playerID uint, score uint64, kills uint) (*GameRewards, error) {
 	// Get player to check league and current stats
 	player, err := s.playerRepo.FindByID(ctx, playerID)
 	if err != nil {
@@ -71,7 +71,11 @@ func (s *GameService) EndGame(ctx context.Context, playerID uint, score uint64) 
 	}
 
 	// Calculate gold reward based on score and league
-	goldEarned := s.CalculateGoldReward(score, player.LeagueID)
+	leagueID := uint(0)
+	if player.LeagueID != nil {
+		leagueID = *player.LeagueID
+	}
+	goldEarned := s.CalculateGoldReward(score, leagueID)
 
 	// Add gold to player balance
 	err = s.playerRepo.UpdateGoldBalance(ctx, playerID, int64(goldEarned))
@@ -90,6 +94,12 @@ func (s *GameService) EndGame(ctx context.Context, playerID uint, score uint64) 
 
 	// Increment total games played
 	err = s.playerRepo.IncrementTotalGames(ctx, playerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update total kills (always update, even if 0)
+	err = s.playerRepo.IncrementTotalKills(ctx, playerID, kills)
 	if err != nil {
 		return nil, err
 	}

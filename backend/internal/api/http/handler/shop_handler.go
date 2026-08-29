@@ -2,7 +2,9 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yourusername/space-invaders/internal/api/http/middleware"
@@ -52,6 +54,24 @@ type CreateOrderRequest struct {
 	PackageID string `json:"packageId" binding:"required"`
 }
 
+// ListItems handles GET /api/v1/shop/items
+// @Summary List all shop items
+// @Description Get all active shop items from the catalog
+// @Tags shop
+// @Produce json
+// @Success 200 {object} response.SuccessResponse{data=[]entity.Item}
+// @Failure 500 {object} response.ErrorResponse
+// @Router /api/v1/shop/items [get]
+func (h *ShopHandler) ListItems(c *gin.Context) {
+	items, err := h.shopService.GetItems(c.Request.Context())
+	if err != nil {
+		response.InternalServerError(c, "Failed to fetch shop items")
+		return
+	}
+
+	response.OK(c, items)
+}
+
 // ListPackages handles GET /api/v1/shop/packages
 // @Summary List available Gold packages
 // @Description Get all available Gold packages for purchase
@@ -99,12 +119,16 @@ func (h *ShopHandler) CreateOrder(c *gin.Context) {
 
 	var req CreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Failed to bind JSON: %v", err)
 		response.BadRequest(c, "Invalid request: "+err.Error())
 		return
 	}
 
+	log.Printf("Creating order for player %d with packageID: %s", playerID, req.PackageID)
+
 	order, err := h.shopService.CreateOrder(c.Request.Context(), playerID, req.PackageID)
 	if err != nil {
+		log.Printf("Failed to create order: %v", err)
 		if errors.Is(err, service.ErrInvalidPackage) {
 			response.BadRequest(c, "Invalid package ID")
 			return
@@ -250,6 +274,80 @@ func (h *ShopHandler) AbacatePayWebhook(c *gin.Context) {
 	}
 
 	response.OK(c, gin.H{"message": "Webhook processed successfully"})
+}
+
+// SimulatePayment simulates a payment for testing (development only)
+// @Summary Simulate payment for testing
+// @Description Simulates a payment confirmation for a pending order (development/testing only)
+// @Tags shop
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Order ID"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /api/v1/shop/orders/{id}/simulate-payment [post]
+func (h *ShopHandler) SimulatePayment(c *gin.Context) {
+	playerID, ok := middleware.GetPlayerID(c)
+	if !ok {
+		response.Unauthorized(c, "Player ID not found in context")
+		return
+	}
+
+	orderID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, "Invalid order ID")
+		return
+	}
+
+	// Get order and verify ownership
+	order, err := h.shopService.GetOrder(c.Request.Context(), uint(orderID))
+	if err != nil {
+		if errors.Is(err, service.ErrOrderNotFound) {
+			response.NotFound(c, "Order not found")
+			return
+		}
+		response.InternalServerError(c, "Failed to fetch order")
+		return
+	}
+
+	// Verify the order belongs to the requesting player
+	if order.PlayerID != playerID {
+		response.Forbidden(c, "You don't have permission to simulate payment for this order")
+		return
+	}
+
+	// Simulate webhook payload
+	now := time.Now()
+	webhook := &external.WebhookPayload{
+		Event: "order.paid",
+	}
+	webhook.Data.ID = order.ExternalID
+	webhook.Data.Status = "PAID"
+	webhook.Data.Amount = order.Amount
+	webhook.Data.ExternalID = order.ExternalID
+	webhook.Data.PaidAt = &now
+
+	// Process the simulated webhook
+	if err := h.shopService.ProcessPaymentWebhook(c.Request.Context(), webhook); err != nil {
+		if errors.Is(err, service.ErrOrderNotFound) {
+			response.NotFound(c, "Order not found")
+			return
+		}
+		if errors.Is(err, service.ErrOrderPaid) {
+			response.BadRequest(c, "Order already paid")
+			return
+		}
+		response.InternalServerError(c, "Failed to process simulated payment")
+		return
+	}
+
+	response.OK(c, gin.H{
+		"message": "Payment simulated successfully",
+		"orderId": orderID,
+	})
 }
 
 // Helper functions

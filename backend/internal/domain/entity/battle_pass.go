@@ -65,8 +65,8 @@ type BattlePassReward struct {
 	RewardType  string `gorm:"not null;type:varchar(50)"` // gold, space, nft, item, achievement
 	GoldAmount  uint   `gorm:"default:0"`
 	SpaceAmount uint64 `gorm:"default:0"` // in lamports
-	ItemID      *uint  `gorm:"index"`
-	Item        *Item  `gorm:"foreignKey:ItemID"`
+	ItemID      *string `gorm:"type:text;index"`
+	Item        *Item   `gorm:"foreignKey:ItemID"`
 
 	// NFT reward (if applicable)
 	NFTCollectionID *uint  `gorm:"index"`

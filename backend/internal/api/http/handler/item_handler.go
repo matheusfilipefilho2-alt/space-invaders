@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,14 +22,23 @@ func NewItemHandler(itemService *service.ItemService) *ItemHandler {
 
 // ItemResponse represents an item in API responses
 type ItemResponse struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Category    string `json:"category"`
-	PriceGold   uint64 `json:"priceGold"`
-	PriceSpace  uint64 `json:"priceSpace"`
-	IconURL     string `json:"iconUrl"`
-	IsActive    bool   `json:"isActive"`
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Category    string  `json:"category"`
+	PriceGold   *uint64 `json:"priceGold,omitempty"`
+	PriceReal   *float64 `json:"priceReal,omitempty"`
+	CoinAmount  *uint64 `json:"coinAmount,omitempty"`
+	Image       string  `json:"image"`
+	Rarity      string  `json:"rarity"`
+	UnlockLevel *uint64 `json:"unlockLevel,omitempty"`
+	Permanent   bool    `json:"permanent"`
+	Duration    *string `json:"duration,omitempty"`
+	Disabled    bool    `json:"disabled"`
+	ComingSoon  bool    `json:"comingSoon"`
+	SkinFile    *string `json:"skinFile,omitempty"`
+	IsDefault   bool    `json:"isDefault"`
+	IsActive    bool    `json:"isActive"`
 }
 
 // PlayerItemResponse represents a player item in API responses
@@ -65,8 +73,17 @@ func (h *ItemHandler) ListShopItems(c *gin.Context) {
 			Description: item.Description,
 			Category:    string(item.Category),
 			PriceGold:   item.PriceGold,
-			PriceSpace:  item.PriceSpace,
-			IconURL:     item.IconURL,
+			PriceReal:   item.PriceReal,
+			CoinAmount:  item.CoinAmount,
+			Image:       item.Image,
+			Rarity:      string(item.Rarity),
+			UnlockLevel: item.UnlockLevel,
+			Permanent:   item.Permanent,
+			Duration:    item.Duration,
+			Disabled:    item.Disabled,
+			ComingSoon:  item.ComingSoon,
+			SkinFile:    item.SkinFile,
+			IsDefault:   item.IsDefault,
 			IsActive:    item.IsActive,
 		}
 	}
@@ -111,8 +128,17 @@ func (h *ItemHandler) GetPlayerItems(c *gin.Context) {
 				Description: pi.Item.Description,
 				Category:    string(pi.Item.Category),
 				PriceGold:   pi.Item.PriceGold,
-				PriceSpace:  pi.Item.PriceSpace,
-				IconURL:     pi.Item.IconURL,
+				PriceReal:   pi.Item.PriceReal,
+				CoinAmount:  pi.Item.CoinAmount,
+				Image:       pi.Item.Image,
+				Rarity:      string(pi.Item.Rarity),
+				UnlockLevel: pi.Item.UnlockLevel,
+				Permanent:   pi.Item.Permanent,
+				Duration:    pi.Item.Duration,
+				Disabled:    pi.Item.Disabled,
+				ComingSoon:  pi.Item.ComingSoon,
+				SkinFile:    pi.Item.SkinFile,
+				IsDefault:   pi.Item.IsDefault,
 				IsActive:    pi.Item.IsActive,
 			},
 			Equipped:       pi.Equipped,
@@ -146,14 +172,13 @@ func (h *ItemHandler) PurchaseItem(c *gin.Context) {
 		return
 	}
 
-	itemIDStr := c.Param("id")
-	itemID, err := strconv.ParseUint(itemIDStr, 10, 32)
-	if err != nil {
+	itemID := c.Param("id")
+	if itemID == "" {
 		response.BadRequest(c, "Invalid item ID")
 		return
 	}
 
-	err = h.itemService.PurchaseItem(c.Request.Context(), playerID, uint(itemID))
+	err := h.itemService.PurchaseItem(c.Request.Context(), playerID, itemID)
 	if err != nil {
 		// Parse error messages from service
 		errMsg := err.Error()
@@ -195,14 +220,13 @@ func (h *ItemHandler) EquipItem(c *gin.Context) {
 		return
 	}
 
-	itemIDStr := c.Param("id")
-	itemID, err := strconv.ParseUint(itemIDStr, 10, 32)
-	if err != nil {
+	itemID := c.Param("id")
+	if itemID == "" {
 		response.BadRequest(c, "Invalid item ID")
 		return
 	}
 
-	if err := h.itemService.EquipItem(c.Request.Context(), playerID, uint(itemID)); err != nil {
+	if err := h.itemService.EquipItem(c.Request.Context(), playerID, itemID); err != nil {
 		errMsg := err.Error()
 		switch {
 		case errMsg == "player does not own this item":
@@ -236,14 +260,13 @@ func (h *ItemHandler) UnequipItem(c *gin.Context) {
 		return
 	}
 
-	itemIDStr := c.Param("id")
-	itemID, err := strconv.ParseUint(itemIDStr, 10, 32)
-	if err != nil {
+	itemID := c.Param("id")
+	if itemID == "" {
 		response.BadRequest(c, "Invalid item ID")
 		return
 	}
 
-	if err := h.itemService.UnequipItem(c.Request.Context(), playerID, uint(itemID)); err != nil {
+	if err := h.itemService.UnequipItem(c.Request.Context(), playerID, itemID); err != nil {
 		errMsg := err.Error()
 		switch {
 		case errMsg == "player does not own this item":

@@ -19,10 +19,19 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Load instance info if available
+INFO_FILE="$(dirname "$0")/oci-instance-info.txt"
+if [ -f "$INFO_FILE" ]; then
+    DETECTED_IP=$(grep "Public IP:" "$INFO_FILE" | cut -d: -f2 | xargs)
+    DETECTED_KEY=$(grep "SSH Key:" "$INFO_FILE" | cut -d: -f2- | xargs)
+    OCI_HOST="${OCI_HOST:-$DETECTED_IP}"
+    OCI_KEY_FILE="${OCI_KEY_FILE:-$DETECTED_KEY}"
+fi
+
 # Configuration
-OCI_USER="${OCI_USER:-ubuntu}"
+OCI_USER="${OCI_USER:-opc}"
 OCI_HOST="${OCI_HOST}"
-OCI_KEY_FILE="${OCI_KEY_FILE:-~/.ssh/id_rsa}"
+OCI_KEY_FILE="${OCI_KEY_FILE:-~/.ssh/space-invaders-oci}"
 DEPLOY_DIR="/opt/space-invaders"
 BACKUP_DIR="/opt/space-invaders-backups"
 

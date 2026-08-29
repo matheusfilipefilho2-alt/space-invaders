@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug (Docker)",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "debugAdapter": "dlv-dap",
+      "host": "127.0.0.1",
+      "port": 40000,
+      "showLog": true,
+      "trace": "verbose",
+      "substitutePath": [
+        {
+          "from": "${workspaceFolder}",
+          "to": "/app"
+        }
+      ],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

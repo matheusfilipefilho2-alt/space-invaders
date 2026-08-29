@@ -37,6 +37,7 @@ type PlayerResponse struct {
 	WalletAddress      *string    `json:"walletAddress,omitempty"`
 	HighScore          uint64     `json:"highScore"`
 	TotalGames         uint       `json:"totalGames"`
+	TotalKills         uint       `json:"totalKills"`
 	LastPlayed         *time.Time `json:"lastPlayed,omitempty"`
 	GoldBalance        uint64     `json:"goldBalance"`
 	SpaceBalance       uint64     `json:"spaceBalance"`
@@ -76,6 +77,10 @@ func (h *PlayerHandler) GetMe(c *gin.Context) {
 		return
 	}
 
+	leagueID := uint(0)
+	if player.LeagueID != nil {
+		leagueID = *player.LeagueID
+	}
 	response.OK(c, PlayerResponse{
 		ID:                 player.ID,
 		Username:           player.Username,
@@ -84,10 +89,11 @@ func (h *PlayerHandler) GetMe(c *gin.Context) {
 		WalletAddress:      player.WalletAddress,
 		HighScore:          player.HighScore,
 		TotalGames:         player.TotalGames,
+		TotalKills:         player.TotalKills,
 		LastPlayed:         player.LastPlayed,
 		GoldBalance:        player.GoldBalance,
 		SpaceBalance:       player.SpaceBalance,
-		LeagueID:           player.LeagueID,
+		LeagueID:           leagueID,
 		RankPoints:         player.RankPoints,
 		NotifyOffers:       player.NotifyOffers,
 		NotifyAchievements: player.NotifyAchievements,
@@ -146,6 +152,10 @@ func (h *PlayerHandler) UpdateMe(c *gin.Context) {
 		return
 	}
 
+	leagueID := uint(0)
+	if player.LeagueID != nil {
+		leagueID = *player.LeagueID
+	}
 	response.OK(c, PlayerResponse{
 		ID:                 player.ID,
 		Username:           player.Username,
@@ -154,10 +164,11 @@ func (h *PlayerHandler) UpdateMe(c *gin.Context) {
 		WalletAddress:      player.WalletAddress,
 		HighScore:          player.HighScore,
 		TotalGames:         player.TotalGames,
+		TotalKills:         player.TotalKills,
 		LastPlayed:         player.LastPlayed,
 		GoldBalance:        player.GoldBalance,
 		SpaceBalance:       player.SpaceBalance,
-		LeagueID:           player.LeagueID,
+		LeagueID:           leagueID,
 		RankPoints:         player.RankPoints,
 		NotifyOffers:       player.NotifyOffers,
 		NotifyAchievements: player.NotifyAchievements,

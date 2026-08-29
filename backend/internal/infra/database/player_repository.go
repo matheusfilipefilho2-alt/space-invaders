@@ -117,6 +117,14 @@ func (r *playerRepository) IncrementTotalGames(ctx context.Context, playerID uin
 		Update("total_games", gorm.Expr("total_games + 1")).Error
 }
 
+// IncrementTotalKills increments the total kills counter
+func (r *playerRepository) IncrementTotalKills(ctx context.Context, playerID uint, kills uint) error {
+	return r.db.WithContext(ctx).
+		Model(&entity.Player{}).
+		Where("id = ?", playerID).
+		Update("total_kills", gorm.Expr("total_kills + ?", kills)).Error
+}
+
 // UpdateLeague updates the player's league
 func (r *playerRepository) UpdateLeague(ctx context.Context, playerID uint, leagueID uint) error {
 	return r.db.WithContext(ctx).

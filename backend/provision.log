@@ -1,0 +1,32 @@
+=========================================
+ Retry Script - A1.Flex Provisioning
+=========================================
+
+Configuração:
+  Shape: VM.Standard.A1.Flex
+  OCPUs: 2
+  RAM: 12 GB
+  Região: sa-saopaulo-1
+  Tentando a cada: 600 segundos (10 min)
+
+💡 Dicas:
+  - Deixe rodando durante a noite
+  - Maior chance de sucesso: 2h-6h da manhã
+  - Pressione Ctrl+C para cancelar
+
+[2026-08-28 21:41:07] Tentativa #1...
+  ⏳ Sem capacidade - tentando novamente em 10 minutos...
+[2026-08-28 21:52:48] Tentativa #2...
+  ❌ Erro: RequestException:
+{
+    "client_version": "Oracle-PythonCLI/3.91.0",
+    "logging_tips": "Please run the OCI CLI command using --debug flag to find more debug information.",
+    "message": "The connection to endpoint timed out.",
+    "request_endpoint": null,
+    "target_service": "CLI",
+    "timestamp": "2026-08-29T00:54:29.898734",
+    "troubleshooting_tips": " See [https://docs.oracle.com/iaas/Content/API/SDKDocs/clitroubleshooting.htm] for more information about resolving this error. If you are unable to resolve this issue, run this CLI command with --debug option and contact Oracle support and provide them the full error message."
+}
+FAILED
+[2026-08-28 22:04:30] Tentativa #3...
+  ⏳ Sem capacidade - tentando novamente em 10 minutos...

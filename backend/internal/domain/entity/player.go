@@ -26,14 +26,14 @@ type Player struct {
 	SolanaWallet *string `gorm:"index"` // Player's Solana wallet address for SPACE tokens
 
 	// Progression
-	LeagueID   uint
+	LeagueID   *uint
 	RankPoints uint
 	League     *League
 
 	// Notifications
-	NotifyOffers       bool
-	NotifyAchievements bool
-	NotifyShop         bool
+	NotifyOffers       bool `gorm:"default:true"`
+	NotifyAchievements bool `gorm:"default:true"`
+	NotifyShop         bool `gorm:"default:false"`
 
 	// Relations
 	GuildID *uint

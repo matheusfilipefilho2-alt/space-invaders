@@ -22,6 +22,7 @@ func NewGameHandler(gameService *service.GameService) *GameHandler {
 // EndGameRequest represents the request to end a game
 type EndGameRequest struct {
 	Score uint64 `json:"score" binding:"required"`
+	Kills uint   `json:"kills"`
 }
 
 // EndGameResponse represents the response after ending a game
@@ -88,7 +89,7 @@ func (h *GameHandler) EndGame(c *gin.Context) {
 		return
 	}
 
-	rewards, err := h.gameService.EndGame(c.Request.Context(), playerID, req.Score)
+	rewards, err := h.gameService.EndGame(c.Request.Context(), playerID, req.Score, req.Kills)
 	if err != nil {
 		if errors.Is(err, service.ErrPlayerNotFound) {
 			response.NotFound(c, "Player not found")

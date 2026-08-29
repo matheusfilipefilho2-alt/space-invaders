@@ -11,7 +11,7 @@ type PlayerItem struct {
 	PlayerID uint `gorm:"index:idx_player_items;not null"`
 	Player   *Player
 
-	ItemID   uint `gorm:"not null;index"`
+	ItemID   string `gorm:"type:text;not null;index"`
 	Item     *Item
 	Equipped bool `gorm:"default:false"`
 

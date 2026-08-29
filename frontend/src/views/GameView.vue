@@ -125,8 +125,8 @@ async function handleGameOver(stats: GameStats) {
   if (!sessionStarted.value) return
 
   try {
-    // Send final score to backend (ensure it's an integer)
-    const response = await gameAPI.end(Math.floor(stats.score))
+    // Send final score and kills to backend (ensure they're integers)
+    const response = await gameAPI.end(Math.floor(stats.score), stats.killCount)
     const data = response.data.data
 
     // Update rewards from backend
