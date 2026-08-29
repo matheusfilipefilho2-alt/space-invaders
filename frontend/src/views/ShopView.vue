@@ -416,6 +416,11 @@ async function checkPaymentStatus() {
 
       // Reload items to update balance display
       await loadItems()
+
+      // Reload orders list if on orders tab
+      if (activeTab.value === 'orders') {
+        await loadOrders()
+      }
     } else if (order.status === 'EXPIRED' || order.status === 'CANCELLED') {
       // Order expired or cancelled
       stopPollingPaymentStatus()
