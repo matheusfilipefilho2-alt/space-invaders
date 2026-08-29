@@ -109,7 +109,7 @@
                 <div class="stat-icon">💯</div>
                 <div class="stat-content">
                   <div class="stat-label">Melhor Score</div>
-                  <div class="stat-value">{{ stats.highestScore.toLocaleString() }}</div>
+                  <div class="stat-value">{{ (stats.highestScore || 0).toLocaleString() }}</div>
                 </div>
               </div>
 
@@ -117,7 +117,7 @@
                 <div class="stat-icon">👾</div>
                 <div class="stat-content">
                   <div class="stat-label">Inimigos Destruídos</div>
-                  <div class="stat-value">{{ stats.totalKills.toLocaleString() }}</div>
+                  <div class="stat-value">{{ (stats.totalKills || 0).toLocaleString() }}</div>
                 </div>
               </div>
 
@@ -494,7 +494,27 @@ const inventory = ref<any[]>([])
 const loadingAchievements = ref(false)
 const loadingInventory = ref(false)
 const activeTab = ref<'stats' | 'achievements' | 'inventory' | 'settings'>('stats')
-const stats = ref<GameStatistics>(StatisticsManager.getStatistics())
+
+// Map backend data to stats format
+const stats = computed(() => {
+  if (authStore.user) {
+    return {
+      highestScore: authStore.user.highScore || 0,
+      totalGamesPlayed: authStore.user.totalGames || 0,
+      totalKills: authStore.user.totalKills || 0,
+      totalShots: authStore.user.totalShots || 0,
+      totalHits: authStore.user.totalHits || 0,
+      totalLevelsCompleted: 0, // Not tracked yet
+      totalPlayTime: 0, // Not tracked yet
+      averageScore: authStore.user.totalGames > 0
+        ? Math.floor(authStore.user.highScore / authStore.user.totalGames)
+        : 0
+    }
+  }
+  // Fallback to localStorage if not authenticated
+  return StatisticsManager.getStatistics()
+})
+
 const localAchievements = ref<Achievement[]>([])
 
 // Skins
@@ -578,11 +598,10 @@ const difficulties = [
 
 async function loadProfile() {
   try {
+    // Fetch profile from backend
+    await authStore.fetchProfile()
     const response = await playerAPI.getProfile()
     player.value = response.data.data
-
-    // Load local statistics
-    stats.value = StatisticsManager.getStatistics()
 
     // Load local achievements
     localAchievements.value = AchievementManager.getAchievements()
