@@ -184,6 +184,7 @@ export class GameEngine {
     this.tutorial = new Tutorial()
     this.hasShownFirstDeathTip = false
     this.hasShownComboTip = false
+    this.levelCompletePending = false
     this.sessionStats = StatisticsManager.createSessionStats()
 
     this.setupCanvas()
@@ -281,6 +282,7 @@ export class GameEngine {
     // Reset tutorial tip flags
     this.hasShownFirstDeathTip = false
     this.hasShownComboTip = false
+    this.levelCompletePending = false
 
     // Reset session statistics
     this.sessionStats = StatisticsManager.createSessionStats()
