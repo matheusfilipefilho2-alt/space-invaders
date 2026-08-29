@@ -234,7 +234,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { itemAPI, playerAPI, shopAPI } from '@/services/api'
 import { SHOP_ITEMS, getRarityName as getItemRarityName } from '@/data/shopItems'
@@ -731,6 +731,13 @@ function reopenPixModal(order: any) {
   showPixModal.value = true
   startPollingPaymentStatus()
 }
+
+// Watch activeTab and load orders when switching to orders tab
+watch(activeTab, (newTab) => {
+  if (newTab === 'orders' && orders.value.length === 0) {
+    loadOrders()
+  }
+})
 
 onMounted(() => {
   loadItems()
