@@ -1181,4 +1181,179 @@ onMounted(() => {
   background: #FF8C00;
   transform: translateY(-2px);
 }
+
+/* Orders Section */
+.orders-section {
+  padding: 20px;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.order-card {
+  background: rgba(5, 5, 25, 0.9);
+  border: 2px solid #4ECDC4;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(78, 205, 196, 0.3);
+}
+
+/* Status-specific styling */
+.order-card.order-pending { border-color: #FFD700; }
+.order-card.order-completed { border-color: #00ff88; }
+.order-card.order-expired {
+  border-color: #FF6B6B;
+  opacity: 0.7;
+}
+.order-card.order-cancelled {
+  border-color: #888888;
+  opacity: 0.6;
+}
+
+.order-status-badge {
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.order-pending .order-status-badge {
+  background: #FFD700;
+  color: #000;
+}
+
+.order-completed .order-status-badge {
+  background: #00ff88;
+  color: #000;
+}
+
+.order-expired .order-status-badge {
+  background: #FF6B6B;
+  color: #fff;
+}
+
+.order-cancelled .order-status-badge {
+  background: #888888;
+  color: #fff;
+}
+
+.order-number {
+  color: #888;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.order-package {
+  color: #4ECDC4;
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+.order-amount {
+  color: #FFD700;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.order-date {
+  color: #888;
+  font-size: 11px;
+  margin: 8px 0;
+}
+
+.order-info {
+  color: #fff;
+  font-size: 12px;
+  margin: 10px 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.order-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.order-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.order-btn.primary {
+  background: #00ff88;
+  color: #000;
+}
+
+.order-btn.primary:hover {
+  background: #00cc6f;
+  transform: translateY(-2px);
+}
+
+.load-more-btn {
+  width: 100%;
+  padding: 12px;
+  background: rgba(78, 205, 196, 0.2);
+  border: 2px solid #4ECDC4;
+  border-radius: 8px;
+  color: #4ECDC4;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: rgba(78, 205, 196, 0.3);
+  transform: translateY(-2px);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+}
+
+.empty-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+.empty-state p {
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+.empty-hint {
+  color: #4ECDC4;
+  font-size: 12px;
+}
 </style>
