@@ -39,13 +39,23 @@ func (s *LeaderboardService) GetGlobalLeaderboard(ctx context.Context, limit, of
 	// Convert to leaderboard entries with calculated rank
 	entries := make([]*LeaderboardEntry, 0, len(players))
 	for i, player := range players {
+		leagueID := uint(0)
+		if player.LeagueID != nil {
+			leagueID = *player.LeagueID
+		}
+		// Get league name safely (handle nil League)
+		leagueName := ""
+		if player.League != nil {
+			leagueName = player.League.Name
+		}
+
 		entry := &LeaderboardEntry{
 			Rank:       offset + i + 1, // Rank starts at offset + 1
 			PlayerID:   player.ID,
 			Username:   player.Username,
 			HighScore:  player.HighScore,
-			LeagueName: player.League.Name,
-			LeagueID:   player.LeagueID,
+			LeagueName: leagueName,
+			LeagueID:   leagueID,
 		}
 		entries = append(entries, entry)
 	}
@@ -64,13 +74,24 @@ func (s *LeaderboardService) GetLeagueLeaderboard(ctx context.Context, leagueID 
 	// Convert to leaderboard entries with calculated rank (relative to league)
 	entries := make([]*LeaderboardEntry, 0, len(players))
 	for i, player := range players {
+		leagueID := uint(0)
+		if player.LeagueID != nil {
+			leagueID = *player.LeagueID
+		}
+
+		// Get league name safely (handle nil League)
+		leagueName := ""
+		if player.League != nil {
+			leagueName = player.League.Name
+		}
+
 		entry := &LeaderboardEntry{
 			Rank:       offset + i + 1, // Rank within league starts at offset + 1
 			PlayerID:   player.ID,
 			Username:   player.Username,
 			HighScore:  player.HighScore,
-			LeagueName: player.League.Name,
-			LeagueID:   player.LeagueID,
+			LeagueName: leagueName,
+			LeagueID:   leagueID,
 		}
 		entries = append(entries, entry)
 	}
