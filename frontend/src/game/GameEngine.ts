@@ -304,9 +304,11 @@ export class GameEngine {
 
     // Check if this is a boss level (level 2, then every 5 levels: 7, 12, 17, etc.)
     this.isBossLevel = this.stats.level === 2 || (this.stats.level > 2 && (this.stats.level - 2) % 5 === 0)
+    console.log(`🎮 Starting level ${this.stats.level}, isBossLevel: ${this.isBossLevel}`)
 
     if (this.isBossLevel) {
       // Spawn boss instead of invader grid
+      console.log(`👾 Spawning boss for level ${this.stats.level}`)
       this.boss = new Boss(this.config.canvasWidth, this.config.canvasHeight, this.stats.level)
       this.invaderGrid = null
       this.waveManager = null
@@ -1052,9 +1054,11 @@ export class GameEngine {
 
     // Check if next level is a boss level (level 2, then every 5 levels: 7, 12, 17, etc.)
     this.isBossLevel = this.stats.level === 2 || (this.stats.level > 2 && (this.stats.level - 2) % 5 === 0)
+    console.log(`🔄 Level complete transition to ${this.stats.level}, isBossLevel: ${this.isBossLevel}`)
 
     if (this.isBossLevel) {
       // Spawn boss for boss level
+      console.log(`👾 Creating boss for level ${this.stats.level}`)
       this.boss = new Boss(this.config.canvasWidth, this.config.canvasHeight, this.stats.level)
       this.invaderGrid = null
       this.waveManager = null
