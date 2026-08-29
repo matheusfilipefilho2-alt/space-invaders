@@ -300,14 +300,14 @@ export class Boss implements Size {
     // Phase 1: Basic attacks
     if (this.phase === 1) {
       if (bossTier === 1) {
-        // Boss 1 (Level 5): Single shot
+        // Boss 1 (Level 2): Single shot
         projectiles.push(new Projectile(centerX, centerY, false))
       } else if (bossTier === 2) {
-        // Boss 2 (Level 10): Double shot
+        // Boss 2 (Level 7): Double shot
         projectiles.push(new Projectile(centerX - 15, centerY, false))
         projectiles.push(new Projectile(centerX + 15, centerY, false))
       } else {
-        // Boss 3+ (Level 15+): Triple shot even in phase 1
+        // Boss 3+ (Level 12+): Triple shot even in phase 1
         projectiles.push(new Projectile(centerX - 20, centerY, false))
         projectiles.push(new Projectile(centerX, centerY, false))
         projectiles.push(new Projectile(centerX + 20, centerY, false))
