@@ -144,6 +144,72 @@
           </div>
         </div>
       </div>
+
+    <!-- Orders Section -->
+    <div v-else-if="activeTab === 'orders'" class="orders-section">
+      <h2 class="section-title">📦 MEUS PEDIDOS</h2>
+
+      <!-- Loading state -->
+      <div v-if="ordersLoading && orders.length === 0" class="loading">
+        Carregando pedidos...
+      </div>
+
+      <!-- Empty state -->
+      <div v-else-if="orders.length === 0" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>Nenhum pedido encontrado</p>
+        <p class="empty-hint">Compre pacotes de moedas na aba "🛍️ Todos os Itens"</p>
+      </div>
+
+      <!-- Orders list -->
+      <div v-else class="orders-list">
+        <div v-for="order in orders" :key="order.id"
+             class="order-card"
+             :class="`order-${order.status.toLowerCase()}`">
+
+          <!-- Status badge -->
+          <div class="order-status-badge">
+            {{ getStatusIcon(order.status) }} {{ getStatusLabel(order.status) }}
+          </div>
+
+          <!-- Order info -->
+          <div class="order-number">#{{ order.id }}</div>
+          <h3 class="order-package">{{ getPackageName(order.packageId) }}</h3>
+          <div class="order-amount">
+            💵 {{ formatPrice(order.amount) }} • 🪙 {{ order.goldAmount }} Gold
+          </div>
+          <div class="order-date">{{ formatOrderDate(order.createdAt) }}</div>
+
+          <!-- Status-specific info -->
+          <div class="order-info">
+            <span v-if="order.status === 'PENDING'">
+              Expira em: {{ calculateExpiresIn(order.expiresAt) }}
+            </span>
+            <span v-else-if="order.status === 'COMPLETED'">
+              Pago às {{ formatTime(order.completedAt) }}
+            </span>
+            <span v-else-if="order.status === 'EXPIRED'">
+              Expirou às {{ formatTime(order.expiresAt) }}
+            </span>
+          </div>
+
+          <!-- Actions (PENDING only) -->
+          <div v-if="order.status === 'PENDING'" class="order-actions">
+            <button @click="reopenPixModal(order)" class="order-btn primary">
+              Ver QR Code
+            </button>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <button v-if="hasMoreOrders"
+                @click="loadMoreOrders"
+                :disabled="ordersLoading"
+                class="load-more-btn">
+          {{ ordersLoading ? 'Carregando...' : 'Carregar Mais' }}
+        </button>
+      </div>
+    </div>
     </div>
 
     <!-- Modal de Confirmação (Itens com GOLD) -->
