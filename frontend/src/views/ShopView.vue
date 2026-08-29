@@ -626,6 +626,51 @@ const shortenAddress = (address: string) => {
   return `${address.slice(0, 4)}...${address.slice(-4)}`
 }
 
+// Order helper functions
+function getPackageName(packageId: string): string {
+  const packages: Record<string, string> = {
+    'coin_pack_199': 'Pacote de 199 Moedas',
+    'coin_pack_499': 'Pacote de 499 Moedas',
+    'coin_pack_999': 'Pacote de 999 Moedas'
+  }
+  return packages[packageId] || packageId
+}
+
+function formatOrderDate(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('pt-BR') + ' às ' +
+         date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatTime(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatPrice(cents: number): string {
+  return `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`
+}
+
+function getStatusIcon(status: string): string {
+  const icons: Record<string, string> = {
+    'PENDING': '🟡',
+    'COMPLETED': '✅',
+    'EXPIRED': '⏰',
+    'CANCELLED': '❌'
+  }
+  return icons[status] || '❓'
+}
+
+function getStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    'PENDING': 'PENDENTE',
+    'COMPLETED': 'PAGO',
+    'EXPIRED': 'EXPIRADO',
+    'CANCELLED': 'CANCELADO'
+  }
+  return labels[status] || status
+}
+
 onMounted(() => {
   loadItems()
 
