@@ -93,10 +93,11 @@ export interface Conversion {
 export interface ShopPackage {
   id: string
   name: string
-  gold_amount: number
-  price_cents: number // Price in BRL cents
-  price_brl: number // Price in BRL (formatted)
-  bonus_percentage?: number
+  description: string
+  goldAmount: number
+  priceInCents: number
+  priceDisplay: string
+  bonusPercentage?: number
 }
 
 export interface Order {

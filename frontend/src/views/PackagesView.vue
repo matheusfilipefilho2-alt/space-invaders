@@ -30,17 +30,17 @@
             class="package-card"
             :class="{ recommended: pkg.bonus_percentage && pkg.bonus_percentage > 0 }"
           >
-            <div v-if="pkg.bonus_percentage && pkg.bonus_percentage > 0" class="bonus-badge">
-              +{{ pkg.bonus_percentage }}% BONUS
+            <div v-if="pkg.bonusPercentage && pkg.bonusPercentage > 0" class="bonus-badge">
+              +{{ pkg.bonusPercentage }}% BONUS
             </div>
 
             <div class="package-icon">🪙</div>
             <h3 class="package-name">{{ pkg.name }}</h3>
             <div class="package-gold">
-              <span class="gold-amount">{{ formatNumber(pkg.gold_amount) }}</span>
+              <span class="gold-amount">{{ formatNumber(pkg.goldAmount) }}</span>
               <span class="gold-label">GOLD</span>
             </div>
-            <div class="package-price">{{ shopStore.formatPrice(pkg.price_cents) }}</div>
+            <div class="package-price">{{ pkg.priceDisplay }}</div>
 
             <button
               @click="selectPackage(pkg)"
@@ -64,9 +64,9 @@
             <!-- Order Info -->
             <div class="order-info">
               <p><strong>Package:</strong> {{ selectedPackage?.name }}</p>
-              <p><strong>Gold:</strong> {{ formatNumber(selectedPackage?.gold_amount || 0) }}</p>
+              <p><strong>Gold:</strong> {{ formatNumber(selectedPackage?.goldAmount || 0) }}</p>
               <p>
-                <strong>Price:</strong> {{ shopStore.formatPrice(currentOrder.amount) }}
+                <strong>Price:</strong> {{ selectedPackage?.priceDisplay || shopStore.formatPrice(currentOrder.amount) }}
               </p>
               <p v-if="!shopStore.isPixExpired(currentOrder.pix_expiration)">
                 <strong>Time Remaining:</strong>
