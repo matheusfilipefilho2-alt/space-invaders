@@ -894,11 +894,14 @@ export class GameEngine {
     this.enemyProjectiles = this.enemyProjectiles.filter((_, index) => !enemyProjectilesToRemove.has(index))
 
     // Invaders vs player (game over if they reach player)
-    this.invaderGrid.invaders.forEach(invader => {
-      if (invader.alive && this.player && invader.position.y + invader.height >= this.player.position.y) {
-        this.gameOver()
-      }
-    })
+    // Only check in non-boss levels where invaderGrid exists
+    if (this.invaderGrid) {
+      this.invaderGrid.invaders.forEach(invader => {
+        if (invader.alive && this.player && invader.position.y + invader.height >= this.player.position.y) {
+          this.gameOver()
+        }
+      })
+    }
   }
 
   private shoot(): void {
