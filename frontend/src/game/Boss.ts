@@ -43,9 +43,11 @@ export class Boss implements Size {
     this.height = 150
     this.level = level
 
-    // Enhanced progressive scaling - boss gets much harder at high levels
-    const difficultyScale = Math.floor(level / 5)
-    const levelBonus = level - 5 // Bonus for each level past first boss
+    // Calculate boss number in sequence (1st boss at level 2, 2nd at 7, 3rd at 12, etc.)
+    // Formula: level 2 = boss 1, then every 5 levels = next boss
+    const bossNumber = level === 2 ? 1 : Math.floor((level - 2) / 5) + 1
+    const difficultyScale = bossNumber - 1 // 0 for first boss, 1 for second, etc.
+    const levelBonus = (bossNumber - 1) * 5 // Bonus progression similar to old system
 
     this.stats = {
       // HP scales more aggressively: 100 -> 150 -> 250 -> 400 -> 600...
@@ -292,7 +294,8 @@ export class Boss implements Size {
     const centerY = this.position.y + this.height
 
     // Determine boss tier for unique attack patterns
-    const bossTier = Math.floor((this.stats.maxHealth - 100) / 150) + 1 // 1, 2, 3, 4, 5...
+    // Boss 1 (level 2), Boss 2 (level 7), Boss 3 (level 12), etc.
+    const bossTier = this.level === 2 ? 1 : Math.floor((this.level - 2) / 5) + 1
 
     // Phase 1: Basic attacks
     if (this.phase === 1) {
@@ -388,30 +391,31 @@ export class Boss implements Size {
   }
 
   getReward(): BossReward {
-    // Enhanced rewards scale with boss level
-    const bossTier = Math.floor(this.level / 5)
+    // Enhanced rewards scale with boss tier
+    // Boss 1 (level 2), Boss 2 (level 7), Boss 3 (level 12), etc.
+    const bossTier = this.level === 2 ? 1 : Math.floor((this.level - 2) / 5) + 1
 
     // Base rewards
     const baseScore = 5000
     const baseGold = 50
 
     // Scale rewards exponentially with boss tier
-    const scoreMultiplier = 1 + (bossTier * 0.5) // 1x, 1.5x, 2x, 2.5x, 3x...
-    const goldMultiplier = 1 + (bossTier * 0.3)  // 1x, 1.3x, 1.6x, 1.9x, 2.2x...
+    const scoreMultiplier = 1 + ((bossTier - 1) * 0.5) // 1x, 1.5x, 2x, 2.5x, 3x...
+    const goldMultiplier = 1 + ((bossTier - 1) * 0.3)  // 1x, 1.3x, 1.6x, 1.9x, 2.2x...
 
     // Guaranteed power-ups for higher tier bosses
     const guaranteedPowerUps = [
-      undefined,              // Tier 1 (level 5): no guaranteed
-      'weapon_laser',        // Tier 2 (level 10): laser weapon
-      'weapon_spread',       // Tier 3 (level 15): spread weapon
-      'weapon_missile',      // Tier 4 (level 20): missile weapon
-      'weapon_lightning'     // Tier 5+ (level 25+): lightning weapon
+      undefined,              // Tier 1 (level 2): no guaranteed
+      'weapon_laser',        // Tier 2 (level 7): laser weapon
+      'weapon_spread',       // Tier 3 (level 12): spread weapon
+      'weapon_missile',      // Tier 4 (level 17): missile weapon
+      'weapon_lightning'     // Tier 5+ (level 22+): lightning weapon
     ]
 
     return {
       score: Math.floor(baseScore * scoreMultiplier),
       goldBonus: Math.floor(baseGold * goldMultiplier),
-      guaranteedPowerUp: guaranteedPowerUps[Math.min(bossTier, 4)]
+      guaranteedPowerUp: guaranteedPowerUps[Math.min(bossTier - 1, 4)]
     }
   }
 
