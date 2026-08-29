@@ -705,6 +705,33 @@ async function loadMoreOrders() {
   }
 }
 
+// Reopen PIX modal with existing order
+function reopenPixModal(order: any) {
+  // Check if expired
+  if (new Date(order.expiresAt) < new Date()) {
+    showResult('Pedido Expirado', 'Este pedido expirou. Crie um novo pedido.')
+    order.status = 'EXPIRED'
+    return
+  }
+
+  // Populate modal
+  pixOrder.value = {
+    name: getPackageName(order.packageId),
+    description: `Pedido #${order.id}`,
+    pixCode: order.pixCode,
+    qrCodeUrl: order.qrCodeUrl,
+    paymentUrl: order.paymentUrl,
+    priceDisplay: formatPrice(order.amount),
+    expiresIn: calculateExpiresIn(order.expiresAt)
+  }
+
+  // Set up polling
+  currentOrderId.value = order.id
+  paymentStatus.value = 'PENDING'
+  showPixModal.value = true
+  startPollingPaymentStatus()
+}
+
 onMounted(() => {
   loadItems()
 
