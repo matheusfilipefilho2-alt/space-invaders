@@ -88,6 +88,7 @@ export class GameEngine {
   private hasShownFirstDeathTip: boolean
   private hasShownComboTip: boolean
   private sessionStats: SessionStats
+  private levelCompletePending: boolean
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -502,8 +503,10 @@ export class GameEngine {
     // Check for wave/level completion
     if (this.isBossLevel) {
       // Boss level - complete when boss defeated
-      // Skip this check as levelComplete is already scheduled in checkCollisions with visual effects
-      // Removing this prevents double levelComplete() calls
+      if (this.boss && this.boss.isDefeated() && !this.levelCompletePending) {
+        this.levelCompletePending = true
+        // Delay is handled in checkCollisions with explosions
+      }
     } else if (this.waveManager && this.invaderGrid) {
       // Wave-based level
       if (this.invaderGrid.isAllDead()) {
@@ -723,7 +726,8 @@ export class GameEngine {
           this.updateAccuracy()
 
           // Check if boss defeated
-          if (this.boss.isDefeated()) {
+          if (this.boss.isDefeated() && !this.levelCompletePending) {
+            this.levelCompletePending = true
             const reward = this.boss.getReward()
 
             // Give rewards
@@ -1028,6 +1032,9 @@ export class GameEngine {
   }
 
   private levelComplete(): void {
+    // Reset flag
+    this.levelCompletePending = false
+
     // Increment level
     this.stats.level++
     this.emit('levelChange', this.stats.level)
