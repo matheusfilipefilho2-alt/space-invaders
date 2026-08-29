@@ -299,8 +299,8 @@ export class GameEngine {
     const selectedSkin = SkinManager.getSelectedSkin()
     this.player = new Player(this.config.canvasWidth, this.config.canvasHeight, selectedSkin)
 
-    // Check if this is a boss level (every 5 levels)
-    this.isBossLevel = this.stats.level % 5 === 0
+    // Check if this is a boss level (level 2, then every 5 levels: 7, 12, 17, etc.)
+    this.isBossLevel = this.stats.level === 2 || (this.stats.level > 2 && (this.stats.level - 2) % 5 === 0)
 
     if (this.isBossLevel) {
       // Spawn boss instead of invader grid
@@ -1036,8 +1036,8 @@ export class GameEngine {
     this.soundEffects.playSound('nextLevel')
     this.soundEffects.playLevelMusic(this.stats.level)
 
-    // Check if next level is a boss level
-    this.isBossLevel = this.stats.level % 5 === 0
+    // Check if next level is a boss level (level 2, then every 5 levels: 7, 12, 17, etc.)
+    this.isBossLevel = this.stats.level === 2 || (this.stats.level > 2 && (this.stats.level - 2) % 5 === 0)
 
     if (this.isBossLevel) {
       // Spawn boss for boss level
